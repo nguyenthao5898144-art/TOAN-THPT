@@ -17,7 +17,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
  * Vì server.cjs đang chạy bên trong thư mục 'src', ta dùng '..' để đi ra ngoài thư mục gốc,
  * sau đó mới đi vào thư mục 'dist/client' nơi chứa giao diện của Vite.
  */
-const staticDir = path.join(__dirname, '..', 'dist', 'client');
+const staticDir = path.join(process.cwd(), 'dist', 'client');
 app.use(express.static(staticDir));
 
 // =================================================================
