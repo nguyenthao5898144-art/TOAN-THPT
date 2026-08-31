@@ -9,13 +9,13 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// Khởi tạo Google Gen AI kết nối với mô hình Gemini
+// Khởi tạo thực thể trí tuệ nhân tạo Google Gen AI
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 /**
- * 🛠️ SỬA ĐƯỜNG DẪN TẠI ĐÂY:
- * Vì server.cjs chạy ở gốc và Vite build ra thư mục 'dist/client',
- * ta phải gộp cả 'dist' và 'client' vào đường dẫn tĩnh.
+ * 🛠️ THIẾT LẬP ĐƯỜNG DẪN TĨNH KHỚP VỚI VITE:
+ * Tệp tin server.cjs chạy ở thư mục gốc, kết quả build của Vite nằm tại 'dist/client'.
+ * Đoạn mã này gộp chuẩn xác các cấp thư mục để Express đọc đúng file index.html.
  */
 const staticDir = path.join(__dirname, 'dist', 'client');
 app.use(express.static(staticDir));
@@ -54,7 +54,7 @@ app.post('/api/export-docx', async (req, res) => {
           }),
           new Paragraph({
             children: [
-              new TextRun({ text: content || "Nội dung...", size: 24 }),
+              new TextRun({ text: content || "Nội dung tài liệu...", size: 24 }),
             ],
           }),
         ],
@@ -73,13 +73,13 @@ app.post('/api/export-docx', async (req, res) => {
 });
 
 // =================================================================
-// 🛠️ ĐIỀU HƯỚNG TRẢ VỀ FILE TRONG THƯ MỤC DIST/CLIENT:
-// Đảm bảo Express luôn tìm thấy index.html nằm tại dist/client/index.html
+// 🛠️ ĐIỀU HƯỚNG BẮT BUỘC TRẢ VỀ INDEX.HTML TRONG DIST/CLIENT:
+// Đảm bảo Express phân phối tệp tin gốc chính xác, gỡ bỏ lỗi ENOENT
 // =================================================================
 app.get('*', (req, res) => {
   res.sendFile(path.join(staticDir, 'index.html'));
 });
 
-// Khởi chạy hệ thống trên cổng Render cung cấp (Mặc định là 10000)
+// Vận hành ứng dụng tích hợp cổng thích ứng của môi trường Render (Mặc định 10000)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Máy chủ vận hành mượt mà tại cổng kết nối: ${PORT}`));
