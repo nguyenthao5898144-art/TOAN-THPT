@@ -9,15 +9,15 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// Khởi tạo thực thể Google Gen AI kết nối với mô hình Gemini
+// Khởi tạo Google Gen AI kết nối với mô hình Gemini
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 /**
- * 🛠️ ĐỒNG BỘ ĐƯỜNG DẪN CHUẨN COMMONJS (CJS):
- * Sử dụng trực tiếp biến toàn cục __dirname có sẵn khi esbuild đóng gói ra file server.cjs.
- * Vì server.cjs nằm trực tiếp trong thư mục dist, ta chỉ cần trỏ vào thư mục con 'client' bên cạnh nó.
+ * 🛠️ SỬA ĐƯỜNG DẪN TẠI ĐÂY:
+ * Vì server.cjs chạy ở gốc và Vite build ra thư mục 'dist/client',
+ * ta phải gộp cả 'dist' và 'client' vào đường dẫn tĩnh.
  */
-const staticDir = path.join(__dirname, 'client');
+const staticDir = path.join(__dirname, 'dist', 'client');
 app.use(express.static(staticDir));
 
 // =================================================================
@@ -73,8 +73,8 @@ app.post('/api/export-docx', async (req, res) => {
 });
 
 // =================================================================
-// 🛠️ ĐIỀU HƯỚNG TRẢ VỀ FILE TRONG THƯ MỤC CLIENT:
-// Đảm bảo Express luôn tìm thấy index.html nằm sâu bên trong dist/client
+// 🛠️ ĐIỀU HƯỚNG TRẢ VỀ FILE TRONG THƯ MỤC DIST/CLIENT:
+// Đảm bảo Express luôn tìm thấy index.html nằm tại dist/client/index.html
 // =================================================================
 app.get('*', (req, res) => {
   res.sendFile(path.join(staticDir, 'index.html'));
