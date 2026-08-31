@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TestConfig, Assignment, ClassRoom } from '../types';
-import { getStoredClasses, saveAssignment } from '../utils/classStorage';
-import { 
+import { TestConfig } from './types';
+import { getStoredClasses, saveAssignment, Assignment, ClassRoom } from './classStorage'; 
   Send, Clock, Calendar, CheckSquare, Square, 
   Users, Check, Copy, Link as LinkIcon, X, Sparkles 
 } from 'lucide-react';
