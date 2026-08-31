@@ -13,8 +13,8 @@ const currentDir = typeof __dirname !== 'undefined'
   ? __dirname
   : path.dirname(new URL(import.meta.url).pathname);
 
-// Chỉ định Express tìm tài nguyên giao diện được Vite build bên trong thư mục 'dist'
-app.use(express.static(path.join(currentDir, 'dist')));
+// Server.cjs đang nằm trong dist, trỏ vào thư mục con client cùng cấp để tìm index.html
+app.use(express.static(path.join(currentDir, 'client')));
 
 app.post('/api/chat', async (req, res) => {
   try {
@@ -29,9 +29,8 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// Trả về index.html nằm sâu bên trong thư mục dist
 app.get('*', (req, res) => {
-  res.sendFile(path.join(currentDir, 'dist', 'index.html'));
+  res.sendFile(path.join(currentDir, 'client', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
