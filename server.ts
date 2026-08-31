@@ -12,16 +12,13 @@ app.use(express.json());
 // Khởi tạo thực thể Google Gen AI kết nối với mô hình Gemini
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Xác định vị trí thư mục hiện hành của tệp chạy máy chủ
-const currentDir = typeof __dirname !== 'undefined'
-  ? __dirname
-  : path.dirname(new URL(import.meta.url).pathname);
-
 /**
- * 🛠️ SỬA ĐƯỜNG DẪN TẠI ĐÂY:
- * Vì Vite xuất thẳng vào 'dist' chứ không có 'dist/client', ta trỏ trực tiếp vào thư mục 'dist'
+ * 🛠️ ĐỒNG BỘ ĐƯỜNG DẪN CHUẨN COMMONJS (CJS):
+ * Sử dụng trực tiếp biến toàn cục __dirname có sẵn khi esbuild đóng gói ra file server.cjs.
+ * Vì server.cjs nằm trực tiếp trong thư mục dist, ta chỉ cần trỏ vào thư mục con 'client' bên cạnh nó.
  */
-app.use(express.static(path.join(currentDir, 'dist')));
+const staticDir = path.join(__dirname, 'client');
+app.use(express.static(staticDir));
 
 // =================================================================
 // 🚀 ROUTE API 1: XỬ LÝ CHATBOT MÔ HÌNH GEMINI AI
@@ -76,13 +73,13 @@ app.post('/api/export-docx', async (req, res) => {
 });
 
 // =================================================================
-// 🛠️ SỬA ĐƯỜNG DẪN ĐIỀU HƯỚNG TẠI ĐÂY:
-// Trả về file index.html nằm trực tiếp trong thư mục dist
+// 🛠️ ĐIỀU HƯỚNG TRẢ VỀ FILE TRONG THƯ MỤC CLIENT:
+// Đảm bảo Express luôn tìm thấy index.html nằm sâu bên trong dist/client
 // =================================================================
 app.get('*', (req, res) => {
-  res.sendFile(path.join(currentDir, 'dist', 'index.html'));
+  res.sendFile(path.join(staticDir, 'index.html'));
 });
 
 // Khởi chạy hệ thống trên cổng Render cung cấp (Mặc định là 10000)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server đang vận hành tại cổng: ${PORT}`));
+app.listen(PORT, () => console.log(`Máy chủ vận hành mượt mà tại cổng kết nối: ${PORT}`));
