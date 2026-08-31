@@ -2,7 +2,7 @@
 // CHÚ Ý: Bạn hãy thay thế các tên file gemini-code dưới đây bằng tên file thực tế của bạn
 
 // 1. Kết nối đến file chứa chức năng sinh đề thi của bạn
-import { generateUniqueTestForStudent as originalGenerate } from './gemini-code-1788062859773.tsx'; './gemini-code-1788064203391.tsx';
+import { generateUniqueTestForStudent as originalGenerate } from './1.tsx'; './12.tsx'; './13.tsx'; './14.tsx'; './15.tsx';
 export const generateUniqueTestForStudent = originalGenerate;
 
 // 2. Kết nối đến file chứa chức năng lọc trùng câu hỏi (nếu có file riêng)
