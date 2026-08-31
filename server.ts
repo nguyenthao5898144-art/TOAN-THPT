@@ -3,24 +3,27 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 
-// Kích hoạt đọc cấu hình file biến môi trường .env
+// Nạp các biến môi trường từ file .env
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
-// Khởi tạo đối tượng kết nối với API Trí tuệ nhân tạo Gemini
+// Khởi tạo Google Gen AI với API Key bảo mật
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Xác định vị trí thư mục hiện tại của file server sau khi build
+// Xác định thư mục hiện tại chứa tệp server.cjs sau khi khởi chạy
 const currentDir = typeof __dirname !== 'undefined'
   ? __dirname
   : path.dirname(new URL(import.meta.url).pathname);
 
-// Trỏ Express đọc toàn bộ tệp tĩnh (HTML/CSS/JS) nằm cùng cấp trong thư mục dist
+/**
+ * VÌ FILE SERVER.CJS VÀ CÁC FILE STATIC (INDEX.HTML, ASSETS) NẰM CHUNG TRONG THƯ MỤC DIST:
+ * Express phải đọc các tài nguyên tĩnh nằm ngay cùng cấp (currentDir) xung quanh nó.
+ */
 app.use(express.static(currentDir));
 
-// --- CÁC ĐƯỜNG DẪN API (ROUTE API) CỦA BẠN SẼ ĐẶT TẠI ĐÂY ---
+// --- ĐƯỜNG DẪN XỬ LÝ API CHAT GEMINI ---
 app.post('/api/chat', async (req, res) => {
   try {
     const { message } = req.body;
@@ -34,11 +37,11 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// Điều hướng bắt buộc trả về index.html cho toàn bộ các yêu cầu tải trang Front-end
+// Điều hướng bắt buộc: Trả về index.html nằm ngay cạnh file server cho mọi request tải trang
 app.get('*', (req, res) => {
   res.sendFile(path.join(currentDir, 'index.html'));
 });
 
-// Cấu hình cổng kết nối thích ứng tự động với máy chủ Render
+// Cấu hình cổng kết nối thích ứng tự động với Render
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Hệ thống máy chủ vận hành mượt mà tại cổng: ${PORT}`));
+app.listen(PORT, () => console.log(`Máy chủ vận hành mượt mà tại cổng kết nối: ${PORT}`));
