@@ -36,7 +36,7 @@ async function startServer() {
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
   });
-  // Trả về giao diện index.html cho người dùng khi vào trang chủ
+    // Sửa đường dẫn tìm file index.html ở ngay thư mục gốc
   app.use(express.static(path.join(__dirname, './')));
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, './index.html'));
