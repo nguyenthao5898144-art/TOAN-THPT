@@ -36,10 +36,10 @@ async function startServer() {
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
   });
-    // Sửa đường dẫn tìm file index.html ở ngay thư mục gốc
-  app.use(express.static(path.join(__dirname, './')));
+      // Ép hệ thống đi ra ngoài thư mục dist để tìm đúng index.html ở thư mục gốc
+  app.use(express.static(path.join(__dirname, '../')));
   app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, './index.html'));
+    res.sendFile(path.join(__dirname, '../index.html'));
   });
 
   // API Route: Generate fresh questions and matrix
