@@ -6,9 +6,8 @@ import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
 import { deduplicateAllQuestions, createDefaultTest, alignQuestionsToOutcomeMatrix } from './testGenerator.ts';
 dotenv.config();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+const __filename = __filename || fileURLToPath(import.meta.url);
+const __dirname = __dirname || path.dirname(__filename);
 // Lazy initialization for Google GenAI client
 let aiClient: GoogleGenAI | null = null;
 function getGeminiClient(): GoogleGenAI | null {
