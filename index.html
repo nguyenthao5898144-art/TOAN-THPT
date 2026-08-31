@@ -1,41 +1,13 @@
-<!doctype html>
-<html lang="en">
-<head>
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Toán 12 - Tác giả: NGUYỄN QUỐC TÂM</title>
-    <!-- Tự động nạp thư viện Tailwind và Babel để hiển thị giao diện đẹp không cần Vite -->
-    <script src="https://jsdelivr.net"></script>
-    <script src="https://unpkg.com"></script>
-    <script src="https://unpkg.com"></script>
-    <script src="https://unpkg.com"></script>
-</head>
-<body class="bg-slate-950 text-white">
+  </head>
+  <body>
     <div id="root"></div>
-
-    <!-- Đoạn lệnh cầu nối ép trình duyệt tự đọc và vẽ trực tiếp file giao diện của bạn -->
-    <script type="text/babel">
-        fetch('/src/1.tsx')
-            .then(res => res.text())
-            .then(code => {
-                // Loại bỏ lệnh import/export thuần của hệ thống để chạy trực tiếp trên web
-                const cleanCode = code
-                    .replace(/import\s+.*?\s+from\s+['"].*?['"];?/g, '')
-                    .replace(/export\s+default\s+/g, 'const AppComponent = ')
-                    .replace(/export\s+/g, '');
-                
-                // Giả lập hàm xử lý đổi khối lớp để không bị lỗi giao diện
-                const handleSwitchGrade = (grade) => { alert('Bạn đã chọn khối lớp: ' + grade); };
-                const selectedGrade = '12';
-
-                // Biên dịch và hiển thị
-                const CompiledComponent = () => {
-                    return eval(Babel.transform(cleanCode + '\n;AppComponent;', { presets: ['react'] }).code)();
-                };
-                const root = ReactDOM.createRoot(document.getElementById('root'));
-                root.render(<CompiledComponent />);
-            })
-            .catch(err => console.error("Lỗi nạp giao diện:", err));
-    </script>
-</body>
+    <!-- Điểm kích hoạt ứng dụng React từ thư mục src -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
