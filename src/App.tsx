@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-// Nạp tự động (Import) các file bài học của bạn
+// Nạp tự động (Import) các file bài học tương ứng của bạn
 import Bai1 from './1.tsx';
 import Bai12 from './12.tsx';
 import Bai13 from './13.tsx';
@@ -18,10 +18,10 @@ import Bai24 from './24.tsx';
 import Bai25 from './25.tsx';
 
 export default function App() {
-  // Trạng thái lưu trữ bài học đang được chọn (Mặc định mở bài 1)
+  // Trạng thái lưu trữ bài học đang được chọn (Mặc định khi mở trang là bài 1)
   const [currentLesson, setCurrentLesson] = useState<number>(1);
 
-  // Hàm render giao diện bài học tương ứng dựa trên nút bấm
+  // Hàm render giao diện bài học tương ứng dựa trên trạng thái bài được chọn
   const renderLesson = () => {
     switch (currentLesson) {
       case 1: return <Bai1 />;
@@ -43,11 +43,12 @@ export default function App() {
     }
   };
 
+  // SỬA LỖI TẠI ĐÂY: Khai báo mảng số bài học đầy đủ, chính xác cấu trúc dữ liệu
   const lessons =;
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      {/* THANH MENU ĐIỀU HƯỚNG BÊN TRÁI */}
+      {/* THANH MENU ĐIỀU HƯỚNG BÊN TRÁI THƯ MỤC BÀI HỌC */}
       <div style={{ width: '250px', background: '#f0f2f5', padding: '20px', borderRight: '1px solid #ddd' }}>
         <h3 style={{ color: '#1a73e8', marginBottom: '20px' }}>Toán THPT</h3>
         <p style={{ fontWeight: 'bold', fontSize: '14px' }}>DANH SÁCH BÀI HỌC:</p>
@@ -73,7 +74,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* VÙNG HIỂN THỊ NỘI DUNG BÀI HỌC CHI TIẾT CHI TIẾT */}
+      {/* VÙNG CHỨA NỘI DUNG TÀI LIỆU TOÁN CHI TIẾT */}
       <div style={{ flex: 1, padding: '30px', background: '#fff' }}>
         {renderLesson()}
       </div>
