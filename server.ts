@@ -4,10 +4,8 @@ import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
-import { deduplicateAllQuestions, createDefaultTest, alignQuestionsToOutcomeMatrix } from './src/utils/testGenerator';
-
+import { deduplicateAllQuestions, createDefaultTest, alignQuestionsToOutcomeMatrix } from './testGenerator.ts';
 dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
