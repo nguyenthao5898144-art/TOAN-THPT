@@ -4,12 +4,12 @@ import { useState } from 'react';
  * TỰ ĐỘNG QUÉT THƯ MỤC "nguồn":
  * Vite tự động tìm kiếm và nạp (eager import) toàn bộ các file .tsx trong thư mục 'nguồn'
  */
-const files = import.meta.glob('./nguồn/*.tsx', { eager: true });
+const files = import.meta.glob('./[0-9]*.tsx', { eager: true });
 
 // Xây dựng danh sách các Component dựa trên tên file quét được
 const componentsMap: Record<string, any> = {};
 Object.keys(files).forEach((key) => {
-  // Trích xuất tên file (Ví dụ: "./nguồn/1.tsx" -> "1")
+  nst fileName = key.replace('./', '').replace('.tsx', '');
   const fileName = key.replace('./nguồn/', '').replace('.tsx', '');
   const module: any = files[key];
   // Lấy Component được export mặc định (export default) bên trong file
