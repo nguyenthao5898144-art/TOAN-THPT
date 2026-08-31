@@ -4,13 +4,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   build: {
-    rollupOptions: {
-      external: [
-        'fsevents', 'path', 'fs', 'crypto',
-        './1.tsx', './12.tsx', './13.tsx', './14.tsx', './15.tsx',
-        './16.tsx', './17.tsx', './18.tsx', './19.tsx', './20.tsx',
-        './21.tsx', './22.tsx', './23.tsx', './24.tsx', './25.tsx'
-      ]
-    }
+    outDir: 'dist/client', // Ép Vite đóng gói giao diện vào dist/client
+    emptyOutDir: false     // Ngăn Vite xóa nhầm tệp server.cjs của esbuild
   }
 });
