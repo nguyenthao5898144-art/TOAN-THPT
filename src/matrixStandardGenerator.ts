@@ -1,5 +1,5 @@
-import { GeneratedTest, Question, CognitiveLevel } from '../types';
-import { MATH_12_SYLLABUS } from '../data/math12Syllabus';
+import { GeneratedTest, Question, CognitiveLevel } from './types';
+import { MATH_12_SYLLABUS } from './math12Syllabus';
 
 export interface StandardMatrixCell {
   count: number;
