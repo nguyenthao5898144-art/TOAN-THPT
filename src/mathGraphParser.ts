@@ -1,4 +1,4 @@
-import { GraphData, BBTData } from '../data/diagramBank';
+import { GraphData, BBTData } from './diagramBank';
 import { cleanMathString } from './mathSanitizer';
 
 /**
