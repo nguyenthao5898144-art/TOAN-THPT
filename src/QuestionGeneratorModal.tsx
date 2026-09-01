@@ -1,12 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { TestConfig } from './types';
 import { MATH_12_SYLLABUS, Topic, Lesson } from './math12Syllabus';
-import { DIAGRAM_BANK, DiagramItem } from './diagramBank';
-import { DiagramRenderer } from './DiagramRenderer';
+import { DIAGRAM_BANK } from './diagramBank';
 import {
-  Sparkles, CheckCircle2, Sliders, BookOpen, AlertCircle,
-  RefreshCw, CheckSquare, Square, ListChecks, Image as ImageIcon,
-  ChevronDown, ChevronUp, Trash2, RotateCcw, X, Clock, Layers
+  Sparkles, Sliders, BookOpen, Clock, Table, CheckSquare, Square,
+  CheckCircle2, ChevronDown, ChevronUp, Layers, Award, FileText,
+  Database, RefreshCw, X, HelpCircle, Check, ArrowRight
 } from 'lucide-react';
 
 export interface QuestionGeneratorModalProps {
@@ -27,18 +26,28 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
   isGenerating = false,
   onClose,
 }) => {
-  // 1. Phân loại chuyên đề & Khối lớp
-  const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
-  const [grade, setGrade] = useState<string>(config?.grade || '12');
+  // 1. Thông tin chung
   const [title, setTitle] = useState<string>(config?.title || 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN THPT - GDPT 2018');
   const [durationMinutes, setDurationMinutes] = useState<number>(config?.durationMinutes || 45);
+  const [activePreset, setActivePreset] = useState<'standard' | '15min' | 'advanced'>('standard');
 
-  // 2. Cơ cấu số lượng câu hỏi theo ma trận
-  const [mcCount, setMcCount] = useState<number>(config?.questionCountByType?.multipleChoice ?? 12);
-  const [tfCount, setTfCount] = useState<number>(config?.questionCountByType?.trueFalse ?? 4);
-  const [saCount, setSaCount] = useState<number>(config?.questionCountByType?.shortAnswer ?? 6);
+  // 2. Cơ cấu Ma trận theo 3 dạng thức & 3 mức độ nhận thức
+  // Phần I: MCQ
+  const [mcNB, setMcNB] = useState<number>(6);
+  const [mcTH, setMcTH] = useState<number>(4);
+  const [mcVD, setMcVD] = useState<number>(2);
 
-  // 3. Chọn chủ đề & bài học
+  // Phần II: Đúng / Sai
+  const [tfNB, setTfNB] = useState<number>(1);
+  const [tfTH, setTfTH] = useState<number>(2);
+  const [tfVD, setTfVD] = useState<number>(1);
+
+  // Phần III: Trả lời ngắn
+  const [saNB, setSaNB] = useState<number>(1);
+  const [saTH, setSaTH] = useState<number>(2);
+  const [saVD, setSaVD] = useState<number>(3);
+
+  // 3. Chọn chủ đề & bài học & YCCĐ
   const initialTopicIds = config?.selectedTopicIds && config.selectedTopicIds.length > 0
     ? config.selectedTopicIds
     : [MATH_12_SYLLABUS[0].id];
@@ -49,34 +58,60 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
     : MATH_12_SYLLABUS[0].lessons.map((l) => l.id);
   const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>(initialLessonIds);
 
-  // Thu gọn / Mở rộng nhóm chủ đề
+  const [selectedOutcomes, setSelectedOutcomes] = useState<string[]>([]);
   const [collapsedTopicIds, setCollapsedTopicIds] = useState<string[]>([]);
+  const [isBankOpen, setIsBankOpen] = useState<boolean>(false);
 
-  const categories = ['Tất cả', 'Giải Tích', 'Hình Học', 'Thống Kê & Xác Suất', 'Chuyên Đề Học Tập'];
+  // Tổng số câu hỏi từng phần
+  const totalMC = mcNB + mcTH + mcVD;
+  const totalTF = tfNB + tfTH + tfVD;
+  const totalSA = saNB + saTH + saVD;
+  const totalQuestions = totalMC + totalTF + totalSA;
 
-  // Lọc chủ đề theo Category
-  const filteredTopics = useMemo(() => {
-    return MATH_12_SYLLABUS.filter(
-      (t) => selectedCategory === 'Tất cả' || t.category === selectedCategory
-    );
-  }, [selectedCategory]);
+  // Tổng số câu theo mức độ nhận thức
+  const totalNB = mcNB + tfNB + saNB;
+  const totalTH = mcTH + tfTH + saTH;
+  const totalVD = mcVD + tfVD + saVD;
 
-  const toggleTopicCollapse = (topicId: string) => {
-    setCollapsedTopicIds((prev) =>
-      prev.includes(topicId) ? prev.filter((id) => id !== topicId) : [...prev, topicId]
-    );
+  // Tính tổng điểm ước tính
+  const totalScore = (totalMC * 0.25 + totalTF * 1.0 + totalSA * 0.5).toFixed(1);
+
+  // Mẫu ma trận nhanh
+  const applyPreset = (preset: 'standard' | '15min' | 'advanced') => {
+    setActivePreset(preset);
+    if (preset === 'standard') {
+      setDurationMinutes(45);
+      setMcNB(6); setMcTH(4); setMcVD(2); // 12 MCQ = 3.0đ
+      setTfNB(1); setTfTH(2); setTfVD(1); // 4 TF = 4.0đ
+      setSaNB(1); setSaTH(2); setSaVD(3); // 6 SA = 3.0đ
+    } else if (preset === '15min') {
+      setDurationMinutes(15);
+      setMcNB(3); setMcTH(2); setMcVD(1); // 6 MCQ
+      setTfNB(0); setTfTH(1); setTfVD(1); // 2 TF
+      setSaNB(0); setSaTH(1); setSaVD(1); // 2 SA
+    } else if (preset === 'advanced') {
+      setDurationMinutes(90);
+      setMcNB(4); setMcTH(4); setMcVD(4); // 12 MCQ
+      setTfNB(0); setTfTH(2); setTfVD(2); // 4 TF
+      setSaNB(0); setSaTH(1); setSaVD(1); // 2 SA
+    }
   };
 
-  const toggleTopic = (topic: Topic) => {
-    const isSelected = selectedTopicIds.includes(topic.id);
+  const selectedTopics = useMemo(() => {
+    return MATH_12_SYLLABUS.filter((t) => selectedTopicIds.includes(t.id));
+  }, [selectedTopicIds]);
+
+  const toggleTopic = (topicId: string) => {
+    const topic = MATH_12_SYLLABUS.find((t) => t.id === topicId);
+    if (!topic) return;
     const lessonIds = topic.lessons.map((l) => l.id);
 
-    if (isSelected) {
-      if (selectedTopicIds.length <= 1) return; // Giữ ít nhất 1 chủ đề
-      setSelectedTopicIds((prev) => prev.filter((id) => id !== topic.id));
+    if (selectedTopicIds.includes(topicId)) {
+      if (selectedTopicIds.length <= 1) return;
+      setSelectedTopicIds((prev) => prev.filter((id) => id !== topicId));
       setSelectedLessonIds((prev) => prev.filter((id) => !lessonIds.includes(id)));
     } else {
-      setSelectedTopicIds((prev) => [...prev, topic.id]);
+      setSelectedTopicIds((prev) => [...prev, topicId]);
       setSelectedLessonIds((prev) => Array.from(new Set([...prev, ...lessonIds])));
     }
   };
@@ -87,31 +122,39 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
     );
   };
 
-  const handleSelectAllInTopic = (topic: Topic) => {
-    const lessonIds = topic.lessons.map((l) => l.id);
-    if (!selectedTopicIds.includes(topic.id)) {
-      setSelectedTopicIds((prev) => [...prev, topic.id]);
+  const toggleOutcome = (outcome: string) => {
+    setSelectedOutcomes((prev) =>
+      prev.includes(outcome) ? prev.filter((o) => o !== outcome) : [...prev, outcome]
+    );
+  };
+
+  const handleSelectAllTopics = () => {
+    const allTopicIds = MATH_12_SYLLABUS.map((t) => t.id);
+    const allLessonIds = MATH_12_SYLLABUS.flatMap((t) => t.lessons.map((l) => l.id));
+    setSelectedTopicIds(allTopicIds);
+    setSelectedLessonIds(allLessonIds);
+  };
+
+  const handleDeselectAllTopics = () => {
+    if (MATH_12_SYLLABUS.length > 0) {
+      setSelectedTopicIds([MATH_12_SYLLABUS[0].id]);
+      setSelectedLessonIds(MATH_12_SYLLABUS[0].lessons.map((l) => l.id));
     }
-    setSelectedLessonIds((prev) => Array.from(new Set([...prev, ...lessonIds])));
   };
 
-  const handleDeselectAllInTopic = (topic: Topic) => {
-    const lessonIds = topic.lessons.map((l) => l.id);
-    setSelectedLessonIds((prev) => prev.filter((id) => !lessonIds.includes(id)));
-  };
-
-  const handleStartGenerate = () => {
+  const handleStartGenerate = (source: 'ai' | 'bank') => {
     const newConfig: TestConfig = {
       ...config,
       title,
-      grade,
+      grade: '12',
       durationMinutes,
       selectedTopicIds,
       selectedLessonIds,
+      selectedOutcomes,
       questionCountByType: {
-        multipleChoice: mcCount,
-        trueFalse: tfCount,
-        shortAnswer: saCount,
+        multipleChoice: totalMC,
+        trueFalse: totalTF,
+        shortAnswer: totalSA,
       },
     };
 
@@ -119,247 +162,334 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
       setConfig(newConfig);
     }
 
-    if (typeof onGenerate === 'function') {
+    if (source === 'bank' && typeof onGenerateFromBank === 'function') {
+      onGenerateFromBank();
+    } else if (typeof onGenerate === 'function') {
       onGenerate(newConfig);
     }
   };
 
   return (
-    <div className="font-sans text-slate-800 space-y-6">
-      {/* Header */}
-      <div className="border-b border-slate-200 pb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-blue-600" />
-            CẤU HÌNH MA TRẬN & TẠO ĐỀ THI TOÁN THPT
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Thiết lập ma trận nhận thức và cấu trúc đề thi chuẩn Chương trình GDPT 2018
-          </p>
-        </div>
-      </div>
-
-      {/* Thông tin chung */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-        <div className="md:col-span-2">
-          <label className="block text-xs font-bold text-slate-700 mb-1">Tiêu đề đề thi / Kiểm tra:</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            placeholder="Nhập tiêu đề đề kiểm tra..."
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-blue-600" /> Thời gian làm bài (Phút):
-          </label>
-          <input
-            type="number"
-            min={15}
-            max={180}
-            value={durationMinutes}
-            onChange={(e) => setDurationMinutes(Number(e.target.value))}
-            className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          />
-        </div>
-      </div>
-
-      {/* Cơ cấu số lượng câu hỏi theo 3 phần chuẩn GDPT 2018 */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
-        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-          <Sliders className="w-4 h-4 text-blue-600" />
-          CƠ CẤU DẠNG THỨC CÂU HỎI (CHUẨN BỘ GIÁO DỤC & ĐÀO TẠO):
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100">
-            <span className="text-xs font-bold text-blue-900 block mb-1">Phần I: Trắc nghiệm 4 lựa chọn</span>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={0}
-                max={50}
-                value={mcCount}
-                onChange={(e) => setMcCount(Number(e.target.value))}
-                className="w-20 px-2.5 py-1.5 bg-white border border-blue-300 rounded-lg text-sm font-bold text-center"
-              />
-              <span className="text-xs text-slate-600">câu (0.25đ / câu)</span>
-            </div>
-          </div>
-
-          <div className="p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
-            <span className="text-xs font-bold text-indigo-900 block mb-1">Phần II: Trắc nghiệm Đúng / Sai</span>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={0}
-                max={20}
-                value={tfCount}
-                onChange={(e) => setTfCount(Number(e.target.value))}
-                className="w-20 px-2.5 py-1.5 bg-white border border-indigo-300 rounded-lg text-sm font-bold text-center"
-              />
-              <span className="text-xs text-slate-600">câu (4 ý / câu)</span>
-            </div>
-          </div>
-
-          <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
-            <span className="text-xs font-bold text-emerald-900 block mb-1">Phần III: Trả lời ngắn</span>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={0}
-                max={20}
-                value={saCount}
-                onChange={(e) => setSaCount(Number(e.target.value))}
-                className="w-20 px-2.5 py-1.5 bg-white border border-emerald-300 rounded-lg text-sm font-bold text-center"
-              />
-              <span className="text-xs text-slate-600">câu (0.5đ / câu)</span>
-            </div>
-          </div>
-        </div>
-        <div className="text-xs text-slate-500 font-medium">
-          Tổng số câu hỏi: <strong>{mcCount + tfCount + saCount} câu</strong> | Tổng điểm: <strong>10.0 điểm</strong>
-        </div>
-      </div>
-
-      {/* Bộ lọc Chuyên đề & Bài học */}
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-            <BookOpen className="w-4 h-4 text-blue-600" />
-            CHỌN CHUYÊN ĐỀ & BÀI HỌC VÀO MA TRẬN ĐỀ THI:
-          </h3>
-          {/* Tabs Category */}
-          <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-lg">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
-                  selectedCategory === cat
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {cat}
+    <div className="font-sans text-slate-800 space-y-5">
+      {/* 1. KHỐI CHỌN CHỦ ĐỀ LỚN TRÊN CÙNG */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+        {MATH_12_SYLLABUS.map((topic) => {
+          const isSelected = selectedTopicIds.includes(topic.id);
+          return (
+            <div
+              key={topic.id}
+              onClick={() => toggleTopic(topic.id)}
+              className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-2.5 ${
+                isSelected
+                  ? 'bg-blue-50/80 border-blue-400 shadow-sm ring-1 ring-blue-300'
+                  : 'bg-white border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              <button type="button" className="mt-0.5 text-blue-600">
+                {isSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4 text-slate-400" />}
               </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Danh sách chủ đề và bài học */}
-        <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-          {filteredTopics.map((topic) => {
-            const isTopicSelected = selectedTopicIds.includes(topic.id);
-            const isCollapsed = collapsedTopicIds.includes(topic.id);
-
-            return (
-              <div key={topic.id} className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-                {/* Topic Header */}
-                <div className="p-3 bg-slate-50 flex items-center justify-between border-b border-slate-100">
-                  <div className="flex items-center gap-2.5 flex-1 cursor-pointer" onClick={() => toggleTopic(topic)}>
-                    <button type="button" className="text-blue-600">
-                      {isTopicSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4 text-slate-400" />}
-                    </button>
-                    <span className="text-sm font-bold text-slate-800">{topic.name}</span>
-                    <span className="text-[10px] px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full font-semibold">
-                      {topic.category}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleSelectAllInTopic(topic)}
-                      className="text-[11px] text-blue-600 hover:underline font-semibold"
-                    >
-                      Chọn hết
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeselectAllInTopic(topic)}
-                      className="text-[11px] text-slate-500 hover:underline font-semibold"
-                    >
-                      Bỏ chọn
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toggleTopicCollapse(topic.id)}
-                      className="p-1 text-slate-400 hover:text-slate-700"
-                    >
-                      {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Lessons list */}
-                {!isCollapsed && (
-                  <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white">
-                    {topic.lessons.map((lesson) => {
-                      const isLessonSelected = selectedLessonIds.includes(lesson.id);
-                      return (
-                        <div
-                          key={lesson.id}
-                          onClick={() => toggleLesson(lesson.id)}
-                          className={`p-2.5 rounded-lg border text-xs cursor-pointer flex items-center gap-2 transition-all ${
-                            isLessonSelected
-                              ? 'bg-blue-50/70 border-blue-300 text-blue-900 font-semibold'
-                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                          }`}
-                        >
-                          {isLessonSelected ? (
-                            <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
-                          ) : (
-                            <Square className="w-4 h-4 text-slate-300 shrink-0" />
-                          )}
-                          <span>{lesson.name}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+              <div className="flex-1 min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100/70 px-1.5 py-0.5 rounded">
+                  {topic.category}
+                </span>
+                <h4 className="text-xs font-bold text-slate-800 mt-1 leading-snug truncate">{topic.name}</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">{topic.lessons.length} bài học</p>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Footer Action Buttons */}
-      <div className="border-t border-slate-200 pt-4 flex items-center justify-between">
-        <div className="text-xs text-slate-500">
-          Đã chọn: <strong>{selectedTopicIds.length} chuyên đề</strong> | <strong>{selectedLessonIds.length} bài học</strong>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {onClose && (
+      {/* DANH SÁCH BÀI HỌC VÀ YÊU CẦU CẦN ĐẠT (YCCĐ) */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-blue-600" />
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+              DANH SÁCH BÀI HỌC VÀ YÊU CẦU CẦN ĐẠT CỦA CÁC CHỦ ĐỀ ĐÃ CHỌN ({selectedTopics.length} chủ đề):
+            </h3>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-bold transition-all cursor-pointer"
+              onClick={handleSelectAllTopics}
+              className="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md font-semibold"
             >
-              Đóng
+              Chọn tất cả bài
             </button>
-          )}
+            <button
+              type="button"
+              onClick={handleDeselectAllTopics}
+              className="px-2.5 py-1 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-md font-semibold"
+            >
+              Bỏ chọn bài
+            </button>
+          </div>
+        </div>
 
+        {/* Nội dung từng chủ đề & YCCĐ */}
+        <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+          {selectedTopics.map((topic) => (
+            <div key={topic.id} className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
+              <div className="p-2.5 bg-slate-100/80 flex items-center justify-between border-b border-slate-200">
+                <span className="text-xs font-bold text-slate-800">
+                  {topic.category.toUpperCase()}: {topic.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCollapsedTopicIds((prev) =>
+                    prev.includes(topic.id) ? prev.filter((id) => id !== topic.id) : [...prev, topic.id]
+                  )}
+                  className="text-slate-500 hover:text-slate-800"
+                >
+                  {collapsedTopicIds.includes(topic.id) ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {!collapsedTopicIds.includes(topic.id) && (
+                <div className="p-3 space-y-2.5 bg-white">
+                  {topic.lessons.map((lesson, lIdx) => {
+                    const isLessonSelected = selectedLessonIds.includes(lesson.id);
+                    return (
+                      <div key={lesson.id} className="border border-slate-200 rounded-lg p-2.5 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div
+                            onClick={() => toggleLesson(lesson.id)}
+                            className="flex items-center gap-2 cursor-pointer font-bold text-xs text-slate-800"
+                          >
+                            <button type="button" className="text-blue-600">
+                              {isLessonSelected ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5 text-slate-400" />}
+                            </button>
+                            <span>Bài {lIdx + 1}: {lesson.name}</span>
+                          </div>
+                          <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
+                            {lesson.outcomes.length} YCCĐ
+                          </span>
+                        </div>
+
+                        {/* YCCĐ List */}
+                        {isLessonSelected && (
+                          <div className="space-y-1.5 pl-6 border-t border-slate-100 pt-2">
+                            {lesson.outcomes.map((outcome, oIdx) => {
+                              const isOutcomeSelected = selectedOutcomes.length === 0 || selectedOutcomes.includes(outcome);
+                              return (
+                                <div
+                                  key={oIdx}
+                                  onClick={() => toggleOutcome(outcome)}
+                                  className={`p-1.5 rounded text-[11px] cursor-pointer flex items-start gap-2 border ${
+                                    isOutcomeSelected
+                                      ? 'bg-blue-50/50 border-blue-200 text-blue-900 font-medium'
+                                      : 'bg-slate-50 border-slate-200 text-slate-500'
+                                  }`}
+                                >
+                                  <span className="px-1.5 py-0.2 bg-blue-600 text-white rounded text-[9px] font-bold shrink-0 mt-0.5">
+                                    YCCĐ {oIdx + 1}
+                                  </span>
+                                  <span>{outcome}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* BƯỚC 2: TẠO & CẤU HÌNH MA TRẬN CHI TIẾT */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 bg-emerald-600 text-white text-[11px] font-black rounded">BƯỚC 2</span>
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+              TẠO & CẤU HÌNH MA TRẬN CHI TIẾT (PHÂN BỐ SỐ CÂU THEO MỨC ĐỘ & YCCĐ)
+            </h3>
+          </div>
+
+          {/* Mẫu ma trận nhanh */}
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="text-slate-500 text-[11px] font-semibold">Mẫu ma trận nhanh:</span>
+            <button
+              type="button"
+              onClick={() => applyPreset('standard')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                activePreset === 'standard' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              Chuẩn GDPT 2018 (22 câu - 10đ)
+            </button>
+            <button
+              type="button"
+              onClick={() => applyPreset('15min')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                activePreset === '15min' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              Kiểm tra 15 Phút (10 câu)
+            </button>
+            <button
+              type="button"
+              onClick={() => applyPreset('advanced')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                activePreset === 'advanced' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              Phân hóa / Nâng cao (18 câu)
+            </button>
+          </div>
+        </div>
+
+        {/* Bảng phân bổ số câu theo Dạng thức & Mức độ nhận thức */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-center border-collapse border border-slate-300">
+            <thead className="bg-slate-100 font-bold text-slate-800 text-[11px]">
+              <tr>
+                <th className="border border-slate-300 p-2 text-left">Dạng câu hỏi (Định dạng Bộ GD&ĐT)</th>
+                <th className="border border-slate-300 p-2 bg-blue-50 text-blue-900 w-24">Nhận biết</th>
+                <th className="border border-slate-300 p-2 bg-indigo-50 text-indigo-900 w-24">Thông hiểu</th>
+                <th className="border border-slate-300 p-2 bg-emerald-50 text-emerald-900 w-24">Vận dụng</th>
+                <th className="border border-slate-300 p-2 bg-slate-200 text-slate-900 font-black w-24">Tổng số câu</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-slate-300 p-2 text-left font-semibold">
+                  Phần I: Trắc nghiệm 4 lựa chọn (0.25đ / câu)
+                </td>
+                <td className="border border-slate-300 p-1 bg-blue-50/30">
+                  <input type="number" min={0} value={mcNB} onChange={(e) => setMcNB(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
+                </td>
+                <td className="border border-slate-300 p-1 bg-indigo-50/30">
+                  <input type="number" min={0} value={mcTH} onChange={(e) => setMcTH(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
+                </td>
+                <td className="border border-slate-300 p-1 bg-emerald-50/30">
+                  <input type="number" min={0} value={mcVD} onChange={(e) => setMcVD(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
+                </td>
+                <td className="border border-slate-300 p-2 font-bold bg-slate-50">{totalMC} câu</td>
+              </tr>
+
+              <tr>
+                <td className="border border-slate-300 p-2 text-left font-semibold">
+                  Phần II: Trắc nghiệm Đúng/Sai (Mỗi câu gồm 4 ý a, b, c, d)
+                </td>
+                <td className="border border-slate-300 p-1 bg-blue-50/30">
+                  <input type="number" min={0} value={tfNB} onChange={(e) => setTfNB(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
+                </td>
+                <td className="border border-slate-300 p-1 bg-indigo-50/30">
+                  <input type="number" min={0} value={tfTH} onChange={(e) => setTfTH(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
+                </td>
+                <td className="border border-slate-300 p-1 bg-emerald-50/30">
+                  <input type="number" min={0} value={tfVD} onChange={(e) => setTfVD(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
+                </td>
+                <td className="border border-slate-300 p-2 font-bold bg-slate-50">{totalTF} câu</td>
+              </tr>
+
+              <tr>
+                <td className="border border-slate-300 p-2 text-left font-semibold">
+                  Phần III: Trắc nghiệm trả lời ngắn (0.5đ / câu)
+                </td>
+                <td className="border border-slate-300 p-1 bg-blue-50/30">
+                  <input type="number" min={0} value={saNB} onChange={(e) => setSaNB(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
+                </td>
+                <td className="border border-slate-300 p-1 bg-indigo-50/30">
+                  <input type="number" min={0} value={saTH} onChange={(e) => setSaTH(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
+                </td>
+                <td className="border border-slate-300 p-1 bg-emerald-50/30">
+                  <input type="number" min={0} value={saVD} onChange={(e) => setSaVD(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
+                </td>
+                <td className="border border-slate-300 p-2 font-bold bg-slate-50">{totalSA} câu</td>
+              </tr>
+
+              {/* Dòng Tổng cộng */}
+              <tr className="bg-slate-100 font-bold text-slate-900">
+                <td className="border border-slate-300 p-2 text-left">TỔNG CỘNG SỐ CÂU THEO MỨC ĐỘ:</td>
+                <td className="border border-slate-300 p-2 bg-blue-100 text-blue-900 font-black">{totalNB} NB</td>
+                <td className="border border-slate-300 p-2 bg-indigo-100 text-indigo-900 font-black">{totalTH} TH</td>
+                <td className="border border-slate-300 p-2 bg-emerald-100 text-emerald-900 font-black">{totalVD} VD</td>
+                <td className="border border-slate-300 p-2 bg-amber-200 text-amber-950 font-black">{totalQuestions} CÂU</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Thanh xem trước tỷ lệ */}
+        <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between text-xs">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5 text-blue-800 font-bold">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span> Nhận biết: {mcNB} MCQ | {tfNB} ĐS | {saNB} TL
+            </span>
+            <span className="flex items-center gap-1.5 text-indigo-800 font-bold">
+              <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span> Thông hiểu: {mcTH} MCQ | {tfTH} ĐS | {saTH} TL
+            </span>
+            <span className="flex items-center gap-1.5 text-emerald-800 font-bold">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> Vận dụng: {mcVD} MCQ | {tfVD} ĐS | {saVD} TL
+            </span>
+          </div>
+          <div className="font-bold text-slate-900">
+            Tổng cộng: <span className="text-blue-700">{totalQuestions} câu</span> | Tổng điểm: <span className="text-emerald-700">{totalScore} điểm</span>
+          </div>
+        </div>
+      </div>
+
+      {/* BƯỚC 3: TẠO ĐỀ THI HOÀN CHỈNH */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 bg-purple-600 text-white text-[11px] font-black rounded">BƯỚC 3</span>
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+              TẠO ĐỀ THI HOÀN CHỈNH (TỪ AI HOẶC TỪ NGÂN HÀNG CÂU HỎI)
+            </h3>
+          </div>
+          <div className="text-xs font-bold text-slate-700">
+            Tổng cộng: <strong className="text-blue-700">{totalQuestions} câu hỏi</strong> | <strong className="text-emerald-700">{totalScore} điểm</strong>
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-500">
+          Đề thi sẽ được khởi tạo 100% đúng theo ma trận {totalQuestions} câu và các YCCĐ đã chọn ở trên. Vui lòng chọn nguồn tạo đề:
+        </p>
+
+        {/* 2 NÚT TẠO ĐỀ CHÍNH */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          {/* Nút 1: Tạo đề từ AI Gemini */}
           <button
             type="button"
             disabled={isGenerating || selectedLessonIds.length === 0}
-            onClick={handleStartGenerate}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 cursor-pointer"
+            onClick={() => handleStartGenerate('ai')}
+            className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:bg-slate-300 text-white rounded-xl text-left shadow-lg hover:shadow-xl transition-all cursor-pointer space-y-1.5"
           >
-            {isGenerating ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                Đang tạo đề thi...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                Bắt đầu tạo đề thi mới
-              </>
-            )}
+            <div className="flex items-center justify-between">
+              <span className="font-black text-sm flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-300" /> TẠO ĐỀ TỪ AI (GEMINI)
+              </span>
+              <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold uppercase">Tự động 100%</span>
+            </div>
+            <p className="text-[11px] text-blue-100">
+              AI sẽ tự động biên soạn mới toàn bộ {totalQuestions} câu hỏi bám sát Ma trận & YCCĐ GDPT 2018.
+            </p>
+          </button>
+
+          {/* Nút 2: Tạo đề từ Ngân hàng */}
+          <button
+            type="button"
+            disabled={isGenerating || selectedLessonIds.length === 0}
+            onClick={() => handleStartGenerate('bank')}
+            className="p-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:bg-slate-300 text-white rounded-xl text-left shadow-lg hover:shadow-xl transition-all cursor-pointer space-y-1.5"
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-black text-sm flex items-center gap-2">
+                <Database className="w-4 h-4 text-emerald-200" /> TẠO ĐỀ TỪ NGÂN HÀNG
+              </span>
+              <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold uppercase">Có sẵn mẫu</span>
+            </div>
+            <p className="text-[11px] text-emerald-100">
+              Lấy câu hỏi & bài tập chuẩn mực từ Ngân hàng câu hỏi có sẵn theo đúng tỉ lệ ma trận đã cấu hình.
+            </p>
           </button>
         </div>
       </div>
