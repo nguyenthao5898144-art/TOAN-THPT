@@ -17,16 +17,12 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
   onClose,
   currentConfig,
 }) => {
-  isOpen,
-  onClose,
-  currentConfig
-}) => {
   const classes: ClassRoom[] = getStoredClasses();
 
   // 1. Cấu hình bài tập
-  const [title, setTitle] = useState(currentConfig.title || 'KIỂM TRA ĐỊNH KỲ TOÁN 12');
-  const [durationMinutes, setDurationMinutes] = useState(currentConfig.durationMinutes || 45);
-  
+  const [title, setTitle] = useState(currentConfig?.title || 'KIỂM TRA ĐỊNH KỲ TOÁN 12');
+  const [durationMinutes, setDurationMinutes] = useState(currentConfig?.durationMinutes || 45);
+
   // Thời gian mở & đóng đề mặc định (Từ hiện tại đến 2 ngày sau)
   const nowStr = new Date().toISOString().slice(0, 16);
   const futureStr = new Date(Date.now() + 48 * 3600 * 1000).toISOString().slice(0, 16);
@@ -38,7 +34,7 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
   // Đối tượng nhận bài
   const [targetType, setTargetType] = useState<'class' | 'specific_students'>('class');
-  const [selectedClasses, setSelectedClasses] = useState<string[]>(classes.map(c => c.name));
+  const [selectedClasses, setSelectedClasses] = useState<string[]>(classes.map((c) => c.name));
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
@@ -47,14 +43,14 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
   if (!isOpen) return null;
 
   const handleToggleClass = (className: string) => {
-    setSelectedClasses(prev => 
-      prev.includes(className) ? prev.filter(c => c !== className) : [...prev, className]
+    setSelectedClasses((prev) =>
+      prev.includes(className) ? prev.filter((c) => c !== className) : [...prev, className]
     );
   };
 
   const handleToggleStudent = (studentId: string) => {
-    setSelectedStudentIds(prev =>
-      prev.includes(studentId) ? prev.filter(id => id !== studentId) : [...prev, studentId]
+    setSelectedStudentIds((prev) =>
+      prev.includes(studentId) ? prev.filter((id) => id !== studentId) : [...prev, studentId]
     );
   };
 
@@ -72,7 +68,7 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
       targetClasses: selectedClasses,
       targetStudentIds: selectedStudentIds,
       allowReviewSolution: true,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     saveAssignment(newAssignment);
@@ -87,12 +83,12 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
     if (!generatedLink) return;
     navigator.clipboard.writeText(generatedLink);
     setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 3000);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
-      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden font-sans">
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden font-sans">
         {/* Header */}
         <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center space-x-3">
@@ -100,196 +96,157 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
               <Send className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-black">CẤU HÌNH GIAO BÀI TẬP THEO MA TRẬN</h2>
-              <p className="text-xs text-slate-400">Sinh đề độc bản riêng cho từng học sinh khi làm bài</p>
+              <h2 className="text-base sm:text-lg font-black">CẤU HÌNH GIAO BÀI TẬP THÔNG MA TRẬN/ĐỀ</h2>
+              <p className="text-xs text-slate-400">Sinh đề đặc bản riêng cho từng học sinh khi làm bài</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800">
+          <button
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body Form */}
-        <div className="p-5 sm:p-6 overflow-y-auto space-y-4 text-xs text-slate-800 flex-1">
-          {/* Tiêu đề */}
+        <div className="p-5 overflow-y-auto flex-1 space-y-4 text-sm text-slate-700">
+          {/* Tên bài tập */}
           <div>
-            <label className="block font-bold text-slate-700 mb-1">Tiêu đề bài kiểm tra / Luyện tập:</label>
+            <label className="block font-bold text-slate-800 mb-1">Tên bài kiểm tra / Nhiệm vụ:</label>
             <input
               type="text"
               value={title}
-              onChange={e => setTitle(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              placeholder="Nhập tên bài tập..."
             />
           </div>
 
-          {/* Cài đặt thời gian & Số lần làm bài */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+          {/* Thời gian làm bài & số lần làm */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-blue-600" /> Thời gian MỞ ĐỀ:
-              </label>
-              <input
-                type="datetime-local"
-                value={openAt}
-                onChange={e => setOpenAt(e.target.value)}
-                className="w-full p-2 bg-white border border-slate-300 rounded-xl font-medium"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-rose-600" /> Thời gian ĐÓNG ĐỀ (Hạn chót):
-              </label>
-              <input
-                type="datetime-local"
-                value={closeAt}
-                onChange={e => setCloseAt(e.target.value)}
-                className="w-full p-2 bg-white border border-slate-300 rounded-xl font-medium"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-amber-600" /> Thời gian làm bài (Phút):
+              <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-emerald-600" /> Thời gian làm bài (Phút):
               </label>
               <input
                 type="number"
                 min={5}
                 max={180}
                 value={durationMinutes}
-                onChange={e => setDurationMinutes(Number(e.target.value))}
-                className="w-full p-2 bg-white border border-slate-300 rounded-xl font-bold text-blue-900"
+                onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Số lần làm bài tối đa:</label>
+              <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-500" /> Số lần làm tối đa:
+              </label>
               <select
                 value={maxAttempts}
-                onChange={e => setMaxAttempts(Number(e.target.value))}
-                className="w-full p-2 bg-white border border-slate-300 rounded-xl font-semibold text-slate-900"
+                onChange={(e) => setMaxAttempts(Number(e.target.value))}
+                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
               >
-                <option value={1}>Chỉ làm 1 lần duy nhất</option>
-                <option value={2}>Tối đa 2 lần</option>
-                <option value={3}>Tối đa 3 lần</option>
-                <option value={0}>Không giới hạn số lần làm</option>
+                <option value={1}>1 lần duy nhất</option>
+                <option value={2}>2 lần</option>
+                <option value={3}>3 lần</option>
+                <option value={0}>Không giới hạn (Luyện tập tự do)</option>
               </select>
             </div>
           </div>
 
-          {/* Đối tượng giao bài */}
-          <div className="space-y-2 pt-2">
-            <label className="block font-bold text-slate-800">Giao bài tập cho:</label>
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="targetType"
-                  checked={targetType === 'class'}
-                  onChange={() => setTargetType('class')}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span className="font-semibold">Theo Lớp học</span>
+          {/* Khung thời gian mở & đóng */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-blue-600" /> Thời gian mở đề:
               </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="targetType"
-                  checked={targetType === 'specific_students'}
-                  onChange={() => setTargetType('specific_students')}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span className="font-semibold">Chọn học sinh cụ thể</span>
-              </label>
+              <input
+                type="datetime-local"
+                value={openAt}
+                onChange={(e) => setOpenAt(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              />
             </div>
-
-            {/* Danh sách chọn Lớp */}
-            {targetType === 'class' && (
-              <div className="flex flex-wrap gap-2 pt-2">
-                {classes.map(c => {
-                  const isChecked = selectedClasses.includes(c.name);
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => handleToggleClass(c.name)}
-                      className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                        isChecked ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-600 border-slate-200'
-                      }`}
-                    >
-                      {isChecked ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
-                      <span>Lớp {c.name} ({c.students.length} HS)</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Danh sách chọn từng Học sinh cụ thể */}
-            {targetType === 'specific_students' && (
-              <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-2 space-y-1 bg-slate-50">
-                {classes.flatMap(c => c.students).map(s => {
-                  const isChecked = selectedStudentIds.includes(s.id);
-                  return (
-                    <div
-                      key={s.id}
-                      onClick={() => handleToggleStudent(s.id)}
-                      className={`p-2 rounded-lg border text-xs cursor-pointer flex items-center justify-between ${
-                        isChecked ? 'bg-blue-50 border-blue-300 font-bold text-blue-900' : 'bg-white border-slate-200 text-slate-700'
-                      }`}
-                    >
-                      <span>{s.fullName} ({s.className})</span>
-                      <span className="text-[11px] text-slate-400 font-mono">{s.phone}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-rose-600" /> Thời gian đóng đề:
+              </label>
+              <input
+                type="datetime-local"
+                value={closeAt}
+                onChange={(e) => setCloseAt(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              />
+            </div>
           </div>
 
-          {/* Khu vực hiển thị Link bài tập sau khi tạo */}
+          {/* Đối tượng giao bài */}
+          <div className="border-t border-slate-200 pt-3">
+            <label className="block font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+              <Users className="w-4 h-4 text-emerald-600" /> Chọn lớp học nhận bài:
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {classes.map((cls) => {
+                const isSelected = selectedClasses.includes(cls.name);
+                return (
+                  <button
+                    key={cls.id}
+                    type="button"
+                    onClick={() => handleToggleClass(cls.name)}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition-colors flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-emerald-600 text-white border-emerald-600'
+                        : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                    }`}
+                  >
+                    {isSelected ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                    {cls.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Link đã tạo */}
           {generatedLink && (
-            <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl space-y-2 animate-in fade-in">
-              <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-emerald-600" />
-                ĐÃ TẠO LINK GIAO BÀI THÀNH CÔNG!
-              </span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={generatedLink}
-                  className="flex-1 p-2 bg-white border border-emerald-300 rounded-xl text-xs font-mono text-slate-700 select-all"
-                />
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
+                  <LinkIcon className="w-4 h-4" /> Link bài làm của học sinh:
+                </span>
                 <button
                   type="button"
                   onClick={handleCopyLink}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="px-2.5 py-1 bg-emerald-600 text-white rounded-md text-xs font-bold hover:bg-emerald-700 flex items-center gap-1"
                 >
-                  {isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  <span>{isCopied ? 'Đã copy link!' : 'Copy Link Gửi Zalo'}</span>
+                  {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  {isCopied ? 'Đã sao chép!' : 'Sao chép link'}
                 </button>
               </div>
-              <p className="text-[11px] text-emerald-800">
-                * Học sinh đăng nhập bằng Số điện thoại $\rightarrow$ Bấm Bắt đầu làm bài $\rightarrow$ Tự động nhận 1 mã đề độc bản ngẫu nhiên theo ma trận.
-              </p>
+              <input
+                type="text"
+                readOnly
+                value={generatedLink}
+                className="w-full px-3 py-1.5 bg-white border border-emerald-300 rounded-lg text-xs text-slate-700 select-all"
+              />
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl">
+        {/* Footer Buttons */}
+        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-slate-600 bg-white border border-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-100 transition-colors"
+          >
             Đóng
           </button>
-          {!generatedLink && (
-            <button
-              onClick={handleCreateAssignment}
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer"
-            >
-              <Send className="w-4 h-4" />
-              <span>TẠO & LẤY LINK GIAO BÀI</span>
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleCreateAssignment}
+            className="px-5 py-2 text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+          >
+            <Send className="w-4 h-4" /> Tạo link & Giao bài
+          </button>
         </div>
-      </div>
-    </div>
-  );
-};
