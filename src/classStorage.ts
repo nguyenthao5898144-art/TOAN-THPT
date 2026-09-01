@@ -79,9 +79,6 @@ export const saveClasses = (classes: ClassRoom[]): void => {
   }
 };
 
-/**
- * Tự động phân tích danh sách học sinh dán từ Excel / Word
- */
 export const parseStudentListText = (rawText: string): Student[] => {
   if (!rawText) return [];
   const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
@@ -136,3 +133,12 @@ export const deleteStoredAssignment = (id: string): void => {
 };
 
 export const deleteAssignment = deleteStoredAssignment;
+
+// Đăng ký toàn cục vào window để tránh lỗi ReferenceError ở mọi component
+if (typeof window !== 'undefined') {
+  (window as any).getStoredAssignments = getStoredAssignments;
+  (window as any).getAssignments = getStoredAssignments;
+  (window as any).saveAssignment = saveAssignment;
+  (window as any).getStoredClasses = getStoredClasses;
+  (window as any).saveClasses = saveClasses;
+}
