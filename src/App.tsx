@@ -14,7 +14,12 @@ import { AssignmentModal } from './19';
 import { StudentPortal } from './14';
 import { exportTestToWord } from './wordExporter';
 import { saveTestToBank } from './testBankStorage';
-// 2. Cấu hình & Đề thi mặc định ban đầu (Đầy đủ thuộc tính)
+
+export default function App() {
+  // 1. Tự động nhận diện nếu link mở ở chế độ học sinh làm bài
+  const isStudentMode = new URLSearchParams(window.location.search).get('mode') === 'student';
+
+  // 2. Cấu hình & Đề thi mặc định ban đầu (Đầy đủ thuộc tính)
   const [currentTest, setCurrentTest] = useState<GeneratedTest>(() => {
     const defaultCfg = {
       title: 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN THPT - GDPT 2018',
@@ -29,33 +34,6 @@ import { saveTestToBank } from './testBankStorage';
         trueFalse: 4,
         shortAnswer: 6,
       },
-    };
-    try {
-      return createDefaultTest(defaultCfg as any);
-    } catch (e) {
-      return {
-        id: `test_${Date.now()}`,
-        title: defaultCfg.title,
-        config: defaultCfg,
-        questions: [],
-        createdAt: new Date().toISOString(),
-      } as any;
-    }
-  });
-export default function App() {
-  // 1. Tự động nhận diện nếu link mở ở chế độ học sinh làm bài
-  const isStudentMode = new URLSearchParams(window.location.search).get('mode') === 'student';
-
-  // 2. Cấu hình & Đề thi mặc định ban đầu
-  const [currentTest, setCurrentTest] = useState<GeneratedTest>(() => {
-    const defaultCfg = {
-      title: 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN THPT - GDPT 2018',
-      grade: '12',
-      durationMinutes: 45,
-      selectedTopicIds: [],
-      selectedLessonIds: [],
-      selectedOutcomes: [],
-      topics: [],
     };
     try {
       return createDefaultTest(defaultCfg as any);
@@ -181,7 +159,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsGenModalOpen(false)}
-              className="absolute top-4 right-4 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 rounded-xl text-xs font-bold transition-all cursor-pointer z-20 shadow-sm"
+              className="absolute top-4 right-4 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 rounded-xl text-xs font-bold transition-all cursor-pointer z-50 shadow-sm"
               title="Đóng bảng tạo đề"
             >
               ✕ Đóng bảng
