@@ -1,4 +1,4 @@
-import { Question } from '../types';
+import { Question } from './types';
 
 /**
  * Clean and normalize text for string similarity comparison
