@@ -318,7 +318,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
           {!isCollapsed && (
             <nav className="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto py-1 text-xs">
               {/* [1] TẠO ĐỀ MỚI */}
-              
+             {/* TẠO ĐỀ MỚI */} 
         <button
           type="button"
           onClick={() => {
