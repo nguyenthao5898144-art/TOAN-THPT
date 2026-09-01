@@ -142,22 +142,28 @@ export default function App() {
               setCurrentTest((prev) => ({ ...prev, config: newConfig }));
             }
           }}
+          {/* Modal Soạn đề thi theo ma trận */}
+      {isGenModalOpen && (
+        <QuestionGeneratorModal
+          config={currentTest.config}
+          setConfig={(newConfig) => {
+            if (typeof newConfig === 'function') {
+              setCurrentTest((prev) => ({ ...prev, config: newConfig(prev.config) }));
+            } else {
+              setCurrentTest((prev) => ({ ...prev, config: newConfig }));
+            }
+          }}
           onGenerate={(overrideConfig) => {
             setIsGenModalOpen(false);
-            if (overrideConfig) {
-              setCurrentTest(createDefaultTest(overrideConfig));
+            const targetConfig = overrideConfig || currentTest.config;
+            try {
+              const newTest = createDefaultTest(targetConfig);
+              setCurrentTest(newTest);
+            } catch (err) {
+              console.error('Lỗi khi tạo đề:', err);
             }
           }}
           isGenerating={isGenerating}
-        />
-      )}
-
-      {/* Modal Chỉnh sửa chi tiết câu hỏi */}
-      {editingQuestion && (
-        <EditorModal
-          question={editingQuestion}
-          onSave={handleSaveQuestion}
-          onClose={() => setEditingQuestion(null)}
         />
       )}
 
