@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ClassRoom, StudentAccount } from '../types';
-import { getStoredClasses, saveClasses, parseStudentListText } from '../utils/classStorage';
+import { ClassRoom, StudentAccount } from './types';
+import { getStoredClasses, saveClasses, parseStudentListText } from './classStorage';
 import { Users, Plus, Upload, Trash2, FileSpreadsheet, CheckCircle2, Copy, X, KeyRound, Phone } from 'lucide-react';
 
 interface ClassManagementModalProps {
