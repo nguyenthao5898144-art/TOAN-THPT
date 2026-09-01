@@ -294,7 +294,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
               <div>
                 <div className="flex items-center space-x-2">
                   <h1 className="font-extrabold text-base sm:text-lg text-white leading-tight tracking-wide">
-                    TOÁN 12
+                    TOÁN THPT
                   </h1>
                   <span className="text-[10px] font-bold text-blue-300 bg-blue-950/80 px-1.5 py-0.5 rounded border border-blue-800/80">
                     GDPT 2018
@@ -351,7 +351,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
                     ? 'bg-amber-600 text-white shadow-sm ring-1 ring-amber-400'
                     : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
                 }`}
-                title="Ngân hàng lưu trữ các đề thi đã tạo (tên file Khối-Lớp-Chủ đề)"
+                title="Ngân hàng lưu trữ các đề thi đã tạo (tên file Lớp-Bài)"
               >
                 <FolderArchive className="w-3.5 h-3.5 text-amber-300" />
                 <span>[3] Kho đề đã lưu</span>
