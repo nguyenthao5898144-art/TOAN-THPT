@@ -1,94 +1,189 @@
-import { useState } from 'react';
-
-/**
- * TỰ ĐỘNG QUÉT CÁC FILE BÀI HỌC .tsx
- * Hỗ trợ quét cả khi file nằm ở src/ hoặc trong src/nguồn/
- */
-const files = import.meta.glob(['./[0-9]*.tsx', './nguồn/*.tsx', './nguon/*.tsx'], { eager: true });
-
-// Xây dựng danh sách các Component dựa trên tên file quét được
-const componentMap: Record<string, any> = {};
-Object.keys(files).forEach((key) => {
-  const fileName = key.replace('./nguồn/', '').replace('./nguon/', '').replace('./', '').replace('.tsx', '');
-  const module: any = files[key];
-  if (module && module.default) {
-    componentMap[fileName] = module.default;
-  }
-});
-
-// Sắp xếp danh sách tên file theo thứ tự số tăng dần (1, 2, 3... 25)
-const sortedFileNames = Object.keys(componentMap).sort((a, b) => {
-  const numA = parseInt(a, 10);
-  const numB = parseInt(b, 10);
-  if (isNaN(numA) || isNaN(numB)) return a.localeCompare(b);
-  return numA - numB;
-});
+import React, { useState } from 'react';
+import { GeneratedTest, Question, TestConfig } from './types';
+import { createDefaultTest } from './testGenerator';
+import { HeaderMenu } from './HeaderMenu';
+import { QuestionList } from './QuestionList';
+import { SlideViewer } from './SlideViewer';
+import { MatrixTable } from './MatrixTable';
+import { TestBankModal } from './TestBankModal';
+import { EditorModal } from './EditorModal';
+import { FileUploadModal } from './FileUploadModal';
+import { QuestionGeneratorModal } from './QuestionGeneratorModal';
+import { AssistantChat } from './AssistantChat';
+import { AssignmentModal } from './19';
+import { StudentPortal } from './14';
+import { exportTestToWord } from './wordExporter';
+import { saveTestToBank } from './testBankStorage';
 
 export default function App() {
-  // Mặc định kích hoạt hiển thị bài học đầu tiên trong danh sách
-  const [currentView, setCurrentView] = useState<string>(sortedFileNames[0] || '');
+  // 1. Tự động nhận diện chế độ học sinh làm bài (nếu mở link có ?mode=student)
+  const isStudentMode = new URLSearchParams(window.location.search).get('mode') === 'student';
 
-  // Trích xuất Component tương ứng để render lên giao diện
-  const TargetComponent = componentMap[currentView];
+  // 2. Cấu hình & Đề thi mặc định ban đầu
+  const [currentTest, setCurrentTest] = useState<GeneratedTest>(() => {
+    return createDefaultTest({
+      title: 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ ĐỊNH KỲ TOÁN 12 - GDPT 2018',
+      grade: '12',
+      durationMinutes: 45,
+      topics: [],
+    } as any);
+  });
 
-  if (sortedFileNames.length === 0) {
+  const [activeTab, setActiveTab] = useState<'generator' | 'slides' | 'editor' | 'matrix' | 'bank'>('generator');
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+
+  // Trạng thái mở các Modal chức năng
+  const [isGenModalOpen, setIsGenModalOpen] = useState<boolean>(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState<boolean>(false);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+
+  // Nếu là chế độ học sinh -> Hiển thị cổng làm bài trực tuyến
+  if (isStudentMode) {
     return (
-      <div style={{ padding: '30px', color: 'red', fontFamily: 'sans-serif' }}>
-        ⚠️ Không tìm thấy file code .tsx nào. Vui lòng kiểm tra lại danh sách file trong thư mục src!
-      </div>
+      <StudentPortal
+        testConfig={currentTest.config}
+        assignmentTitle={currentTest.title}
+      />
     );
   }
 
+  // Xử lý lưu câu hỏi sau khi chỉnh sửa
+  const handleSaveQuestion = (updated: Question) => {
+    setCurrentTest((prev) => ({
+      ...prev,
+      questions: prev.questions.map((q) => (q.id === updated.id ? updated : q)),
+    }));
+    setEditingQuestion(null);
+  };
+
+  // Xử lý xóa câu hỏi
+  const handleDeleteQuestion = (id: string) => {
+    setCurrentTest((prev) => ({
+      ...prev,
+      questions: prev.questions.filter((q) => q.id !== id),
+    }));
+  };
+
+  // Xuất đề thi ra file Word (.docx) chuẩn quy cách Bộ GD&ĐT
+  const handleExportWord = () => {
+    exportTestToWord(currentTest);
+  };
+
+  // Lưu nhanh đề thi vào Kho dữ liệu
+  const handleQuickSaveToBank = () => {
+    saveTestToBank(currentTest);
+    alert('Đã lưu đề thi vào Kho Lưu Trữ thành công!');
+  };
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      {/* THANH MENU ĐIỀU HƯỚNG BÊN TRÁI TỰ ĐỘNG SINH */}
-      <div
-        style={{
-          width: '280px',
-          background: '#f8f9fa',
-          padding: '20px',
-          borderRight: '1px solid #dee2e6',
-          height: '100vh',
-          overflowY: 'auto',
-          position: 'sticky',
-          top: 0,
+    <div className="min-h-screen bg-slate-100 text-slate-800 font-sans pb-20">
+      {/* Thanh Menu điều hướng phía trên */}
+      <HeaderMenu
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        questionCount={currentTest.questions.length}
+        onExportWord={handleExportWord}
+        onGenerateNew={() => setIsGenModalOpen(true)}
+        onOpenUpload={() => setIsUploadModalOpen(true)}
+        onQuickSaveToBank={handleQuickSaveToBank}
+        isGenerating={isGenerating}
+      />
+
+      {/* Vùng hiển thị nội dung chính theo Tab */}
+      <main className="max-w-7xl mx-auto p-4 sm:p-6">
+        {activeTab === 'generator' && (
+          <QuestionList
+            test={currentTest}
+            onEditQuestion={(q) => setEditingQuestion(q)}
+            onDeleteQuestion={handleDeleteQuestion}
+            onSaveToBank={handleQuickSaveToBank}
+            onOpenBank={() => setActiveTab('bank')}
+          />
+        )}
+
+        {activeTab === 'slides' && (
+          <SlideViewer test={currentTest} />
+        )}
+
+        {activeTab === 'matrix' && (
+          <MatrixTable test={currentTest} />
+        )}
+
+        {activeTab === 'bank' && (
+          <TestBankModal
+            isOpen={true}
+            onClose={() => setActiveTab('generator')}
+            onSelectTest={(test) => {
+              setCurrentTest(test);
+              setActiveTab('generator');
+            }}
+          />
+        )}
+      </main>
+
+      {/* Trợ lý AI Gemini hỗ trợ soạn đề & giải đáp (Góc phải dưới) */}
+      <AssistantChat
+        currentTest={currentTest}
+        onGenerateCommand={(prompt) => {
+          console.log('AI Prompt:', prompt);
         }}
-      >
-        <h2 style={{ color: '#0d6efd', marginBottom: '8px', fontSize: '18px' }}>TOÁN THPT</h2>
-        <p style={{ color: '#666', fontSize: '12px', marginBottom: '20px' }}>Tác giả: Nguyễn Quốc Thảo</p>
+        isGenerating={isGenerating}
+      />
 
-        <p style={{ fontWeight: 'bold', fontSize: '14px', color: '#495057', marginBottom: '10px' }}>
-          DANH SÁCH BÀI HỌC ({sortedFileNames.length}):
-        </p>
+      {/* Modal Soạn đề thi theo ma trận */}
+      {isGenModalOpen && (
+        <QuestionGeneratorModal
+          config={currentTest.config}
+          setConfig={(newConfig) => {
+            if (typeof newConfig === 'function') {
+              setCurrentTest((prev) => ({ ...prev, config: newConfig(prev.config) }));
+            } else {
+              setCurrentTest((prev) => ({ ...prev, config: newConfig }));
+            }
+          }}
+          onGenerate={(overrideConfig) => {
+            setIsGenModalOpen(false);
+            if (overrideConfig) {
+              setCurrentTest(createDefaultTest(overrideConfig));
+            }
+          }}
+          isGenerating={isGenerating}
+        />
+      )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {sortedFileNames.map((name) => (
-            <button
-              key={name}
-              onClick={() => setCurrentView(name)}
-              style={{
-                padding: '10px 12px',
-                textAlign: 'left',
-                backgroundColor: currentView === name ? '#0d6efd' : '#fff',
-                color: currentView === name ? '#fff' : '#495057',
-                border: '1px solid #ced4da',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: currentView === name ? 'bold' : 'normal',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              📄 Bài học {name}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Modal Chỉnh sửa chi tiết câu hỏi */}
+      {editingQuestion && (
+        <EditorModal
+          question={editingQuestion}
+          onSave={handleSaveQuestion}
+          onClose={() => setEditingQuestion(null)}
+        />
+      )}
 
-      {/* VÙNG CHỨA NỘI DUNG GIAO DIỆN CỦA BÀI ĐƯỢC CHỌN */}
-      <div style={{ flex: 1, padding: '25px', background: '#ffffff', minWidth: 0 }}>
-        {TargetComponent ? <TargetComponent /> : <div>Đang tải nội dung...</div>}
-      </div>
+      {/* Modal Tải file Word lên để trích xuất câu hỏi */}
+      {isUploadModalOpen && (
+        <FileUploadModal
+          isOpen={isUploadModalOpen}
+          onClose={() => setIsUploadModalOpen(false)}
+          onImportQuestions={(importedQuestions, appendMode) => {
+            setIsUploadModalOpen(false);
+            setCurrentTest((prev) => ({
+              ...prev,
+              questions: appendMode ? [...prev.questions, ...importedQuestions] : importedQuestions,
+            }));
+          }}
+        />
+      )}
+
+      {/* Modal Giao bài kiểm tra trực tuyến cho học sinh */}
+      {isAssignModalOpen && (
+        <AssignmentModal
+          isOpen={isAssignModalOpen}
+          onClose={() => setIsAssignModalOpen(false)}
+          currentConfig={currentTest.config}
+        />
+      )}
     </div>
   );
 }
