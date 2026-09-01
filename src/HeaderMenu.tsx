@@ -329,9 +329,18 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
               >
                 <Sparkles className="w-3.5 h-3.5 text-blue-300" />
                 <span>[1] TẠO ĐỀ MỚI</span>
-              </button>
-
-              {/* [2] Tải lên */}
+              
+{/* TẠO ĐỀ MỚI */}
+        <button
+          onClick={onGenerateNew}
+          id="btn_menu_generate"
+          className="px-2.5 py-1.5 rounded-md font-medium bg-blue-600 hover:bg-blue-700 text-white transition-all flex items-center space-x-1.5 whitespace-nowrap shadow-md cursor-pointer"
+          title="Tạo đề thi mới theo ma trận đặc tả"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-blue-200" />
+          <span> TẠO ĐỀ MỚI</span>
+        </button>
+              {/* [2] TẢI LÊN */}
               <button
                 onClick={onOpenUpload}
                 id="btn_menu_upload"
