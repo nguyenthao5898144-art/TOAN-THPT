@@ -1,6 +1,6 @@
-import { GeneratedTest, Question, TestConfig } from '../types';
+import { GeneratedTest, Question, TestConfig } from './types';
 import { createDefaultTest } from './testGenerator';
-import { MATH_12_SYLLABUS } from '../data/math12Syllabus';
+import { MATH_12_SYLLABUS } from './math12Syllabus';
 
 export interface StoredTestItem {
   id: string;
