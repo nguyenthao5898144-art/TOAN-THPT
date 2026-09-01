@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertCircle, FileText, CheckCircle2, X } from 'lucide-react';
-import { StoredTestItem } from '../utils/testBankStorage';
+import { StoredTestItem } from './testBankStorage';
 
 interface DuplicatePromptModalProps {
   isOpen: boolean;
