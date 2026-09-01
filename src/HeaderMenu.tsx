@@ -14,11 +14,12 @@ import {
   FileText,
   Layers,
   Table,
+  Users,
 } from 'lucide-react';
 
 export interface HeaderMenuProps {
-  activeTab: 'generator' | 'slides' | 'editor' | 'matrix' | 'bank';
-  setActiveTab: (tab: 'generator' | 'slides' | 'editor' | 'matrix' | 'bank') => void;
+  activeTab: 'generator' | 'slides' | 'editor' | 'matrix' | 'bank' | 'classes';
+  setActiveTab: (tab: 'generator' | 'slides' | 'editor' | 'matrix' | 'bank' | 'classes') => void;
   onExportWord?: () => void;
   onGenerateNew?: () => void;
   onOpenUpload: () => void;
@@ -155,7 +156,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
       }
     >
       <div className="flex flex-col space-y-2">
-        {/* HÀNG 1: LOGO VÀ CÁC NÚT LỆNH CHÍNH */}
+        {/* HÀNG 1: LOGO & CÁC NÚT LỆNH CHÍNH */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center space-x-2.5">
             {isFloating && (
@@ -185,7 +186,6 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
             </div>
           </div>
 
-          {/* CÁC NÚT BẤM CHỨC NĂNG */}
           {!isCollapsed && (
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
               {/* NÚT 1: TẠO ĐỀ MỚI */}
@@ -229,7 +229,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
                 title="Kho lưu trữ các đề thi đã tạo"
               >
                 <FolderArchive className="w-3.5 h-3.5 text-amber-300" />
-                <span> Kho đề đã lưu</span>
+                <span> Kho đề</span>
               </button>
 
               {/* NÚT 4: GIAO BÀI CHO HỌC SINH (LẤY LINK) */}
@@ -240,7 +240,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
                 title="Tạo link và giao bài cho học sinh"
               >
                 <UserCheck className="w-3.5 h-3.5 text-emerald-200" />
-                <span> Giao bài học sinh</span>
+                <span> Giao bài</span>
               </button>
 
               {/* NÚT XUẤT WORD */}
@@ -291,7 +291,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
           </div>
         </div>
 
-        {/* HÀNG 2: CÁC TAB CHỨC NĂNG */}
+        {/* HÀNG 2: CÁC TAB CHỨC NĂNG (CÓ THÊM TAB QUẢN LÝ LỚP HỌC) */}
         {!isCollapsed && (
           <div className="flex items-center space-x-1.5 border-t border-slate-800/80 pt-2 text-xs overflow-x-auto">
             <button
@@ -344,6 +344,20 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
             >
               <FolderArchive className="w-3.5 h-3.5" />
               <span>Kho lưu trữ đề</span>
+            </button>
+
+            {/* TAB MỚI: QUẢN LÝ LỚP HỌC */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('classes')}
+              className={
+                activeTab === 'classes'
+                  ? 'px-3 py-1.5 rounded-lg font-bold bg-emerald-600 text-white flex items-center space-x-1.5 shadow-sm ring-1 ring-emerald-300'
+                  : 'px-3 py-1.5 rounded-lg font-bold text-emerald-400 hover:bg-slate-800 hover:text-emerald-300 flex items-center space-x-1.5'
+              }
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>👥 Quản lý Lớp học</span>
             </button>
           </div>
         )}
