@@ -101,8 +101,8 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
   );
 
   const selectedTopics = MATH_12_SYLLABUS.filter((t) =>
-    config.selectedTopicIds.includes(t.id)
-  );
+  (config?.selectedTopicIds || []).includes(t.id)
+);
   const effectiveSelectedTopics = selectedTopics.length > 0 ? selectedTopics : [MATH_12_SYLLABUS[0]];
 
   const allLessonsInSelectedTopics = effectiveSelectedTopics.flatMap((t) => t.lessons);
