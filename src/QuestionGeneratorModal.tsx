@@ -2,9 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { TestConfig } from './types';
 import { MATH_12_SYLLABUS, Topic, Lesson } from './math12Syllabus';
 import {
-  Sparkles, Sliders, BookOpen, Clock, Table, CheckSquare, Square,
-  CheckCircle2, ChevronDown, ChevronUp, Layers, Award, FileText,
-  Database, RefreshCw, X, RotateCcw, Check, ArrowRight
+  Sparkles, BookOpen, Clock, CheckSquare, Square,
+  CheckCircle2, ChevronDown, ChevronUp, Database, RefreshCw, HelpCircle
 } from 'lucide-react';
 
 export interface QuestionGeneratorModalProps {
@@ -23,30 +22,23 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
   onGenerate,
   onGenerateFromBank,
   isGenerating = false,
-  onClose,
 }) => {
-  // 1. Thông tin chung
   const [title, setTitle] = useState<string>(config?.title || 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN THPT - GDPT 2018');
   const [durationMinutes, setDurationMinutes] = useState<number>(config?.durationMinutes || 45);
   const [activePreset, setActivePreset] = useState<'standard' | '15min' | 'advanced'>('standard');
 
-  // 2. Cơ cấu Ma trận theo 3 dạng thức
-  // Phần I: MCQ
   const [mcNB, setMcNB] = useState<number>(6);
   const [mcTH, setMcTH] = useState<number>(4);
   const [mcVD, setMcVD] = useState<number>(2);
 
-  // Phần II: Đúng / Sai
   const [tfNB, setTfNB] = useState<number>(1);
   const [tfTH, setTfTH] = useState<number>(2);
   const [tfVD, setTfVD] = useState<number>(1);
 
-  // Phần III: Trả lời ngắn
   const [saNB, setSaNB] = useState<number>(1);
   const [saTH, setSaTH] = useState<number>(2);
   const [saVD, setSaVD] = useState<number>(3);
 
-  // 3. Chọn chủ đề & bài học & YCCĐ
   const initialTopicIds = config?.selectedTopicIds && config.selectedTopicIds.length > 0
     ? config.selectedTopicIds
     : [MATH_12_SYLLABUS[0].id];
@@ -59,30 +51,24 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
 
   const [selectedOutcomes, setSelectedOutcomes] = useState<string[]>([]);
   const [collapsedTopicIds, setCollapsedTopicIds] = useState<string[]>([]);
-
-  // 4. Bảng Ma trận chi tiết YCCĐ
   const [yccdCounts, setYccdCounts] = useState<Record<string, { nb: number; th: number; vd: number }>>({});
 
-  // Tổng số câu hỏi từng phần
   const totalMC = mcNB + mcTH + mcVD;
   const totalTF = tfNB + tfTH + tfVD;
   const totalSA = saNB + saTH + saVD;
   const totalQuestions = totalMC + totalTF + totalSA;
 
-  // Tổng số câu theo mức độ nhận thức
   const totalNB = mcNB + tfNB + saNB;
   const totalTH = mcTH + tfTH + saTH;
   const totalVD = mcVD + tfVD + saVD;
   const totalScore = (totalMC * 0.25 + totalTF * 1.0 + totalSA * 0.5).toFixed(1);
 
-  // Danh sách chủ đề được chọn
   const selectedTopics = useMemo(() => {
     return MATH_12_SYLLABUS.filter((t) => selectedTopicIds.includes(t.id));
   }, [selectedTopicIds]);
 
-  // Tạo danh sách các dòng YCCĐ phẳng
   const flatYccdList = useMemo(() => {
-    const list: { key: string; topicName: string; lessonName: string; outcome: string; outcomeIndex: number; topicId: string; lessonId: string }[] = [];
+    const list: { key: string; topicName: string; lessonName: string; outcome: string; outcomeIndex: number }[] = [];
     selectedTopics.forEach((topic) => {
       topic.lessons.forEach((lesson) => {
         if (selectedLessonIds.includes(lesson.id)) {
@@ -94,8 +80,6 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
                 lessonName: lesson.name,
                 outcome,
                 outcomeIndex: idx + 1,
-                topicId: topic.id,
-                lessonId: lesson.id,
               });
             }
           });
@@ -105,16 +89,13 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
     return list;
   }, [selectedTopics, selectedLessonIds, selectedOutcomes]);
 
-  // Tự động phân bổ đều số câu hỏi theo từng YCCĐ
   const handleAutoDistributeYccd = () => {
     const numRows = flatYccdList.length;
     if (numRows === 0) return;
-
     const newCounts: Record<string, { nb: number; th: number; vd: number }> = {};
     let remNB = totalNB;
     let remTH = totalTH;
     let remVD = totalVD;
-
     const baseNB = Math.floor(totalNB / numRows);
     const baseTH = Math.floor(totalTH / numRows);
     const baseVD = Math.floor(totalVD / numRows);
@@ -124,22 +105,14 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
       const nb = isLast ? remNB : baseNB;
       const th = isLast ? remTH : baseTH;
       const vd = isLast ? remVD : baseVD;
-
       remNB -= nb;
       remTH -= th;
       remVD -= vd;
-
-      newCounts[row.key] = {
-        nb: Math.max(0, nb),
-        th: Math.max(0, th),
-        vd: Math.max(0, vd),
-      };
+      newCounts[row.key] = { nb: Math.max(0, nb), th: Math.max(0, th), vd: Math.max(0, vd) };
     });
-
     setYccdCounts(newCounts);
   };
 
-  // Khởi tạo ban đầu cho YCCĐ khi danh sách YCCĐ thay đổi
   useEffect(() => {
     handleAutoDistributeYccd();
   }, [flatYccdList.length, totalQuestions]);
@@ -156,14 +129,12 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
     }));
   };
 
-  // Tổng số câu hiện tại trong bảng YCCĐ
   const sumYccdNB = flatYccdList.reduce((sum, r) => sum + (yccdCounts[r.key]?.nb || 0), 0);
   const sumYccdTH = flatYccdList.reduce((sum, r) => sum + (yccdCounts[r.key]?.th || 0), 0);
   const sumYccdVD = flatYccdList.reduce((sum, r) => sum + (yccdCounts[r.key]?.vd || 0), 0);
   const sumYccdTotal = sumYccdNB + sumYccdTH + sumYccdVD;
   const isMatrixSynced = sumYccdTotal === totalQuestions;
 
-  // Áp dụng mẫu ma trận nhanh
   const applyPreset = (preset: 'standard' | '15min' | 'advanced') => {
     setActivePreset(preset);
     if (preset === 'standard') {
@@ -188,7 +159,6 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
     const topic = MATH_12_SYLLABUS.find((t) => t.id === topicId);
     if (!topic) return;
     const lessonIds = topic.lessons.map((l) => l.id);
-
     if (selectedTopicIds.includes(topicId)) {
       if (selectedTopicIds.length <= 1) return;
       setSelectedTopicIds((prev) => prev.filter((id) => id !== topicId));
@@ -209,20 +179,6 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
     setSelectedOutcomes((prev) =>
       prev.includes(outcome) ? prev.filter((o) => o !== outcome) : [...prev, outcome]
     );
-  };
-
-  const handleSelectAllTopics = () => {
-    const allTopicIds = MATH_12_SYLLABUS.map((t) => t.id);
-    const allLessonIds = MATH_12_SYLLABUS.flatMap((t) => t.lessons.map((l) => l.id));
-    setSelectedTopicIds(allTopicIds);
-    setSelectedLessonIds(allLessonIds);
-  };
-
-  const handleDeselectAllTopics = () => {
-    if (MATH_12_SYLLABUS.length > 0) {
-      setSelectedTopicIds([MATH_12_SYLLABUS[0].id]);
-      setSelectedLessonIds(MATH_12_SYLLABUS[0].lessons.map((l) => l.id));
-    }
   };
 
   const handleStartGenerate = (source: 'ai' | 'bank') => {
@@ -254,7 +210,7 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
 
   return (
     <div className="font-sans text-slate-800 space-y-5">
-      {/* 1. KHỐI CHỌN CHỦ ĐỀ LỚN */}
+      {/* 1. KHỐI CHỌN CHỦ ĐỀ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {MATH_12_SYLLABUS.map((topic) => {
           const isSelected = selectedTopicIds.includes(topic.id);
@@ -283,35 +239,16 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
         })}
       </div>
 
-      {/* DANH SÁCH BÀI HỌC VÀ YÊU CẦU CẦN ĐẠT (YCCĐ) */}
+      {/* DANH SÁCH BÀI HỌC VÀ YCCĐ */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5">
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-blue-600" />
-            <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-              DANH SÁCH BÀI HỌC VÀ YÊU CẦU CẦN ĐẠT CỦA CÁC CHỦ ĐỀ ĐÃ CHỌN ({selectedTopics.length} chủ đề):
-            </h3>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs">
-            <button
-              type="button"
-              onClick={handleSelectAllTopics}
-              className="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md font-semibold"
-            >
-              Chọn tất cả bài
-            </button>
-            <button
-              type="button"
-              onClick={handleDeselectAllTopics}
-              className="px-2.5 py-1 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-md font-semibold"
-            >
-              Bỏ chọn bài
-            </button>
-          </div>
+        <div className="flex items-center gap-2 border-b pb-2">
+          <BookOpen className="w-4 h-4 text-blue-600" />
+          <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+            DANH SÁCH BÀI HỌC VÀ YÊU CẦU CẦN ĐẠT CỦA CÁC CHỦ ĐỀ ĐÃ CHỌN ({selectedTopics.length} chủ đề):
+          </h3>
         </div>
 
-        {/* Danh sách bài học và YCCĐ */}
-        <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
           {selectedTopics.map((topic) => (
             <div key={topic.id} className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
               <div className="p-2.5 bg-slate-100/80 flex items-center justify-between border-b border-slate-200">
@@ -330,28 +267,23 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
               </div>
 
               {!collapsedTopicIds.includes(topic.id) && (
-                <div className="p-3 space-y-2.5 bg-white">
+                <div className="p-3 space-y-2 bg-white">
                   {topic.lessons.map((lesson, lIdx) => {
                     const isLessonSelected = selectedLessonIds.includes(lesson.id);
                     return (
-                      <div key={lesson.id} className="border border-slate-200 rounded-lg p-2.5 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div
-                            onClick={() => toggleLesson(lesson.id)}
-                            className="flex items-center gap-2 cursor-pointer font-bold text-xs text-slate-800"
-                          >
-                            <button type="button" className="text-blue-600">
-                              {isLessonSelected ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5 text-slate-400" />}
-                            </button>
-                            <span>Bài {lIdx + 1}: {lesson.name}</span>
-                          </div>
-                          <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
-                            {lesson.outcomes.length} YCCĐ
-                          </span>
+                      <div key={lesson.id} className="border border-slate-200 rounded-lg p-2 space-y-1.5">
+                        <div
+                          onClick={() => toggleLesson(lesson.id)}
+                          className="flex items-center gap-2 cursor-pointer font-bold text-xs text-slate-800"
+                        >
+                          <button type="button" className="text-blue-600">
+                            {isLessonSelected ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5 text-slate-400" />}
+                          </button>
+                          <span>Bài {lIdx + 1}: {lesson.name}</span>
                         </div>
 
                         {isLessonSelected && (
-                          <div className="space-y-1.5 pl-6 border-t border-slate-100 pt-2">
+                          <div className="space-y-1 pl-6 border-t border-slate-100 pt-1.5">
                             {lesson.outcomes.map((outcome, oIdx) => {
                               const isOutcomeSelected = selectedOutcomes.length === 0 || selectedOutcomes.includes(outcome);
                               return (
@@ -383,54 +315,45 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
         </div>
       </div>
 
-      {/* BƯỚC 2: TẠO & CẤU HÌNH MA TRẬN CHI TIẾT */}
+      {/* BƯỚC 2: TẠO & CẤU HÌNH MA TRẬN */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5">
           <div className="flex items-center gap-2">
             <span className="px-2 py-0.5 bg-emerald-600 text-white text-[11px] font-black rounded">BƯỚC 2</span>
             <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-              TẠO & CẤU HÌNH MA TRẬN CHI TIẾT (PHÂN BỐ SỐ CÂU THEO MỖI YCCĐ)
+              TẠO & CẤU HÌNH MA TRẬN CHI TIẾT (PHÂN BỐ SỐ CÂU THEO MỨC ĐỘ & YCCĐ)
             </h3>
           </div>
 
           <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-slate-500 text-[11px] font-semibold">Mẫu ma trận nhanh:</span>
+            <span className="text-slate-500 text-[11px] font-semibold">Mẫu ma trận:</span>
             <button
               type="button"
               onClick={() => applyPreset('standard')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
-                activePreset === 'standard' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${
+                activePreset === 'standard' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700'
               }`}
             >
-              Chuẩn GDPT 2018 (22 câu - 10đ)
+              Chuẩn GDPT 2018 (22 câu)
             </button>
             <button
               type="button"
               onClick={() => applyPreset('15min')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
-                activePreset === '15min' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${
+                activePreset === '15min' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700'
               }`}
             >
               Kiểm tra 15 Phút (10 câu)
             </button>
-            <button
-              type="button"
-              onClick={() => applyPreset('advanced')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
-                activePreset === 'advanced' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              Phân hóa / Nâng cao (18 câu)
-            </button>
           </div>
         </div>
 
-        {/* Bảng Dạng câu hỏi */}
+        {/* Bảng Dạng thức */}
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-center border-collapse border border-slate-300">
             <thead className="bg-slate-100 font-bold text-slate-800 text-[11px]">
               <tr>
-                <th className="border border-slate-300 p-2 text-left">Dạng câu hỏi (Định dạng Bộ GD&ĐT)</th>
+                <th className="border border-slate-300 p-2 text-left">Dạng câu hỏi</th>
                 <th className="border border-slate-300 p-2 bg-blue-50 text-blue-900 w-24">Nhận biết</th>
                 <th className="border border-slate-300 p-2 bg-indigo-50 text-indigo-900 w-24">Thông hiểu</th>
                 <th className="border border-slate-300 p-2 bg-emerald-50 text-emerald-900 w-24">Vận dụng</th>
@@ -440,48 +363,30 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
             <tbody>
               <tr>
                 <td className="border border-slate-300 p-2 text-left font-semibold">Phần I: Trắc nghiệm 4 lựa chọn (0.25đ / câu)</td>
-                <td className="border border-slate-300 p-1 bg-blue-50/30">
-                  <input type="number" min={0} value={mcNB} onChange={(e) => setMcNB(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
-                </td>
-                <td className="border border-slate-300 p-1 bg-indigo-50/30">
-                  <input type="number" min={0} value={mcTH} onChange={(e) => setMcTH(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
-                </td>
-                <td className="border border-slate-300 p-1 bg-emerald-50/30">
-                  <input type="number" min={0} value={mcVD} onChange={(e) => setMcVD(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
-                </td>
+                <td className="border border-slate-300 p-1"><input type="number" min={0} value={mcNB} onChange={(e) => setMcNB(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" /></td>
+                <td className="border border-slate-300 p-1"><input type="number" min={0} value={mcTH} onChange={(e) => setMcTH(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" /></td>
+                <td className="border border-slate-300 p-1"><input type="number" min={0} value={mcVD} onChange={(e) => setMcVD(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" /></td>
                 <td className="border border-slate-300 p-2 font-bold bg-slate-50">{totalMC} câu</td>
               </tr>
               <tr>
-                <td className="border border-slate-300 p-2 text-left font-semibold">Phần II: Trắc nghiệm Đúng/Sai (Mỗi câu gồm 4 ý a, b, c, d)</td>
-                <td className="border border-slate-300 p-1 bg-blue-50/30">
-                  <input type="number" min={0} value={tfNB} onChange={(e) => setTfNB(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
-                </td>
-                <td className="border border-slate-300 p-1 bg-indigo-50/30">
-                  <input type="number" min={0} value={tfTH} onChange={(e) => setTfTH(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
-                </td>
-                <td className="border border-slate-300 p-1 bg-emerald-50/30">
-                  <input type="number" min={0} value={tfVD} onChange={(e) => setTfVD(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
-                </td>
+                <td className="border border-slate-300 p-2 text-left font-semibold">Phần II: Trắc nghiệm Đúng/Sai (Mỗi câu gồm 4 ý)</td>
+                <td className="border border-slate-300 p-1"><input type="number" min={0} value={tfNB} onChange={(e) => setTfNB(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" /></td>
+                <td className="border border-slate-300 p-1"><input type="number" min={0} value={tfTH} onChange={(e) => setTfTH(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" /></td>
+                <td className="border border-slate-300 p-1"><input type="number" min={0} value={tfVD} onChange={(e) => setTfVD(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" /></td>
                 <td className="border border-slate-300 p-2 font-bold bg-slate-50">{totalTF} câu</td>
               </tr>
               <tr>
                 <td className="border border-slate-300 p-2 text-left font-semibold">Phần III: Trắc nghiệm trả lời ngắn (0.5đ / câu)</td>
-                <td className="border border-slate-300 p-1 bg-blue-50/30">
-                  <input type="number" min={0} value={saNB} onChange={(e) => setSaNB(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
-                </td>
-                <td className="border border-slate-300 p-1 bg-indigo-50/30">
-                  <input type="number" min={0} value={saTH} onChange={(e) => setSaTH(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
-                </td>
-                <td className="border border-slate-300 p-1 bg-emerald-50/30">
-                  <input type="number" min={0} value={saVD} onChange={(e) => setSaVD(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" />
-                </td>
+                <td className="border border-slate-300 p-1"><input type="number" min={0} value={saNB} onChange={(e) => setSaNB(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" /></td>
+                <td className="border border-slate-300 p-1"><input type="number" min={0} value={saTH} onChange={(e) => setSaTH(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" /></td>
+                <td className="border border-slate-300 p-1"><input type="number" min={0} value={saVD} onChange={(e) => setSaVD(Number(e.target.value))} className="w-16 p-1 text-center font-bold border rounded" /></td>
                 <td className="border border-slate-300 p-2 font-bold bg-slate-50">{totalSA} câu</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        {/* BẢNG MA TRẬN CHI TIẾT YCCĐ (ĐÚNG THEO ẢNH YÊU CẦU) */}
+        {/* BẢNG MA TRẬN CHI TIẾT YCCĐ */}
         <div className="border border-emerald-300 rounded-xl overflow-hidden shadow-sm mt-4 bg-white">
           <div className="p-3 bg-emerald-50 border-b border-emerald-200 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -489,7 +394,7 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
                 MA TRẬN CHI TIẾT YCCĐ
               </span>
               <span className="text-xs font-bold text-emerald-950">
-                ≛ PHÂN BỐ SỐ CÂU CHI TIẾT THEO TỪNG CHỦ ĐỀ, BÀI HỌC VÀ YÊU CẦU CẦN ĐẠT (YCCĐ)
+                ≛ PHÂN BỐ SỐ CÂU CHI TIẾT THEO TỪNG CHỦ ĐỀ, BÀI HỌC VÀ YCCĐ
               </span>
             </div>
             <button
@@ -560,7 +465,6 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
                   );
                 })}
 
-                {/* Hàng tổng cộng YCCĐ */}
                 <tr className="bg-slate-100 font-black text-slate-900">
                   <td colSpan={3} className="border border-slate-300 p-2 text-right uppercase tracking-wider">
                     TỔNG CỘNG SỐ CÂU PHÂN BỔ THEO YCCĐ:
@@ -599,7 +503,7 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
         </div>
       </div>
 
-      {/* BƯỚC 3: TẠO ĐỀ THI HOÀN CHỈNH (TỪ AI HOẶC TỪ NGÂN HÀNG CÂU HỎI) */}
+      {/* BƯỚC 3: TẠO ĐỀ THI HOÀN CHỈNH */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
           <div className="flex items-center gap-2">
@@ -613,13 +517,8 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
           </div>
         </div>
 
-        <p className="text-xs text-slate-500">
-          Đề thi sẽ được khởi tạo 100% đúng theo ma trận {totalQuestions} câu và các YCCĐ đã chọn ở trên. Vui lòng chọn nguồn tạo đề:
-        </p>
-
         {/* 2 NÚT TẠO ĐỀ CHÍNH */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-          {/* Nút 1: Tạo đề từ AI Gemini */}
           <button
             type="button"
             disabled={isGenerating || selectedLessonIds.length === 0}
@@ -637,7 +536,6 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
             </p>
           </button>
 
-          {/* Nút 2: Tạo đề từ Ngân hàng */}
           <button
             type="button"
             disabled={isGenerating || selectedLessonIds.length === 0}
