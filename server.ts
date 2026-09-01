@@ -23,16 +23,24 @@ app.use(express.static(staticDir));
 // =================================================================
 // 🚀 ROUTE API 1: XỬ LÝ CHATBOT MÔ HÌNH GEMINI AI
 // =================================================================
+// ROUTE API 1: XỬ LÝ CHATBOT MÔ HÌNH GEMINI AI (AN TOÀN)
 app.post('/api/chat', async (req, res) => {
   try {
     const { message } = req.body;
+    
+    // Nếu tin nhắn rỗng, trả về thông báo hướng dẫn thay vì báo lỗi EMPTY_TEXT
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      return res.json({ text: 'Xin chào! Vui lòng nhập nội dung chuyên đề hoặc câu hỏi bạn cần tạo đề.' });
+    }
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: message,
     });
-    res.json({ text: response.text });
+    res.json({ text: response.text || '' });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Lỗi Gemini API:', error);
+    res.status(500).json({ error: error.message || 'Lỗi xử lý AI' });
   }
 });
 
