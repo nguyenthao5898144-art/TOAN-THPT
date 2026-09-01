@@ -8,7 +8,10 @@ export default defineConfig({
     tailwindcss(),
   ],
   build: {
-    outDir: 'dist/client', // Xuất file giao diện vào thư mục dist/client
+    outDir: 'dist/client',
     emptyOutDir: true,
+    rollupOptions: {
+      external: ['fsevents'],
+    },
   },
 });
