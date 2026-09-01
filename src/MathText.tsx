@@ -1,7 +1,7 @@
 import React from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
-import { cleanMathString } from '../utils/mathSanitizer';
+import { cleanMathString } from '.mathSanitizer';
 
 export { cleanMathString };
 
