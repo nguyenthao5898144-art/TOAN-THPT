@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { GeneratedTest, Question } from '../types';
-import { DIAGRAM_BANK } from '../data/diagramBank';
+import { GeneratedTest, Question } from './types';
+import { DIAGRAM_BANK } from './diagramBank';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
 import { DeduplicationModal } from './DeduplicationModal';
-import { detectQuestionVisuals, filterQuestionsByVisualCategory, VisualType } from '../utils/visualDetector';
-import { resolveQuestionDiagram, parseAsciiBBT } from '../utils/mathGraphParser';
-import { exportAllDiagramsZip } from '../utils/diagramImageGenerator';
+import { detectQuestionVisuals, filterQuestionsByVisualCategory, VisualType } from './visualDetector';
+import { resolveQuestionDiagram, parseAsciiBBT } from './mathGraphParser';
+import { exportAllDiagramsZip } from './diagramImageGenerator';
 import {
   Eye,
   EyeOff,
