@@ -32,7 +32,17 @@ export interface Assignment {
   createdAt: string;
 }
 
-const DEFAULT_CLASSES: ClassRoom[] = [
+export interface StudentSubmission {
+  id: string;
+  studentId: string;
+  studentName: string;
+  testId?: string;
+  score?: number;
+  submittedAt: string;
+  answers: any;
+}
+
+export const DEFAULT_CLASSES: ClassRoom[] = [
   {
     id: '12A1',
     name: '12A1',
@@ -85,10 +95,20 @@ export const parseStudentListText = (rawText: string): Student[] => {
   });
 };
 
+export const getStoredAssignments = (): Assignment[] => {
+  try {
+    const data = localStorage.getItem('assignments_data') || localStorage.getItem('stored_assignments');
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+export const getAssignments = getStoredAssignments;
+
 export const saveAssignment = (assignment: Assignment): void => {
   try {
-    const existingStr = localStorage.getItem('assignments_data');
-    const existing: Assignment[] = existingStr ? JSON.parse(existingStr) : [];
+    const existing: Assignment[] = getStoredAssignments();
     const index = existing.findIndex((a) => a.id === assignment.id);
     if (index >= 0) {
       existing[index] = assignment;
@@ -96,16 +116,23 @@ export const saveAssignment = (assignment: Assignment): void => {
       existing.push(assignment);
     }
     localStorage.setItem('assignments_data', JSON.stringify(existing));
+    localStorage.setItem('stored_assignments', JSON.stringify(existing));
   } catch (e) {
     console.error('Failed to save assignment', e);
   }
 };
 
-export const getAssignments = (): Assignment[] => {
+export const saveStoredAssignment = saveAssignment;
+
+export const deleteStoredAssignment = (id: string): void => {
   try {
-    const data = localStorage.getItem('assignments_data');
-    return data ? JSON.parse(data) : [];
+    const existing: Assignment[] = getStoredAssignments();
+    const filtered = existing.filter((a) => a.id !== id);
+    localStorage.setItem('assignments_data', JSON.stringify(filtered));
+    localStorage.setItem('stored_assignments', JSON.stringify(filtered));
   } catch (e) {
-    return [];
+    console.error('Failed to delete assignment', e);
   }
 };
+
+export const deleteAssignment = deleteStoredAssignment;
