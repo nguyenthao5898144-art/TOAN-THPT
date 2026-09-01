@@ -1995,7 +1995,7 @@ export const createDefaultTest = (config: TestConfig): GeneratedTest => {
   const timestamp = new Date().toISOString();
 
   // 1. Identify Target Topics & Lessons
-  const selectedTopics = MATH_12_SYLLABUS.filter((t) => config.selectedTopicIds.includes(t.id));
+  const selectedTopics = MATH_12_SYLLABUS.filter((t) => config.(t.id));
   const effectiveTopics = selectedTopics.length > 0 ? selectedTopics : [MATH_12_SYLLABUS[0]];
 
   interface OutcomeSlot {
@@ -2384,7 +2384,7 @@ export function alignQuestionsToOutcomeMatrix(
   const selectedOutcomes = config.selectedOutcomes || [];
 
   const selectedTopics = MATH_12_SYLLABUS.filter((t) =>
-    selectedTopicIds.length === 0 || selectedTopicIds.includes(t.id)
+    selectedTopicIds.length === 0 || (t.id)
   );
   const effectiveTopics = selectedTopics.length > 0 ? selectedTopics : [MATH_12_SYLLABUS[0]];
 
