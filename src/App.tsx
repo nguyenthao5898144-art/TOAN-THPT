@@ -16,17 +16,32 @@ import { exportTestToWord } from './wordExporter';
 import { saveTestToBank } from './testBankStorage';
 
 export default function App() {
-  // 1. Tự động nhận diện chế độ học sinh làm bài (nếu mở link có ?mode=student)
+  // 1. Tự động nhận diện nếu link mở ở chế độ học sinh làm bài
   const isStudentMode = new URLSearchParams(window.location.search).get('mode') === 'student';
 
   // 2. Cấu hình & Đề thi mặc định ban đầu
   const [currentTest, setCurrentTest] = useState<GeneratedTest>(() => {
-    return createDefaultTest({
+    const defaultCfg = {
       title: 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN THPT - GDPT 2018',
       grade: '12',
-      durationMinutes: 90,
+      durationMinutes: 45,
+      selectedTopicIds: [],
+      selectedLessonIds: [],
+      selectedOutcomes: [],
       topics: [],
-    } as any);
+    };
+    try {
+      return createDefaultTest(defaultCfg as any);
+    } catch (e) {
+      console.warn('Fallback test init:', e);
+      return {
+        id: `test_${Date.now()}`,
+        title: defaultCfg.title,
+        config: defaultCfg,
+        questions: [],
+        createdAt: new Date().toISOString(),
+      } as any;
+    }
   });
 
   const [activeTab, setActiveTab] = useState<'generator' | 'slides' | 'editor' | 'matrix' | 'bank'>('generator');
@@ -65,7 +80,7 @@ export default function App() {
     }));
   };
 
-  // Xuất đề thi ra file Word (.docx) chuẩn quy cách Bộ GD&ĐT
+  // Xuất đề thi ra file Word (.docx)
   const handleExportWord = () => {
     exportTestToWord(currentTest);
   };
@@ -122,7 +137,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Trợ lý AI Gemini hỗ trợ soạn đề & giải đáp (Góc phải dưới) */}
+      {/* Trợ lý AI Gemini hỗ trợ soạn đề (Góc phải dưới) */}
       <AssistantChat
         currentTest={currentTest}
         onGenerateCommand={(prompt) => {
@@ -131,43 +146,55 @@ export default function App() {
         isGenerating={isGenerating}
       />
 
-      {/* Modal Soạn đề thi theo ma trận */}
+      {/* CỬA SỔ NỔI (MODAL POPUP) TẠO ĐỀ THI BẬT LÊN TRÊN CÙNG */}
       {isGenModalOpen && (
-        <QuestionGeneratorModal
-          config={currentTest.config}
-          setConfig={(newConfig) => {
-            if (typeof newConfig === 'function') {
-              setCurrentTest((prev) => ({ ...prev, config: newConfig(prev.config) }));
-            } else {
-              setCurrentTest((prev) => ({ ...prev, config: newConfig }));
-            }
-          }}
-          {/* Modal Soạn đề thi theo ma trận */}
-      {isGenModalOpen && (
-        <QuestionGeneratorModal
-          config={currentTest.config}
-          setConfig={(newConfig) => {
-            if (typeof newConfig === 'function') {
-              setCurrentTest((prev) => ({ ...prev, config: newConfig(prev.config) }));
-            } else {
-              setCurrentTest((prev) => ({ ...prev, config: newConfig }));
-            }
-          }}
-          onGenerate={(overrideConfig) => {
-            setIsGenModalOpen(false);
-            const targetConfig = overrideConfig || currentTest.config;
-            try {
-              const newTest = createDefaultTest(targetConfig);
-              setCurrentTest(newTest);
-            } catch (err) {
-              console.error('Lỗi khi tạo đề:', err);
-            }
-          }}
-          isGenerating={isGenerating}
+        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-300 relative p-4 sm:p-6">
+            {/* Nút Đóng góc trên bên phải */}
+            <button
+              type="button"
+              onClick={() => setIsGenModalOpen(false)}
+              className="absolute top-4 right-4 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 rounded-xl text-xs font-bold transition-all cursor-pointer z-20 shadow-sm"
+              title="Đóng bảng tạo đề"
+            >
+              ✕ Đóng bảng
+            </button>
+
+            <QuestionGeneratorModal
+              config={currentTest.config}
+              setConfig={(newConfig) => {
+                if (typeof newConfig === 'function') {
+                  setCurrentTest((prev) => ({ ...prev, config: newConfig(prev.config) }));
+                } else {
+                  setCurrentTest((prev) => ({ ...prev, config: newConfig }));
+                }
+              }}
+              onGenerate={(overrideConfig) => {
+                setIsGenModalOpen(false);
+                const targetConfig = overrideConfig || currentTest.config;
+                try {
+                  const newTest = createDefaultTest(targetConfig);
+                  setCurrentTest(newTest);
+                } catch (err) {
+                  console.error('Lỗi tạo đề:', err);
+                }
+              }}
+              isGenerating={isGenerating}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Modal Chỉnh sửa chi tiết câu hỏi */}
+      {editingQuestion && (
+        <EditorModal
+          question={editingQuestion}
+          onSave={handleSaveQuestion}
+          onClose={() => setEditingQuestion(null)}
         />
       )}
 
-      {/* Modal Tải file Word lên để trích xuất câu hỏi */}
+      {/* Modal Tải file Word lên */}
       {isUploadModalOpen && (
         <FileUploadModal
           isOpen={isUploadModalOpen}
@@ -182,7 +209,7 @@ export default function App() {
         />
       )}
 
-      {/* Modal Giao bài kiểm tra trực tuyến cho học sinh */}
+      {/* Modal Giao bài kiểm tra cho học sinh */}
       {isAssignModalOpen && (
         <AssignmentModal
           isOpen={isAssignModalOpen}
