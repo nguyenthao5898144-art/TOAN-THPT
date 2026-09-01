@@ -24,6 +24,8 @@ const MOCK_STUDENT_DATABASE: StudentAccount[] = [
 
 export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assignmentTitle }) => {
   // Trạng thái đăng nhập học sinh
+  // Lấy mã bài tập từ URL hoặc đặt mặc định
+  const assignmentId = new URLSearchParams(window.location.search).get('assignmentId') || 'assignment_default';
   const [currentUser, setCurrentUser] = useState<StudentAccount | null>(() => {
     try {
       const saved = localStorage.getItem('current_student_session');
