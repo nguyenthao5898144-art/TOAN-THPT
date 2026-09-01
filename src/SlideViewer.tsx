@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { GeneratedTest, Question } from '../types';
-import { DIAGRAM_BANK } from '../data/diagramBank';
+import { GeneratedTest, Question } from './types';
+import { DIAGRAM_BANK } from './diagramBank';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
-import { deduplicateAllQuestions } from '../utils/testGenerator';
-import { resolveQuestionDiagram } from '../utils/mathGraphParser';
+import { deduplicateAllQuestions } from './testGenerator';
+import { resolveQuestionDiagram } from './mathGraphParser';
 import {
   ChevronLeft,
   ChevronRight,
