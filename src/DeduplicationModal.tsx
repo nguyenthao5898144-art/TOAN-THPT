@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Question } from '../types';
+import { Question } from './types';
 import {
   findDuplicateQuestionGroups,
   autoDeduplicateQuestions,
