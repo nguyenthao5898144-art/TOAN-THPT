@@ -318,7 +318,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
           {!isCollapsed && (
             <nav className="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto py-1 text-xs">
               {/* [1] TẠO ĐỀ MỚI */}
-             {/* TẠO ĐỀ MỚI */} 
+              
         <button
           type="button"
           onClick={() => {
@@ -334,7 +334,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
           title="Tạo đề thi mới theo ma trận đặc tả"
         >
           <Sparkles className="w-3.5 h-3.5 text-blue-200" />
-          <span> TẠO ĐỀ MỚI</span>
+          <span> [1] TẠO ĐỀ MỚI</span>
         </button>
               {/* [2] TẢI LÊN */}
               <button
