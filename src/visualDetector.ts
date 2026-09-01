@@ -1,5 +1,5 @@
-import { Question } from '../types';
-import { DIAGRAM_BANK } from '../data/diagramBank';
+import { Question } from './types';
+import { DIAGRAM_BANK } from './diagramBank';
 import { hasUnknownParameters } from './mathGraphParser';
 
 export type VisualType = 'bbt' | 'dothi' | 'bang_giatri' | 'hinh_ve';
