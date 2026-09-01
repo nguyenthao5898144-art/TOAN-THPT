@@ -36,8 +36,10 @@ export interface StudentSubmission {
   id: string;
   studentId: string;
   studentName: string;
+  assignmentId?: string;
   testId?: string;
   score?: number;
+  totalScore?: number;
   submittedAt: string;
   answers: any;
 }
@@ -134,11 +136,48 @@ export const deleteStoredAssignment = (id: string): void => {
 
 export const deleteAssignment = deleteStoredAssignment;
 
-// Đăng ký toàn cục vào window để tránh lỗi ReferenceError ở mọi component
+export const getStudentSubmissions = (assignmentId?: string): StudentSubmission[] => {
+  try {
+    const data = localStorage.getItem('student_submissions_data') || localStorage.getItem('student_submissions');
+    const all: StudentSubmission[] = data ? JSON.parse(data) : [];
+    if (assignmentId) {
+      return all.filter((s) => s.assignmentId === assignmentId || s.testId === assignmentId);
+    }
+    return all;
+  } catch (e) {
+    return [];
+  }
+};
+
+export const getStoredStudentSubmissions = getStudentSubmissions;
+export const getSubmissions = getStudentSubmissions;
+
+export const saveStudentSubmission = (submission: StudentSubmission): void => {
+  try {
+    const all = getStudentSubmissions();
+    all.push(submission);
+    localStorage.setItem('student_submissions_data', JSON.stringify(all));
+    localStorage.setItem('student_submissions', JSON.stringify(all));
+  } catch (e) {
+    console.error('Failed to save student submission', e);
+  }
+};
+
+export const saveSubmission = saveStudentSubmission;
+
+// Khởi tạo toàn cục vào window để mọi component đều có thể truy cập
 if (typeof window !== 'undefined') {
   (window as any).getStoredAssignments = getStoredAssignments;
   (window as any).getAssignments = getStoredAssignments;
   (window as any).saveAssignment = saveAssignment;
+  (window as any).saveStoredAssignment = saveAssignment;
+  (window as any).deleteStoredAssignment = deleteStoredAssignment;
+  (window as any).deleteAssignment = deleteStoredAssignment;
   (window as any).getStoredClasses = getStoredClasses;
   (window as any).saveClasses = saveClasses;
+  (window as any).getStudentSubmissions = getStudentSubmissions;
+  (window as any).getStoredStudentSubmissions = getStudentSubmissions;
+  (window as any).getSubmissions = getStudentSubmissions;
+  (window as any).saveStudentSubmission = saveStudentSubmission;
+  (window as any).saveSubmission = saveStudentSubmission;
 }
