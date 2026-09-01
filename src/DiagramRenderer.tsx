@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DiagramItem, DIAGRAM_BANK, BBTData, GraphData } from './diagramBank';
 import { MathText } from './MathText';
-import { parseMathFunction, extractFormulaFromText, hasUnknownParameters, ParsedMathFunction, parseAsciiBBT, resolveQuestionDiagram } from '../utils/mathGraphParser';
+import { parseMathFunction, extractFormulaFromText, hasUnknownParameters, ParsedMathFunction, parseAsciiBBT, resolveQuestionDiagram } from './mathGraphParser';
 import {
   renderBBTToCanvasImage,
   renderGraphToCanvasImage,
@@ -9,7 +9,7 @@ import {
   render3DGeometryToCanvasImage,
   downloadDiagramImageAsPng,
   copyDiagramImageToClipboard,
-} from '../utils/diagramImageGenerator';
+} from './diagramImageGenerator';
 import {
   generateBBTTikZCode,
   generateGraphTikZCode,
@@ -17,7 +17,7 @@ import {
   generate3DGeometryTikZCode,
   extractTikZFromText,
   ParsedTikZResult,
-} from '../utils/tikzParser';
+} from './tikzParser';
 import { Download, Copy, Code, Check, Sparkles, Image as ImageIcon, X } from 'lucide-react';
 
 interface DiagramRendererProps {
