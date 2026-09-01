@@ -1,6 +1,6 @@
-import { TestConfig, GeneratedTest, Question, TestMatrixItem, TestSummary, MultipleChoiceQuestion, TrueFalseQuestion, ShortAnswerQuestion, CognitiveLevel } from '../types';
-import { MATH_12_SYLLABUS, Lesson, Topic } from '../data/math12Syllabus';
-import { DIAGRAM_BANK, DiagramItem } from '../data/diagramBank';
+import { TestConfig, GeneratedTest, Question, TestMatrixItem, TestSummary, MultipleChoiceQuestion, TrueFalseQuestion, ShortAnswerQuestion, CognitiveLevel } from './types';
+import { MATH_12_SYLLABUS, Lesson, Topic } from './math12Syllabus';
+import { DIAGRAM_BANK, DiagramItem } from './diagramBank';
 import { extractFormulaFromText, hasUnknownParameters } from './mathGraphParser';
 import { cleanMathString } from './mathSanitizer';
 
