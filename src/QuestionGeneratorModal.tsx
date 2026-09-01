@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { TestConfig } from './types';
-import { MATH_12_SYLLABUS, Topic, Lesson } from './math12Syllabus';
+import { getSyllabusByGrade, Topic, Lesson } from './math12Syllabus';
 import {
-  Sparkles, BookOpen, Clock, CheckSquare, Square,
+  Sparkles, BookOpen, Clock, Table, CheckSquare, Square,
   CheckCircle2, ChevronDown, ChevronUp, Database, RefreshCw, HelpCircle
 } from 'lucide-react';
 
@@ -22,11 +22,18 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
   onGenerate,
   onGenerateFromBank,
   isGenerating = false,
+  onClose,
 }) => {
-  const [title, setTitle] = useState<string>(config?.title || 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN THPT - GDPT 2018');
+  // 1. Chọn Khối lớp (Toán 10, 11, 12)
+  const [grade, setGrade] = useState<'10' | '11' | '12'>((config?.grade as any) || '12');
+  const [title, setTitle] = useState<string>(config?.title || `ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN ${config?.grade || '12'} - GDPT 2018`);
   const [durationMinutes, setDurationMinutes] = useState<number>(config?.durationMinutes || 45);
   const [activePreset, setActivePreset] = useState<'standard' | '15min' | 'advanced'>('standard');
 
+  // Lấy danh sách chương trình theo Khối lớp đang chọn
+  const currentSyllabus = useMemo(() => getSyllabusByGrade(grade), [grade]);
+
+  // 2. Cơ cấu Ma trận theo 3 dạng thức
   const [mcNB, setMcNB] = useState<number>(6);
   const [mcTH, setMcTH] = useState<number>(4);
   const [mcVD, setMcVD] = useState<number>(2);
@@ -39,19 +46,24 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
   const [saTH, setSaTH] = useState<number>(2);
   const [saVD, setSaVD] = useState<number>(3);
 
-  const initialTopicIds = config?.selectedTopicIds && config.selectedTopicIds.length > 0
-    ? config.selectedTopicIds
-    : [MATH_12_SYLLABUS[0].id];
-  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>(initialTopicIds);
-
-  const initialLessonIds = config?.selectedLessonIds && config.selectedLessonIds.length > 0
-    ? config.selectedLessonIds
-    : MATH_12_SYLLABUS[0].lessons.map((l) => l.id);
-  const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>(initialLessonIds);
-
+  // 3. Chọn chủ đề & bài học & YCCĐ
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([currentSyllabus[0].id]);
+  const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>(currentSyllabus[0].lessons.map((l) => l.id));
   const [selectedOutcomes, setSelectedOutcomes] = useState<string[]>([]);
   const [collapsedTopicIds, setCollapsedTopicIds] = useState<string[]>([]);
   const [yccdCounts, setYccdCounts] = useState<Record<string, { nb: number; th: number; vd: number }>>({});
+
+  // Tự động cập nhật tiêu đề và chủ đề khi đổi Khối lớp
+  const handleSwitchGrade = (newGrade: '10' | '11' | '12') => {
+    setGrade(newGrade);
+    setTitle(`ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN ${newGrade} - GDPT 2018`);
+    const newSyl = getSyllabusByGrade(newGrade);
+    if (newSyl.length > 0) {
+      setSelectedTopicIds([newSyl[0].id]);
+      setSelectedLessonIds(newSyl[0].lessons.map((l) => l.id));
+      setSelectedOutcomes([]);
+    }
+  };
 
   const totalMC = mcNB + mcTH + mcVD;
   const totalTF = tfNB + tfTH + tfVD;
@@ -64,8 +76,8 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
   const totalScore = (totalMC * 0.25 + totalTF * 1.0 + totalSA * 0.5).toFixed(1);
 
   const selectedTopics = useMemo(() => {
-    return MATH_12_SYLLABUS.filter((t) => selectedTopicIds.includes(t.id));
-  }, [selectedTopicIds]);
+    return currentSyllabus.filter((t) => selectedTopicIds.includes(t.id));
+  }, [currentSyllabus, selectedTopicIds]);
 
   const flatYccdList = useMemo(() => {
     const list: { key: string; topicName: string; lessonName: string; outcome: string; outcomeIndex: number }[] = [];
@@ -156,7 +168,7 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
   };
 
   const toggleTopic = (topicId: string) => {
-    const topic = MATH_12_SYLLABUS.find((t) => t.id === topicId);
+    const topic = currentSyllabus.find((t) => t.id === topicId);
     if (!topic) return;
     const lessonIds = topic.lessons.map((l) => l.id);
     if (selectedTopicIds.includes(topicId)) {
@@ -181,11 +193,25 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
     );
   };
 
+  const handleSelectAllTopics = () => {
+    const allTopicIds = currentSyllabus.map((t) => t.id);
+    const allLessonIds = currentSyllabus.flatMap((t) => t.lessons.map((l) => l.id));
+    setSelectedTopicIds(allTopicIds);
+    setSelectedLessonIds(allLessonIds);
+  };
+
+  const handleDeselectAllTopics = () => {
+    if (currentSyllabus.length > 0) {
+      setSelectedTopicIds([currentSyllabus[0].id]);
+      setSelectedLessonIds(currentSyllabus[0].lessons.map((l) => l.id));
+    }
+  };
+
   const handleStartGenerate = (source: 'ai' | 'bank') => {
     const newConfig: TestConfig = {
       ...config,
       title,
-      grade: '12',
+      grade,
       durationMinutes,
       selectedTopicIds,
       selectedLessonIds,
@@ -210,9 +236,51 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
 
   return (
     <div className="font-sans text-slate-800 space-y-5">
-      {/* 1. KHỐI CHỌN CHỦ ĐỀ */}
+      {/* 1. BỘ CHỌN KHỐI LỚP 10, 11, 12 TRÊN CÙNG */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 p-3 rounded-2xl text-white shadow-md">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-400 font-bold px-2 flex items-center gap-1.5">
+            <BookOpen className="w-4 h-4 text-blue-400" /> CHỌN KHỐI LỚP:
+          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleSwitchGrade('10')}
+              className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                grade === '10' ? 'bg-cyan-600 text-white shadow-lg ring-2 ring-cyan-300' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              📘 TOÁN 10
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSwitchGrade('11')}
+              className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                grade === '11' ? 'bg-indigo-600 text-white shadow-lg ring-2 ring-indigo-300' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              📗 TOÁN 11
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSwitchGrade('12')}
+              className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                grade === '12' ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-300' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              📕 TOÁN 12
+            </button>
+          </div>
+        </div>
+
+        <span className="text-[11px] text-slate-300 font-semibold px-2">
+          Chương trình GDPT 2018 • Khối {grade} ({currentSyllabus.length} chuyên đề)
+        </span>
+      </div>
+
+      {/* 2. KHỐI CHỌN CHỦ ĐỀ CỦA KHỐI LỚP ĐANG CHỌN */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-        {MATH_12_SYLLABUS.map((topic) => {
+        {currentSyllabus.map((topic) => {
           const isSelected = selectedTopicIds.includes(topic.id);
           return (
             <div
@@ -241,11 +309,29 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
 
       {/* DANH SÁCH BÀI HỌC VÀ YCCĐ */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
-        <div className="flex items-center gap-2 border-b pb-2">
-          <BookOpen className="w-4 h-4 text-blue-600" />
-          <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-            DANH SÁCH BÀI HỌC VÀ YÊU CẦU CẦN ĐẠT CỦA CÁC CHỦ ĐỀ ĐÃ CHỌN ({selectedTopics.length} chủ đề):
-          </h3>
+        <div className="flex items-center justify-between border-b pb-2">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-blue-600" />
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+              DANH SÁCH BÀI HỌC VÀ YÊU CẦU CẦN ĐẠT CỦA TOÁN {grade} ({selectedTopics.length} chủ đề):
+            </h3>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs">
+            <button
+              type="button"
+              onClick={handleSelectAllTopics}
+              className="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md font-semibold"
+            >
+              Chọn tất cả bài
+            </button>
+            <button
+              type="button"
+              onClick={handleDeselectAllTopics}
+              className="px-2.5 py-1 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-md font-semibold"
+            >
+              Bỏ chọn bài
+            </button>
+          </div>
         </div>
 
         <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
@@ -394,7 +480,7 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
                 MA TRẬN CHI TIẾT YCCĐ
               </span>
               <span className="text-xs font-bold text-emerald-950">
-                ≛ PHÂN BỐ SỐ CÂU CHI TIẾT THEO TỪNG CHỦ ĐỀ, BÀI HỌC VÀ YCCĐ
+                ≛ PHÂN BỐ SỐ CÂU CHI TIẾT THEO TỪNG CHỦ ĐỀ, BÀI HỌC VÀ YCCĐ (TOÁN {grade})
               </span>
             </div>
             <button
@@ -467,7 +553,7 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
 
                 <tr className="bg-slate-100 font-black text-slate-900">
                   <td colSpan={3} className="border border-slate-300 p-2 text-right uppercase tracking-wider">
-                    TỔNG CỘNG SỐ CÂU PHÂN BỔ THEO YCCĐ:
+                    TỔNG CỘNG SỐ CÂU PHÂN BỔ THEO YCCĐ (TOÁN {grade}):
                   </td>
                   <td className="border border-slate-300 p-2 bg-blue-100 text-blue-900">{sumYccdNB} NB</td>
                   <td className="border border-slate-300 p-2 bg-indigo-100 text-indigo-900">{sumYccdTH} TH</td>
@@ -495,7 +581,7 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
             <button
               type="button"
               onClick={handleAutoDistributeYccd}
-              className="text-blue-600 hover:underline font-bold"
+              className="text-blue-600 hover:underline font-bold cursor-pointer"
             >
               Đồng bộ lại theo Ma trận Dạng câu hỏi
             </button>
@@ -509,7 +595,7 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
           <div className="flex items-center gap-2">
             <span className="px-2 py-0.5 bg-purple-600 text-white text-[11px] font-black rounded">BƯỚC 3</span>
             <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-              TẠO ĐỀ THI HOÀN CHỈNH (TỪ AI HOẶC TỪ NGÂN HÀNG CÂU HỎI)
+              TẠO ĐỀ THI HOÀN CHỈNH CHO TOÁN {grade} (TỪ AI HOẶC TỪ NGÂN HÀNG CÂU HỎI)
             </h3>
           </div>
           <div className="text-xs font-bold text-slate-700">
@@ -527,12 +613,12 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
           >
             <div className="flex items-center justify-between">
               <span className="font-black text-sm flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-300" /> TẠO ĐỀ TỪ AI (GEMINI)
+                <Sparkles className="w-4 h-4 text-amber-300" /> TẠO ĐỀ TỪ AI (GEMINI) - TOÁN {grade}
               </span>
               <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold uppercase">Tự động 100%</span>
             </div>
             <p className="text-[11px] text-blue-100">
-              AI sẽ tự động biên soạn mới toàn bộ {totalQuestions} câu hỏi bám sát Ma trận & YCCĐ GDPT 2018.
+              AI sẽ tự động biên soạn mới toàn bộ {totalQuestions} câu hỏi Toán {grade} bám sát Ma trận & YCCĐ GDPT 2018.
             </p>
           </button>
 
@@ -544,12 +630,12 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
           >
             <div className="flex items-center justify-between">
               <span className="font-black text-sm flex items-center gap-2">
-                <Database className="w-4 h-4 text-emerald-200" /> TẠO ĐỀ TỪ NGÂN HÀNG
+                <Database className="w-4 h-4 text-emerald-200" /> TẠO ĐỀ TỪ NGÂN HÀNG - TOÁN {grade}
               </span>
               <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold uppercase">Có sẵn mẫu</span>
             </div>
             <p className="text-[11px] text-emerald-100">
-              Lấy câu hỏi & bài tập chuẩn mực từ Ngân hàng câu hỏi có sẵn theo đúng tỉ lệ ma trận đã cấu hình.
+              Lấy câu hỏi & bài tập chuẩn mực từ Ngân hàng câu hỏi Toán {grade} có sẵn theo đúng tỉ lệ ma trận đã cấu hình.
             </p>
           </button>
         </div>
