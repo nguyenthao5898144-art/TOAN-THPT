@@ -1,4 +1,4 @@
-import { TestConfig, GeneratedTest, Question } from '../types';
+import { TestConfig, GeneratedTest, Question } from './types';
 import { createDefaultTest, mutateQuestionToMakeUnique, deduplicateAllQuestions, calculateMatrixAndSummary } from './testGenerator';
 
 /**
