@@ -2,6 +2,13 @@ export interface Student {
   id: string;
   name: string;
   code?: string;
+  phone?: string;
+}
+
+export interface StudentAccount {
+  id: string;
+  name: string;
+  className?: string;
 }
 
 export interface ClassRoom {
@@ -26,8 +33,21 @@ export interface Assignment {
 }
 
 const DEFAULT_CLASSES: ClassRoom[] = [
-  { id: '12A1', name: '12A1', students: [{ id: 'hs_1', name: 'Học sinh 1' }, { id: 'hs_2', name: 'Học sinh 2' }] },
-  { id: '12A2', name: '12A2', students: [{ id: 'hs_3', name: 'Học sinh 3' }] },
+  {
+    id: '12A1',
+    name: '12A1',
+    students: [
+      { id: 'hs_1', name: 'Nguyễn Văn An', code: 'HS01' },
+      { id: 'hs_2', name: 'Trần Thị Bình', code: 'HS02' },
+    ],
+  },
+  {
+    id: '12A2',
+    name: '12A2',
+    students: [
+      { id: 'hs_3', name: 'Lê Hoàng Cường', code: 'HS03' },
+    ],
+  },
   { id: '12A3', name: '12A3', students: [] },
 ];
 
@@ -39,6 +59,30 @@ export const getStoredClasses = (): ClassRoom[] => {
     console.error('Failed to load classrooms', e);
   }
   return DEFAULT_CLASSES;
+};
+
+export const saveClasses = (classes: ClassRoom[]): void => {
+  try {
+    localStorage.setItem('classrooms_data', JSON.stringify(classes));
+  } catch (e) {
+    console.error('Failed to save classrooms', e);
+  }
+};
+
+/**
+ * Tự động phân tích danh sách học sinh dán từ Excel / Word
+ */
+export const parseStudentListText = (rawText: string): Student[] => {
+  if (!rawText) return [];
+  const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  return lines.map((line, index) => {
+    const cleanName = line.replace(/^[0-9]+[\.\-\/\)\s]+/, '').trim();
+    return {
+      id: `std_${Date.now()}_${index}`,
+      name: cleanName || line,
+      code: `HS${index + 1 < 10 ? '0' : ''}${index + 1}`,
+    };
+  });
 };
 
 export const saveAssignment = (assignment: Assignment): void => {
@@ -54,5 +98,14 @@ export const saveAssignment = (assignment: Assignment): void => {
     localStorage.setItem('assignments_data', JSON.stringify(existing));
   } catch (e) {
     console.error('Failed to save assignment', e);
+  }
+};
+
+export const getAssignments = (): Assignment[] => {
+  try {
+    const data = localStorage.getItem('assignments_data');
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    return [];
   }
 };
