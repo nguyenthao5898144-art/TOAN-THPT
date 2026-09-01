@@ -1,20 +1,16 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React from 'react';
 import {
   Sparkles,
   Upload,
   UserCheck,
   FolderArchive,
-  Pin,
-  PinOff,
-  RotateCcw,
-  GripVertical,
-  ChevronUp,
-  ChevronDown,
   Download,
   FileText,
   Layers,
   Table,
   Users,
+  Send,
+  BookOpen,
 } from 'lucide-react';
 
 export interface HeaderMenuProps {
@@ -24,10 +20,7 @@ export interface HeaderMenuProps {
   onGenerateNew?: () => void;
   onOpenUpload: () => void;
   onOpenAssign?: () => void;
-  onQuickSaveToBank?: () => void;
-  isGenerating?: boolean;
   questionCount: number;
-  savedCount?: number;
 }
 
 export const HeaderMenu: React.FC<HeaderMenuProps> = ({
@@ -37,332 +30,133 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
   onGenerateNew,
   onOpenUpload,
   onOpenAssign,
-  isGenerating = false,
   questionCount,
 }) => {
-  const [isFloating, setIsFloating] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem('header_menu_is_floating');
-      return saved ? JSON.parse(saved) : false;
-    } catch {
-      return false;
-    }
-  });
-
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem('header_menu_is_collapsed');
-      return saved ? JSON.parse(saved) : false;
-    } catch {
-      return false;
-    }
-  });
-
-  const [position, setPosition] = useState<{ x: number; y: number }>(() => {
-    try {
-      const saved = localStorage.getItem('header_menu_position');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-          return parsed;
-        }
-      }
-    } catch {}
-    return {
-      x: typeof window !== 'undefined' ? Math.max(16, (window.innerWidth - 760) / 2) : 50,
-      y: 16,
-    };
-  });
-
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const dragStartRef = useRef<{ startX: number; startY: number; posX: number; posY: number }>({
-    startX: 0,
-    startY: 0,
-    posX: 0,
-    posY: 0,
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('header_menu_is_floating', JSON.stringify(isFloating));
-      localStorage.setItem('header_menu_is_collapsed', JSON.stringify(isCollapsed));
-      if (isFloating) {
-        localStorage.setItem('header_menu_position', JSON.stringify(position));
-      }
-    } catch {}
-  }, [isFloating, isCollapsed, position]);
-
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      if (!isFloating) return;
-      setIsDragging(true);
-      dragStartRef.current = {
-        startX: e.clientX,
-        startY: e.clientY,
-        posX: position.x,
-        posY: position.y,
-      };
-    },
-    [isFloating, position]
-  );
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      const dx = e.clientX - dragStartRef.current.startX;
-      const dy = e.clientY - dragStartRef.current.startY;
-      const newX = Math.max(10, Math.min(window.innerWidth - 300, dragStartRef.current.posX + dx));
-      const newY = Math.max(10, Math.min(window.innerHeight - 80, dragStartRef.current.posY + dy));
-      setPosition({ x: newX, y: newY });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging]);
-
-  const handleResetPosition = () => {
-    setPosition({
-      x: typeof window !== 'undefined' ? Math.max(16, (window.innerWidth - 760) / 2) : 50,
-      y: 16,
-    });
-  };
-
   return (
-    <div
-      style={
-        isFloating
-          ? {
-              position: 'fixed',
-              left: `${position.x}px`,
-              top: `${position.y}px`,
-              zIndex: 40,
-            }
-          : {}
-      }
-      className={
-        isFloating
-          ? 'shadow-2xl rounded-2xl border border-slate-700 bg-slate-900/95 backdrop-blur-md text-white p-2.5 max-w-4xl w-[94vw] sm:w-auto'
-          : 'bg-slate-900 border-b border-slate-800 text-white p-3 shadow-md'
-      }
-    >
-      <div className="flex flex-col space-y-2">
-        {/* HÀNG 1: LOGO & CÁC NÚT LỆNH CHÍNH */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center space-x-2.5">
-            {isFloating && (
-              <button
-                onMouseDown={handleMouseDown}
-                className="p-1 text-slate-400 hover:text-white cursor-move"
-                title="Giữ chuột để kéo di chuyển menu"
-              >
-                <GripVertical className="w-4 h-4" />
-              </button>
-            )}
-
-            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center font-black text-xs shadow-md">
-              THPT
-            </div>
-
-            <div>
-              <div className="flex items-center space-x-1.5">
-                <h1 className="font-black text-sm tracking-wide text-white">TOÁN THPT</h1>
-                <span className="text-[9px] px-1.5 py-0.2 bg-blue-500/30 text-blue-300 rounded font-bold border border-blue-400/30">
-                  GDPT 2018
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 hidden sm:block">
-                Tác giả: NGUYỄN QUỐC TÂM • THPT MAI THANH THẾ
-              </p>
-            </div>
-          </div>
-
-          {!isCollapsed && (
-            <div className="flex flex-wrap items-center gap-1.5 text-xs">
-              {/* NÚT 1: TẠO ĐỀ MỚI */}
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('generator');
-                  if (onGenerateNew) onGenerateNew();
-                }}
-                className={
-                  activeTab === 'generator'
-                    ? 'px-3 py-1.5 rounded-lg font-bold bg-blue-600 text-white ring-2 ring-blue-300 flex items-center space-x-1.5 cursor-pointer shadow-sm'
-                    : 'px-3 py-1.5 rounded-lg font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 flex items-center space-x-1.5 cursor-pointer'
-                }
-                title="Tạo đề thi mới theo ma trận"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-blue-200" />
-                <span> TẠO ĐỀ MỚI</span>
-              </button>
-
-              {/* NÚT 2: TẢI LÊN FILE WORD */}
-              <button
-                type="button"
-                onClick={onOpenUpload}
-                className="px-3 py-1.5 rounded-lg font-bold bg-cyan-700 text-cyan-100 hover:bg-cyan-600 flex items-center space-x-1.5 cursor-pointer shadow-sm"
-                title="Tải lên file câu hỏi Word"
-              >
-                <Upload className="w-3.5 h-3.5 text-cyan-300" />
-                <span> Tải lên</span>
-              </button>
-
-              {/* NÚT 3: KHO ĐỀ ĐÃ LƯU */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('bank')}
-                className={
-                  activeTab === 'bank'
-                    ? 'px-3 py-1.5 rounded-lg font-bold bg-amber-600 text-white ring-2 ring-amber-300 flex items-center space-x-1.5 cursor-pointer shadow-sm'
-                    : 'px-3 py-1.5 rounded-lg font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 flex items-center space-x-1.5 cursor-pointer'
-                }
-                title="Kho lưu trữ các đề thi đã tạo"
-              >
-                <FolderArchive className="w-3.5 h-3.5 text-amber-300" />
-                <span> Kho đề</span>
-              </button>
-
-              {/* NÚT 4: GIAO BÀI CHO HỌC SINH (LẤY LINK) */}
-              <button
-                type="button"
-                onClick={onOpenAssign}
-                className="px-3 py-1.5 rounded-lg font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center space-x-1.5 cursor-pointer shadow-sm ring-1 ring-emerald-300"
-                title="Tạo link và giao bài cho học sinh"
-              >
-                <UserCheck className="w-3.5 h-3.5 text-emerald-200" />
-                <span> Giao bài</span>
-              </button>
-
-              {/* NÚT XUẤT WORD */}
-              {onExportWord && (
-                <button
-                  type="button"
-                  onClick={onExportWord}
-                  className="px-3 py-1.5 rounded-lg font-bold bg-blue-800 hover:bg-blue-700 text-white flex items-center space-x-1.5 cursor-pointer shadow-sm"
-                  title="Xuất đề thi ra file Word (.docx)"
-                >
-                  <Download className="w-3.5 h-3.5 text-blue-200" />
-                  <span>Xuất Word</span>
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* CÔNG CỤ GHIM / THU GỌN */}
-          <div className="flex items-center space-x-1 text-slate-400">
-            <button
-              type="button"
-              onClick={() => setIsFloating(!isFloating)}
-              className="p-1.5 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-              title={isFloating ? 'Ghim cố định lên đầu trang' : 'Bật chế độ menu nổi'}
-            >
-              {isFloating ? <Pin className="w-3.5 h-3.5 text-blue-400" /> : <PinOff className="w-3.5 h-3.5" />}
-            </button>
-
-            {isFloating && (
-              <button
-                type="button"
-                onClick={handleResetPosition}
-                className="p-1.5 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-                title="Đặt lại vị trí"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-1.5 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-              title={isCollapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
-            >
-              {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-            </button>
-          </div>
+    <aside className="w-64 sm:w-72 bg-slate-900 text-white min-h-screen h-screen sticky top-0 flex flex-col justify-between border-r border-slate-800 p-4 shrink-0 shadow-2xl overflow-y-auto font-sans">
+      {/* KHỐI NÚT LỆNH DỌC BÊN TRÁI */}
+      <div className="space-y-4">
+        {/* Tiêu đề cột điều khiển */}
+        <div className="pb-3 border-b border-slate-800 flex items-center justify-between">
+          <span className="text-xs font-black tracking-wider text-slate-300 uppercase flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-blue-400" /> BẢNG ĐIỀU KHIỂN
+          </span>
+          <span className="text-[10px] px-2 py-0.5 bg-blue-600/30 text-blue-300 rounded-full font-bold border border-blue-500/30">
+            GDPT 2018
+          </span>
         </div>
 
-        {/* HÀNG 2: CÁC TAB CHỨC NĂNG (CÓ THÊM TAB QUẢN LÝ LỚP HỌC) */}
-        {!isCollapsed && (
-          <div className="flex items-center space-x-1.5 border-t border-slate-800/80 pt-2 text-xs overflow-x-auto">
-            <button
-              type="button"
-              onClick={() => setActiveTab('generator')}
-              className={
-                activeTab === 'generator'
-                  ? 'px-3 py-1.5 rounded-lg font-bold bg-blue-600 text-white flex items-center space-x-1.5'
-                  : 'px-3 py-1.5 rounded-lg font-bold text-slate-300 hover:bg-slate-800 hover:text-white flex items-center space-x-1.5'
-              }
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Đề thi ({questionCount} câu)</span>
-            </button>
+        {/* DANH SÁCH MENU DỌC BÊN TRÁI TRANG CHỦ */}
+        <div className="space-y-2">
+          {/* 1. TẠO ĐỀ MỚI */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('generator');
+              if (onGenerateNew) onGenerateNew();
+            }}
+            className="w-full px-3.5 py-3 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white flex items-center gap-2.5 shadow-lg transition-all cursor-pointer text-xs sm:text-sm text-left"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
+            <span>✨ Tạo đề mới (Ma trận)</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab('slides')}
-              className={
-                activeTab === 'slides'
-                  ? 'px-3 py-1.5 rounded-lg font-bold bg-blue-600 text-white flex items-center space-x-1.5'
-                  : 'px-3 py-1.5 rounded-lg font-bold text-slate-300 hover:bg-slate-800 hover:text-white flex items-center space-x-1.5'
-              }
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Trình chiếu Slide</span>
-            </button>
+          {/* 2. TẢI LÊN FILE WORD */}
+          <button
+            type="button"
+            onClick={onOpenUpload}
+            className="w-full px-3.5 py-2.5 rounded-xl font-bold bg-slate-800 hover:bg-slate-700 text-cyan-200 hover:text-white flex items-center gap-2.5 transition-all cursor-pointer text-xs sm:text-sm border border-slate-700 text-left"
+          >
+            <Upload className="w-4 h-4 text-cyan-400 shrink-0" />
+            <span>📥 Tải lên đề Word</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab('matrix')}
-              className={
-                activeTab === 'matrix'
-                  ? 'px-3 py-1.5 rounded-lg font-bold bg-blue-600 text-white flex items-center space-x-1.5'
-                  : 'px-3 py-1.5 rounded-lg font-bold text-slate-300 hover:bg-slate-800 hover:text-white flex items-center space-x-1.5'
-              }
-            >
-              <Table className="w-3.5 h-3.5" />
-              <span>Ma trận & Bản đặc tả</span>
-            </button>
+          {/* 3. GIAO BÀI CHO HỌC SINH */}
+          <button
+            type="button"
+            onClick={onOpenAssign}
+            className="w-full px-3.5 py-2.5 rounded-xl font-bold bg-emerald-700 hover:bg-emerald-600 text-emerald-100 flex items-center gap-2.5 transition-all cursor-pointer text-xs sm:text-sm shadow-md border border-emerald-600 text-left"
+          >
+            <Send className="w-4 h-4 text-emerald-300 shrink-0" />
+            <span>📲 Giao bài (Tạo link HS)</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab('bank')}
-              className={
-                activeTab === 'bank'
-                  ? 'px-3 py-1.5 rounded-lg font-bold bg-blue-600 text-white flex items-center space-x-1.5'
-                  : 'px-3 py-1.5 rounded-lg font-bold text-slate-300 hover:bg-slate-800 hover:text-white flex items-center space-x-1.5'
-              }
-            >
-              <FolderArchive className="w-3.5 h-3.5" />
-              <span>Kho lưu trữ đề</span>
-            </button>
+          {/* 4. QUẢN LÝ LỚP HỌC */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('classes')}
+            className={`w-full px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer text-left ${
+              activeTab === 'classes'
+                ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-400'
+                : 'bg-slate-800 hover:bg-slate-700 text-emerald-300 hover:text-white border border-slate-700'
+            }`}
+          >
+            <Users className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>👥 Quản lý Lớp học</span>
+          </button>
 
-            {/* TAB MỚI: QUẢN LÝ LỚP HỌC */}
+          {/* 5. KHO ĐỀ ĐÃ LƯU */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('bank')}
+            className={`w-full px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer text-left ${
+              activeTab === 'bank'
+                ? 'bg-amber-600 text-white shadow-md ring-2 ring-amber-400'
+                : 'bg-slate-800 hover:bg-slate-700 text-amber-200 hover:text-white border border-slate-700'
+            }`}
+          >
+            <FolderArchive className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>🗄️ Kho lưu trữ đề</span>
+          </button>
+
+          {/* 6. MA TRẬN & BẢN ĐẶC TẢ */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('matrix')}
+            className={`w-full px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer text-left ${
+              activeTab === 'matrix'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
+            }`}
+          >
+            <Table className="w-4 h-4 text-blue-400 shrink-0" />
+            <span>📊 Ma trận & Bản đặc tả</span>
+          </button>
+
+          {/* 7. TRÌNH CHIẾU SLIDE */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('slides')}
+            className={`w-full px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer text-left ${
+              activeTab === 'slides'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
+            }`}
+          >
+            <Layers className="w-4 h-4 text-purple-400 shrink-0" />
+            <span>📽️ Trình chiếu Slide</span>
+          </button>
+
+          {/* 8. XUẤT FILE WORD */}
+          {onExportWord && (
             <button
               type="button"
-              onClick={() => setActiveTab('classes')}
-              className={
-                activeTab === 'classes'
-                  ? 'px-3 py-1.5 rounded-lg font-bold bg-emerald-600 text-white flex items-center space-x-1.5 shadow-sm ring-1 ring-emerald-300'
-                  : 'px-3 py-1.5 rounded-lg font-bold text-emerald-400 hover:bg-slate-800 hover:text-emerald-300 flex items-center space-x-1.5'
-              }
+              onClick={onExportWord}
+              className="w-full px-3.5 py-2.5 rounded-xl font-bold bg-blue-900 hover:bg-blue-800 text-blue-100 flex items-center gap-2.5 transition-all cursor-pointer text-xs sm:text-sm border border-blue-700 text-left"
             >
-              <Users className="w-3.5 h-3.5" />
-              <span>👥 Quản lý Lớp học</span>
+              <Download className="w-4 h-4 text-blue-300 shrink-0" />
+              <span>💾 Xuất đề ra Word (.docx)</span>
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* FOOTER CỘT MENU */}
+      <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-400 text-center space-y-0.5">
+        <p className="font-bold text-slate-300">THPT MAI THANH THẾ</p>
+        <p className="text-[10px] text-slate-500">Năm học 2026 - 2027</p>
+      </div>
+    </aside>
   );
 };
 
