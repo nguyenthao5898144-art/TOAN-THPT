@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { TestConfig, GeneratedTest, StudentAccount, StudentSubmission } from '../types';
-import { generateUniqueTestForStudent } from '../utils/studentTestGenerator';
+import { TestConfig, GeneratedTest, StudentAccount, StudentSubmission } from './types';
+import { generateUniqueTestForStudent } from './studentTestGenerator';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
-import { resolveQuestionDiagram } from '../utils/mathGraphParser';
+import { resolveQuestionDiagram } from './mathGraphParser';
 import { 
   Play, Clock, CheckCircle2, Award, LogIn, UserCheck, 
   Send, AlertCircle, RefreshCw, Trophy, BookOpen 
