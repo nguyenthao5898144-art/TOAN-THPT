@@ -15,7 +15,6 @@ import { StudentPortal } from './14';
 import { ClassManager } from './18';
 import { exportTestToWord } from './wordExporter';
 import { saveTestToBank } from './testBankStorage';
-import { Send, Sparkles, Users } from 'lucide-react';
 
 export default function App() {
   const isStudentMode = new URLSearchParams(window.location.search).get('mode') === 'student';
@@ -90,8 +89,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800 font-sans pb-20">
-      {/* Thanh Menu điều hướng phía trên */}
+    <div className="min-h-screen bg-slate-100 text-slate-800 font-sans flex">
+      {/* 1. CỘT MENU CHỨC NĂNG DỌC BÊN TRÁI */}
       <HeaderMenu
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -100,73 +99,57 @@ export default function App() {
         onGenerateNew={() => setIsGenModalOpen(true)}
         onOpenUpload={() => setIsUploadModalOpen(true)}
         onOpenAssign={() => setIsAssignModalOpen(true)}
-        onQuickSaveToBank={handleQuickSaveToBank}
-        isGenerating={isGenerating}
       />
 
-      {/* Nút hành động nhanh dưới Header */}
-      {activeTab !== 'classes' && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsAssignModalOpen(true)}
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer ring-2 ring-emerald-300"
-            >
-              <Send className="w-4 h-4" /> 📲 GIAO BÀI CHO HỌC SINH (TẠO LINK)
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsGenModalOpen(true)}
-              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-amber-300" /> TẠO ĐỀ THEO MA TRẬN
-            </button>
+      {/* 2. VÙNG NỘI DUNG BÊN PHẢI VỚI HEADER CANH GIỮA TRANG TRỌNG */}
+      <div className="flex-1 min-h-screen flex flex-col min-w-0">
+        {/* HEADER CHÍNH NẰM TRÊN CÙNG VÀ CANH GIỮA */}
+        <header className="bg-slate-900 text-white py-4 px-6 shadow-md border-b border-slate-800">
+          <div className="max-w-4xl mx-auto flex flex-col items-center justify-center text-center space-y-1">
+            <div className="flex items-center justify-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-black text-xs text-white shadow">
+                THPT
+              </div>
+              <h1 className="font-black text-xl sm:text-2xl text-white tracking-wide">
+                TOÁN THPT
+              </h1>
+              <span className="px-2 py-0.5 bg-blue-500/25 text-blue-300 rounded-full font-bold text-xs border border-blue-400/30">
+                GDPT 2018
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 font-medium">
+              Tác giả: <strong className="text-white">NGUYỄN QUỐC TÂM</strong> • THPT MAI THANH THẾ
+            </p>
           </div>
+        </header>
 
-          <div className="text-xs font-semibold text-slate-500">
-            Đề hiện tại: <strong className="text-slate-800">{currentTest.title}</strong> ({currentTest.questions.length} câu)
-          </div>
-        </div>
-      )}
+        {/* NỘI DUNG CHÍNH CỦA TAB ĐƯỢC CHỌN */}
+        <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
+          {activeTab === 'generator' && (
+            <QuestionList
+              test={currentTest}
+              onEditQuestion={(q) => setEditingQuestion(q)}
+              onDeleteQuestion={handleDeleteQuestion}
+              onSaveToBank={handleQuickSaveToBank}
+              onOpenBank={() => setActiveTab('bank')}
+            />
+          )}
 
-      {/* Vùng hiển thị nội dung chính theo Tab */}
-      <main className="max-w-7xl mx-auto p-4 sm:p-6">
-        {activeTab === 'generator' && (
-          <QuestionList
-            test={currentTest}
-            onEditQuestion={(q) => setEditingQuestion(q)}
-            onDeleteQuestion={handleDeleteQuestion}
-            onSaveToBank={handleQuickSaveToBank}
-            onOpenBank={() => setActiveTab('bank')}
-          />
-        )}
-
-        {activeTab === 'slides' && (
-          <SlideViewer test={currentTest} />
-        )}
-
-        {activeTab === 'matrix' && (
-          <MatrixTable test={currentTest} />
-        )}
-
-        {activeTab === 'bank' && (
-          <TestBankModal
-            isOpen={true}
-            onClose={() => setActiveTab('generator')}
-            onSelectTest={(test) => {
-              setCurrentTest(test);
-              setActiveTab('generator');
-            }}
-          />
-        )}
-
-        {/* TAB HIỂN THỊ QUẢN LÝ LỚP HỌC */}
-        {activeTab === 'classes' && (
-          <ClassManager />
-        )}
-      </main>
+          {activeTab === 'slides' && <SlideViewer test={currentTest} />}
+          {activeTab === 'matrix' && <MatrixTable test={currentTest} />}
+          {activeTab === 'bank' && (
+            <TestBankModal
+              isOpen={true}
+              onClose={() => setActiveTab('generator')}
+              onSelectTest={(test) => {
+                setCurrentTest(test);
+                setActiveTab('generator');
+              }}
+            />
+          )}
+          {activeTab === 'classes' && <ClassManager />}
+        </main>
+      </div>
 
       {/* Trợ lý AI Gemini */}
       <AssistantChat
