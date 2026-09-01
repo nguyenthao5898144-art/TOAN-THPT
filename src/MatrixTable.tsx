@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { GeneratedTest } from '../types';
+import { GeneratedTest } from './types';
 import { Layers, Download, Printer, Copy, Check, FileText, Sparkles, BookOpen, Info, Sliders, ListChecks, Table as TableIcon } from 'lucide-react';
-import { buildStandardMatrixData, StandardMatrixData, StandardMatrixRow } from '../utils/matrixStandardGenerator';
-import { exportStandardMatrixOnlyWord, exportSpecMatrixOnlyWord, exportBothMatricesWord, exportTestToWord, exportQuestionAndOutcomeMatricesWord } from '../utils/wordExporter';
-import { MATH_12_SYLLABUS } from '../data/math12Syllabus';
+import { buildStandardMatrixData, StandardMatrixData, StandardMatrixRow } from './matrixStandardGenerator';
+import { exportStandardMatrixOnlyWord, exportSpecMatrixOnlyWord, exportBothMatricesWord, exportTestToWord, exportQuestionAndOutcomeMatricesWord } from './wordExporter';
+import { MATH_12_SYLLABUS } from './math12Syllabus';
 
 interface MatrixTableProps {
   test: GeneratedTest;
