@@ -20,12 +20,11 @@ import {
 } from 'docx';
 import JSZip from 'jszip';
 import saveAs from 'file-saver';
-import { GeneratedTest, Question } from '../types';
+import { GeneratedTest, Question } from './types';
 import { extractTestMetadata } from './testBankStorage';
 import { buildStandardMatrixData, StandardMatrixData } from './matrixStandardGenerator';
 import { generateQuestionDiagramImage, GeneratedImageData } from './diagramImageGenerator';
-import { MATH_12_SYLLABUS } from '../data/math12Syllabus';
-
+import { MATH_12_SYLLABUS } from './math12Syllabus';
 /**
  * Standard Page Setup according to the required specifications:
  * - Margins: Top: 1cm, Bottom: 1cm, Inside (Left): 2cm, Outside (Right): 1cm, Gutter: 0cm
