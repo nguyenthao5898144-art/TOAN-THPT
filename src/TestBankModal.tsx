@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GeneratedTest, Question } from '../types';
+import { GeneratedTest, Question } from './types';
 import {
   StoredTestItem,
   getStoredTestBank,
@@ -17,12 +17,12 @@ import {
   extractTestMetadata,
   findDuplicateStoredTest,
   generateSequencedFileName,
-} from '../utils/testBankStorage';
-import { exportTestToWord } from '../utils/wordExporter';
+} from './testBankStorage';
+import { exportTestToWord } from './wordExporter';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
 import { MatrixTable } from './MatrixTable';
-import { resolveQuestionDiagram } from '../utils/mathGraphParser';
+import { resolveQuestionDiagram } from './mathGraphParser';
 import {
   FolderArchive,
   Search,
