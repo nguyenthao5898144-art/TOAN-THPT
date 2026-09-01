@@ -318,23 +318,19 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
           {!isCollapsed && (
             <nav className="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto py-1 text-xs">
               {/* [1] TẠO ĐỀ MỚI */}
-              <button
-                onClick={() => setActiveTab('generator')}
-                id="btn_menu_kt"
-                className={`px-2.5 py-1.5 rounded-md font-medium transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-                  activeTab === 'generator'
-                    ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-blue-300" />
-                <span>[1] TẠO ĐỀ MỚI</span>
               
-{/* TẠO ĐỀ MỚI */}
         <button
-          onClick={onGenerateNew}
+          type="button"
+          onClick={() => {
+            setActiveTab('generator');
+            onGenerateNew && onGenerateNew();
+          }}
           id="btn_menu_generate"
-          className="px-2.5 py-1.5 rounded-md font-medium bg-blue-600 hover:bg-blue-700 text-white transition-all flex items-center space-x-1.5 whitespace-nowrap shadow-md cursor-pointer"
+          className={`px-2.5 py-1.5 rounded-md font-medium transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+            activeTab === 'generator'
+              ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400'
+              : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+          }`}
           title="Tạo đề thi mới theo ma trận đặc tả"
         >
           <Sparkles className="w-3.5 h-3.5 text-blue-200" />
