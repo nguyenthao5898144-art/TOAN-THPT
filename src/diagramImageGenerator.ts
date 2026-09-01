@@ -1,7 +1,7 @@
-import { BBTData, GraphData, DIAGRAM_BANK, DiagramItem } from '../data/diagramBank';
+import { BBTData, GraphData, DIAGRAM_BANK, DiagramItem } from './diagramBank';
 import { parseMathFunction, extractFormulaFromText, hasUnknownParameters, ParsedMathFunction, resolveQuestionDiagram, parseAsciiBBT } from './mathGraphParser';
 import { extractTikZFromText, parseTkzTabToBBT, getTikZCodeForQuestion } from './tikzParser';
-import { Question } from '../types';
+import { Question } from './types';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
