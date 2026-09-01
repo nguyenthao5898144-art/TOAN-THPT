@@ -1,4 +1,4 @@
-import { ClassRoom, StudentAccount, Assignment, StudentSubmission } from '../types';
+import { ClassRoom, StudentAccount, Assignment, StudentSubmission } from './types';
 
 const CLASS_STORAGE_KEY = 'math12_classroom_database_v1';
 const ASSIGNMENT_STORAGE_KEY = 'math12_assignments_database_v1';
