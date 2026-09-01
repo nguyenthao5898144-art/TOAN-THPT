@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { TestConfig, Assignment, ClassRoom } from '../types';
 import { TestConfig } from './types';
-import { getStoredClasses, saveAssignment, Assignment, ClassRoom } from './classStorage'; 
-  Send, Clock, Calendar, CheckSquare, Square, 
-  Users, Check, Copy, Link as LinkIcon, X, Sparkles 
+import { getStoredClasses, saveAssignment, Assignment, ClassRoom } from './classStorage';
+import {
+  Send, Clock, Calendar, CheckSquare, Square,
+  Users, Check, Copy, Link as LinkIcon, X, Sparkles
 } from 'lucide-react';
 
 interface AssignmentModalProps {
@@ -13,6 +13,10 @@ interface AssignmentModalProps {
 }
 
 export const AssignmentModal: React.FC<AssignmentModalProps> = ({
+  isOpen,
+  onClose,
+  currentConfig,
+}) => {
   isOpen,
   onClose,
   currentConfig
