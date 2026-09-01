@@ -22,9 +22,9 @@ export default function App() {
   // 2. Cấu hình & Đề thi mặc định ban đầu
   const [currentTest, setCurrentTest] = useState<GeneratedTest>(() => {
     return createDefaultTest({
-      title: 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ ĐỊNH KỲ TOÁN 12 - GDPT 2018',
+      title: 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN THPT - GDPT 2018',
       grade: '12',
-      durationMinutes: 45,
+      durationMinutes: 90,
       topics: [],
     } as any);
   });
