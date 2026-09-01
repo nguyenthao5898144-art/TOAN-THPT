@@ -472,3 +472,4 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
     </div>
   );
 };
+export default StudentPortal;
