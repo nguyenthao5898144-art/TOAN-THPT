@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Question } from '../types';
+import { Question } from './types';
 import { MathText } from './MathText';
-import { DIAGRAM_BANK } from '../data/diagramBank';
+import { DIAGRAM_BANK } from './diagramBank';
 import { DiagramRenderer } from './DiagramRenderer';
-import { generateTableSvgDataUrl, extractTableDataFromText } from '../utils/tableImageGenerator';
-import { sanitizeQuestionMath } from '../utils/testGenerator';
+import { generateTableSvgDataUrl, extractTableDataFromText } from './tableImageGenerator';
+import { sanitizeQuestionMath } from './testGenerator';
 import { Save, X, Edit3, Plus, Trash2, Image as ImageIcon, Sparkles, Table as TableIcon, RefreshCw } from 'lucide-react';
 
 interface EditorModalProps {
