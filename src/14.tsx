@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { TestConfig, GeneratedTest, StudentAccount, StudentSubmission } from './types';
-import { generateUniqueTestForStudent } from './studentTestGenerator';
+import { generateUniqueTestForStudent } from './testGenerator';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
 import { resolveQuestionDiagram } from './mathGraphParser';
