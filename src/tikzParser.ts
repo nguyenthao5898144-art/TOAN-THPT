@@ -1,5 +1,5 @@
-import { BBTData, GraphData, DiagramItem, DIAGRAM_BANK } from '../data/diagramBank';
-import { Question } from '../types';
+import { BBTData, GraphData, DiagramItem, DIAGRAM_BANK } from './diagramBank';
+import { Question } from './types';
 import { parseAsciiBBT } from './mathGraphParser';
 
 export interface ParsedTikZResult {
