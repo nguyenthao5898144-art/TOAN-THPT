@@ -12,14 +12,22 @@ import {
   ChevronUp,
   ChevronDown,
   BookOpen,
+  Send,
+  FileText,
+  Layers,
+  Table,
+  Award,
+  Download,
+  RefreshCw,
 } from 'lucide-react';
 
-interface HeaderMenuProps {
+export interface HeaderMenuProps {
   activeTab: 'generator' | 'slides' | 'editor' | 'matrix' | 'bank';
   setActiveTab: (tab: 'generator' | 'slides' | 'editor' | 'matrix' | 'bank') => void;
   onExportWord?: () => void;
   onGenerateNew?: () => void;
   onOpenUpload: () => void;
+  onOpenAssign?: () => void;
   onQuickSaveToBank?: () => void;
   isGenerating?: boolean;
   questionCount: number;
@@ -29,14 +37,16 @@ interface HeaderMenuProps {
 export const HeaderMenu: React.FC<HeaderMenuProps> = ({
   activeTab,
   setActiveTab,
+  onExportWord,
   onGenerateNew,
   onOpenUpload,
+  onOpenAssign,
   onQuickSaveToBank,
-  isGenerating,
+  isGenerating = false,
   questionCount,
   savedCount = 0,
 }) => {
-  // Floating state: pinned to top vs freely movable floating menu
+  // Trạng thái ghim nổi (Floating) hoặc ghim cố định trên đầu trang
   const [isFloating, setIsFloating] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem('header_menu_is_floating');
@@ -55,7 +65,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
     }
   });
 
-  // Coordinates for floating position
+  // Tọa độ vị trí nổi
   const [position, setPosition] = useState<{ x: number; y: number }>(() => {
     try {
       const saved = localStorage.getItem('header_menu_position');
@@ -66,7 +76,6 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
         }
       }
     } catch {}
-    // Default floating position: centered horizontally near top
     return {
       x: typeof window !== 'undefined' ? Math.max(16, (window.innerWidth - 760) / 2) : 50,
       y: 16,
@@ -83,7 +92,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
 
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Save state preferences
+  // Lưu trạng thái cài đặt vào localStorage
   useEffect(() => {
     try {
       localStorage.setItem('header_menu_is_floating', JSON.stringify(isFloating));
@@ -104,321 +113,144 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
     }
   }, [position, isFloating]);
 
-  // Keep floating position bounded on resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (!isFloating || !menuRef.current) return;
-      const rect = menuRef.current.getBoundingClientRect();
-      const maxX = Math.max(10, window.innerWidth - rect.width - 10);
-      const maxY = Math.max(10, window.innerHeight - rect.height - 10);
-
-      setPosition((prev) => ({
-        x: Math.min(Math.max(10, prev.x), maxX),
-        y: Math.min(Math.max(10, prev.y), maxY),
-      }));
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isFloating]);
-
-  // Mouse & Touch Drag Handlers
-  const handleDragStart = useCallback(
-    (clientX: number, clientY: number) => {
-      if (!isFloating) {
-        // Automatically switch to floating mode when user starts dragging
-        setIsFloating(true);
-        if (menuRef.current) {
-          const rect = menuRef.current.getBoundingClientRect();
-          setPosition({ x: rect.left, y: rect.top });
-          dragStartRef.current = {
-            startX: clientX,
-            startY: clientY,
-            posX: rect.left,
-            posY: rect.top,
-          };
-        }
-      } else {
-        dragStartRef.current = {
-          startX: clientX,
-          startY: clientY,
-          posX: position.x,
-          posY: position.y,
-        };
-      }
+  // Xử lý kéo thả vị trí nổi
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isFloating) return;
       setIsDragging(true);
+      dragStartRef.current = {
+        startX: e.clientX,
+        startY: e.clientY,
+        posX: position.x,
+        posY: position.y,
+      };
     },
     [isFloating, position]
   );
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    // Only trigger drag if left button clicked
-    if (e.button !== 0) return;
-    handleDragStart(e.clientX, e.clientY);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 1) {
-      handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
-    }
-  };
-
   useEffect(() => {
-    if (!isDragging) return;
-
     const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - dragStartRef.current.startX;
-      const deltaY = e.clientY - dragStartRef.current.startY;
-
-      const menuWidth = menuRef.current?.offsetWidth || 600;
-      const menuHeight = menuRef.current?.offsetHeight || 60;
-
-      const maxX = Math.max(10, window.innerWidth - menuWidth - 10);
-      const maxY = Math.max(10, window.innerHeight - menuHeight - 10);
-
-      const nextX = Math.min(Math.max(10, dragStartRef.current.posX + deltaX), maxX);
-      const nextY = Math.min(Math.max(10, dragStartRef.current.posY + deltaY), maxY);
-
-      setPosition({ x: nextX, y: nextY });
+      if (!isDragging) return;
+      const dx = e.clientX - dragStartRef.current.startX;
+      const dy = e.clientY - dragStartRef.current.startY;
+      const newX = Math.max(10, Math.min(window.innerWidth - 300, dragStartRef.current.posX + dx));
+      const newY = Math.max(10, Math.min(window.innerHeight - 80, dragStartRef.current.posY + dy));
+      setPosition({ x: newX, y: newY });
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        const deltaX = e.touches[0].clientX - dragStartRef.current.startX;
-        const deltaY = e.touches[0].clientY - dragStartRef.current.startY;
-
-        const menuWidth = menuRef.current?.offsetWidth || 600;
-        const menuHeight = menuRef.current?.offsetHeight || 60;
-
-        const maxX = Math.max(10, window.innerWidth - menuWidth - 10);
-        const maxY = Math.max(10, window.innerHeight - menuHeight - 10);
-
-        const nextX = Math.min(Math.max(10, dragStartRef.current.posX + deltaX), maxX);
-        const nextY = Math.min(Math.max(10, dragStartRef.current.posY + deltaY), maxY);
-
-        setPosition({ x: nextX, y: nextY });
-      }
-    };
-
-    const handleDragEnd = () => {
+    const handleMouseUp = () => {
       setIsDragging(false);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleDragEnd);
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-    window.addEventListener('touchend', handleDragEnd);
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleDragEnd);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleDragEnd);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isDragging]);
 
   const handleResetPosition = () => {
-    if (typeof window !== 'undefined') {
-      const menuWidth = menuRef.current?.offsetWidth || 760;
-      setPosition({
-        x: Math.max(16, (window.innerWidth - menuWidth) / 2),
-        y: 20,
-      });
-    }
-  };
-
-  const handleToggleFloating = () => {
-    if (!isFloating) {
-      if (typeof window !== 'undefined') {
-        const menuWidth = menuRef.current?.offsetWidth || 760;
-        setPosition({
-          x: Math.max(16, (window.innerWidth - menuWidth) / 2),
-          y: 20,
-        });
-      }
-      setIsFloating(true);
-    } else {
-      setIsFloating(false);
-    }
+    setPosition({
+      x: typeof window !== 'undefined' ? Math.max(16, (window.innerWidth - 760) / 2) : 50,
+      y: 16,
+    });
   };
 
   return (
-    <>
-      {/* Ghost spacer when floating to avoid page layout jumps */}
-      {!isFloating && <div className="h-0" />}
+    <div
+      ref={menuRef}
+      style={
+        isFloating
+          ? {
+              position: 'fixed',
+              left: `${position.x}px`,
+              top: `${position.y}px`,
+              zIndex: 40,
+            }
+          : {}
+      }
+      className={`transition-all ${
+        isFloating
+          ? 'shadow-2xl rounded-2xl border border-slate-700 bg-slate-900/95 backdrop-blur-md text-white p-2.5 max-w-4xl w-[94vw] sm:w-auto'
+          : 'bg-slate-900 border-b border-slate-800 text-white p-3 shadow-md'
+      }`}
+    >
+      <div className="flex flex-col space-y-2">
+        {/* HÀNG 1: THƯƠNG HIỆU & NÚT ĐIỀU HƯỚNG CỐT LÕI */}
+        <div className="flex items-center justify-between gap-3">
+          {/* Logo & Tên phần mềm */}
+          <div className="flex items-center space-x-2.5">
+            {isFloating && (
+              <button
+                onMouseDown={handleMouseDown}
+                className="p-1 text-slate-400 hover:text-white cursor-move"
+                title="Giữ chuột để di chuyển menu nổi"
+              >
+                <GripVertical className="w-4 h-4" />
+              </button>
+            )}
 
-      <header
-        ref={menuRef}
-        style={
-          isFloating
-            ? {
-                position: 'fixed',
-                left: `${position.x}px`,
-                top: `${position.y}px`,
-                zIndex: 100,
-                touchAction: 'none',
-              }
-            : undefined
-        }
-        className={`transition-shadow ${
-          isFloating
-            ? `shadow-2xl rounded-2xl border border-blue-500/40 bg-slate-900/95 backdrop-blur-md text-slate-100 ring-2 ${
-                isDragging ? 'ring-blue-400 scale-[1.01] opacity-95 cursor-grabbing' : 'ring-slate-700/60'
-              }`
-            : 'sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800 text-slate-100 shadow-md'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2">
-          {/* Drag Handle & Brand Identity */}
-          <div className="flex items-center space-x-2">
-            {/* Drag Grip Handle */}
-            <div
-              onMouseDown={handleMouseDown}
-              onTouchStart={handleTouchStart}
-              className="flex items-center justify-center p-1.5 rounded-lg bg-slate-800/90 hover:bg-blue-600 hover:text-white text-slate-400 cursor-grab active:cursor-grabbing transition-colors group"
-              title="Kéo giữ để di chuyển thanh menu đến bất kỳ vị trí nào"
-            >
-              <GripVertical className="w-4 h-4 group-hover:scale-110 transition-transform text-blue-400 group-hover:text-white" />
-              <Move className="w-3 h-3 -ml-1 text-slate-500 group-hover:text-blue-200" />
+            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center font-black text-xs shadow-md">
+              THPT
             </div>
 
-            {/* Brand Logo & Title */}
-            <div
-              onMouseDown={isFloating ? handleMouseDown : undefined}
-              onTouchStart={isFloating ? handleTouchStart : undefined}
-              className={`flex items-center space-x-2.5 ${isFloating ? 'cursor-grab active:cursor-grabbing select-none' : ''}`}
-            >
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
-                12
+            <div>
+              <div className="flex items-center space-x-1.5">
+                <h1 className="font-black text-sm tracking-wide text-white">TOÁN THPT</h1>
+                <span className="text-[9px] px-1.5 py-0.2 bg-blue-500/30 text-blue-300 rounded font-bold border border-blue-400/30">
+                  GDPT 2018
+                </span>
               </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h1 className="font-extrabold text-base sm:text-lg text-white leading-tight tracking-wide">
-                    TOÁN THPT
-                  </h1>
-                  <span className="text-[10px] font-bold text-blue-300 bg-blue-950/80 px-1.5 py-0.5 rounded border border-blue-800/80">
-                    GDPT 2018
-                  </span>
-                </div>
-                {!isCollapsed && (
-                  <div className="flex items-center space-x-2 text-[11px] text-slate-400">
-                    <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                      <UserCheck className="w-3 h-3 text-emerald-400 inline" />
-                      Tác giả: NGUYỄN QUỐC TÂM
-                    </span>
-                    <span className="text-slate-600 hidden md:inline">•</span>
-                    <span className="hidden md:inline">THPT MAI THANH THẾ</span>
-                  </div>
-                )}
-              </div>
+              <p className="text-[10px] text-slate-400 hidden sm:block">
+                Tác giả: NGUYỄN QUỐC TÂM • THPT MAI THANH THẾ
+              </p>
             </div>
           </div>
 
-          {/* System Control Navigation Bar */}
+          {/* Các nút lệnh quan trọng: Tạo đề, Tải lên, Kho đề, Giao bài */}
           {!isCollapsed && (
-            <nav className="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto py-1 text-xs">
-              {/* [1] TẠO ĐỀ MỚI */}
-              
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('generator');
-            onGenerateNew && onGenerateNew();
-          }}
-          id="btn_menu_generate"
-          className={`px-2.5 py-1.5 rounded-md font-medium transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-            activeTab === 'generator'
-              ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400'
-              : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
-          }`}
-          title="Tạo đề thi mới theo ma trận đặc tả"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-blue-200" />
-          <span> [1] TẠO ĐỀ MỚI</span>
-        </button>
-              {/* [2] TẢI LÊN */}
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+              {/* NÚT 1: TẠO ĐỀ MỚI */}
               <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('generator');
+                  onGenerateNew && onGenerateNew();
+                }}
+                id="btn_menu_generate"
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer shadow-sm ${
+                  activeTab === 'generator'
+                    ? 'bg-blue-600 text-white ring-2 ring-blue-300'
+                    : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                }`}
+                title="Tạo đề thi mới theo ma trận đặc tả"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-blue-200" />
+                <span> TẠO ĐỀ MỚI</span>
+              </button>
+
+              {/* NÚT 2: TẢI LÊN FILE WORD */}
+              <button
+                type="button"
                 onClick={onOpenUpload}
                 id="btn_menu_upload"
-                className="px-2.5 py-1.5 rounded-md font-medium bg-cyan-700 text-cyan-100 hover:bg-cyan-600 transition-all flex items-center space-x-1.5 whitespace-nowrap shadow-sm cursor-pointer"
-                title="Tải lên file câu hỏi (.doc, .docx, .pdf, .txt, .json)"
+                className="px-3 py-1.5 rounded-lg font-bold bg-cyan-700 text-cyan-100 hover:bg-cyan-600 transition-all flex items-center space-x-1.5 whitespace-nowrap shadow-sm cursor-pointer"
+                title="Tải lên file câu hỏi (.docx, .doc, .txt)"
               >
                 <Upload className="w-3.5 h-3.5 text-cyan-300" />
-                <span>[2] Tải lên</span>
+                <span> Tải lên</span>
               </button>
 
-              {/* [3] KHO ĐỀ ĐÃ LƯU (NGÂN HÀNG ĐỀ) */}
-             {/* <button
+              {/* NÚT 3: KHO ĐỀ ĐÃ LƯU */}
+              <button
+                type="button"
                 onClick={() => setActiveTab('bank')}
                 id="btn_menu_bank"
-                className={`px-2.5 py-1.5 rounded-md font-medium transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer shadow-sm ${
                   activeTab === 'bank'
-                    ? 'bg-amber-600 text-white shadow-sm ring-1 ring-amber-400'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
-                }`}
-                title="Ngân hàng lưu trữ các đề thi đã tạo (tên file Lớp-Bài)"
-              >
-                <FolderArchive className="w-3.5 h-3.5 text-amber-300" />
-                <span>[3] Kho đề đã lưu</span>
-                {savedCount > 0 && (
-                  <span className="bg-amber-500 text-slate-950 font-extrabold text-[10px] px-1.5 py-0.2 rounded-full ml-0.5">
-                    {savedCount}
-                  </span>
-                )}
-              </button> */}
-            </nav>
-          )}
-
-          {/* Action Tools & Drag Mode Settings */}
-          <div className="flex items-center space-x-1.5">
-            {/* Menu Move / Pin Mode Controls */}
-            <div className="flex items-center space-x-1">
-              {/* Toggle Floating vs Docked Mode */}
-              <button
-                onClick={handleToggleFloating}
-                className={`p-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1 cursor-pointer ${
-                  isFloating
-                    ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-sm ring-1 ring-blue-300'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
-                }`}
-                title={
-                  isFloating
-                    ? 'Đang ở chế độ NỔI DI CHUYỂN TÙY Ý. Nhấn để ghim cố định lại đầu trang'
-                    : 'Nhấn để chuyển sang CHẾ ĐỘ NỔI DI CHUYỂN TÙY Ý trên màn hình'
-                }
-              >
-                {isFloating ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
-                <span className="hidden lg:inline text-[11px]">
-                  {isFloating ? 'Đang nổi' : 'Di chuyển'}
-                </span>
-              </button>
-
-              {/* Reset Floating Position */}
-              {isFloating && (
-                <button
-                  onClick={handleResetPosition}
-                  className="p-1.5 rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-all cursor-pointer"
-                  title="Đặt lại vị trí menu về vị trí giữa phía trên"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </button>
-              )}
-
-              {/* Minimize / Expand Toggle */}
-              {isFloating && (
-                <button
-                  onClick={() => setIsCollapsed(!isCollapsed)}
-                  className="p-1.5 rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-all cursor-pointer"
-                  title={isCollapsed ? 'Mở rộng thanh menu đầy đủ' : 'Thu gọn thanh menu'}
-                >
-                  {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-    </>
-  );
-};
-
+                    ? 'bg-amber-600 text-white ring-2 ring-amber-300'
+                    : 'bg-slate-800 text-slate-2
