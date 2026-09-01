@@ -546,4 +546,118 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
                           className="w-12 p-1 text-center font-bold border rounded bg-white"
                         />
                       </td>
-                      <
+                      <td className="border border-slate-300 p-1 bg-emerald-50/20">
+                        <input
+                          type="number"
+                          min={0}
+                          value={counts.vd}
+                          onChange={(e) => updateYccdCount(row.key, 'vd', Number(e.target.value))}
+                          className="w-12 p-1 text-center font-bold border rounded bg-white"
+                        />
+                      </td>
+                      <td className="border border-slate-300 p-2 font-black text-slate-900 bg-slate-50">{rowTotal} câu</td>
+                    </tr>
+                  );
+                })}
+
+                {/* Hàng tổng cộng YCCĐ */}
+                <tr className="bg-slate-100 font-black text-slate-900">
+                  <td colSpan={3} className="border border-slate-300 p-2 text-right uppercase tracking-wider">
+                    TỔNG CỘNG SỐ CÂU PHÂN BỔ THEO YCCĐ:
+                  </td>
+                  <td className="border border-slate-300 p-2 bg-blue-100 text-blue-900">{sumYccdNB} NB</td>
+                  <td className="border border-slate-300 p-2 bg-indigo-100 text-indigo-900">{sumYccdTH} TH</td>
+                  <td className="border border-slate-300 p-2 bg-emerald-100 text-emerald-900">{sumYccdVD} VD</td>
+                  <td className="border border-slate-300 p-2 bg-emerald-800 text-white font-black text-sm">{sumYccdTotal} CÂU</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="p-2.5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              {isMatrixSynced ? (
+                <span className="text-emerald-700 font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  Ma trận chi tiết YCCĐ khớp 100% với tổng Ma trận Dạng câu hỏi ({totalQuestions} câu)
+                </span>
+              ) : (
+                <span className="text-amber-700 font-bold flex items-center gap-1">
+                  <HelpCircle className="w-4 h-4 text-amber-600" />
+                  Chưa khớp số câu ({sumYccdTotal} / {totalQuestions} câu). Bấm "Tự động chia đều" để đồng bộ.
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handleAutoDistributeYccd}
+              className="text-blue-600 hover:underline font-bold"
+            >
+              Đồng bộ lại theo Ma trận Dạng câu hỏi
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* BƯỚC 3: TẠO ĐỀ THI HOÀN CHỈNH (TỪ AI HOẶC TỪ NGÂN HÀNG CÂU HỎI) */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 bg-purple-600 text-white text-[11px] font-black rounded">BƯỚC 3</span>
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+              TẠO ĐỀ THI HOÀN CHỈNH (TỪ AI HOẶC TỪ NGÂN HÀNG CÂU HỎI)
+            </h3>
+          </div>
+          <div className="text-xs font-bold text-slate-700">
+            Tổng cộng: <strong className="text-blue-700">{totalQuestions} câu hỏi</strong> | <strong className="text-emerald-700">{totalScore} điểm</strong>
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-500">
+          Đề thi sẽ được khởi tạo 100% đúng theo ma trận {totalQuestions} câu và các YCCĐ đã chọn ở trên. Vui lòng chọn nguồn tạo đề:
+        </p>
+
+        {/* 2 NÚT TẠO ĐỀ CHÍNH */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+          {/* Nút 1: Tạo đề từ AI Gemini */}
+          <button
+            type="button"
+            disabled={isGenerating || selectedLessonIds.length === 0}
+            onClick={() => handleStartGenerate('ai')}
+            className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:bg-slate-300 text-white rounded-xl text-left shadow-lg hover:shadow-xl transition-all cursor-pointer space-y-1.5"
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-black text-sm flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-300" /> TẠO ĐỀ TỪ AI (GEMINI)
+              </span>
+              <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold uppercase">Tự động 100%</span>
+            </div>
+            <p className="text-[11px] text-blue-100">
+              AI sẽ tự động biên soạn mới toàn bộ {totalQuestions} câu hỏi bám sát Ma trận & YCCĐ GDPT 2018.
+            </p>
+          </button>
+
+          {/* Nút 2: Tạo đề từ Ngân hàng */}
+          <button
+            type="button"
+            disabled={isGenerating || selectedLessonIds.length === 0}
+            onClick={() => handleStartGenerate('bank')}
+            className="p-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:bg-slate-300 text-white rounded-xl text-left shadow-lg hover:shadow-xl transition-all cursor-pointer space-y-1.5"
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-black text-sm flex items-center gap-2">
+                <Database className="w-4 h-4 text-emerald-200" /> TẠO ĐỀ TỪ NGÂN HÀNG
+              </span>
+              <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold uppercase">Có sẵn mẫu</span>
+            </div>
+            <p className="text-[11px] text-emerald-100">
+              Lấy câu hỏi & bài tập chuẩn mực từ Ngân hàng câu hỏi có sẵn theo đúng tỉ lệ ma trận đã cấu hình.
+            </p>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default QuestionGeneratorModal;
