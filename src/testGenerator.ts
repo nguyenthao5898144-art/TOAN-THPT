@@ -2975,3 +2975,28 @@ export function calculateMatrixAndSummary(questions: Question[], config?: TestCo
     },
   };
 }
+/**
+ * Tự động tạo / xáo trộn đề thi riêng biệt cho từng học sinh
+ */
+export function generateUniqueTestForStudent(config: TestConfig, student?: any): GeneratedTest {
+  const baseTest: GeneratedTest = typeof createDefaultTest === 'function'
+    ? createDefaultTest(config)
+    : ({
+        id: `test_${Date.now()}`,
+        title: config?.title || 'ĐỀ THI TOÁN 12',
+        config,
+        questions: [],
+        createdAt: new Date().toISOString(),
+      } as any);
+
+  if (baseTest.questions && baseTest.questions.length > 0) {
+    const shuffled = [...baseTest.questions].sort(() => Math.random() - 0.5);
+    return {
+      ...baseTest,
+      id: `test_hs_${Date.now()}`,
+      questions: shuffled,
+    };
+  }
+
+  return baseTest;
+}
