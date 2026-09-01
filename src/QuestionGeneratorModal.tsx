@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { TestConfig } from '../types';
-import { MATH_12_SYLLABUS, Topic, Lesson } from '../data/math12Syllabus';
-import { DIAGRAM_BANK, DiagramItem } from '../data/diagramBank';
+import { TestConfig } from './types';
+import { MATH_12_SYLLABUS, Topic, Lesson } from './math12Syllabus';
+import { DIAGRAM_BANK, DiagramItem } from './diagramBank';
 import { DiagramRenderer } from './DiagramRenderer';
 import { Sparkles, CheckCircle2, Sliders, BookOpen, AlertCircle, RefreshCw, CheckSquare, Square, ListChecks, Image as ImageIcon, ChevronDown, ChevronUp, Trash2, RotateCcw } from 'lucide-react';
 
