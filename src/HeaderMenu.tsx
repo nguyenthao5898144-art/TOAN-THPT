@@ -11,6 +11,7 @@ import {
   GripVertical,
   ChevronUp,
   ChevronDown,
+  BookOpen,
 } from 'lucide-react';
 
 interface HeaderMenuProps {
