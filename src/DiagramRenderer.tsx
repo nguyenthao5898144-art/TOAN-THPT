@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DiagramItem, DIAGRAM_BANK, BBTData, GraphData } from '../data/diagramBank';
+import { DiagramItem, DIAGRAM_BANK, BBTData, GraphData } from './diagramBank';
 import { MathText } from './MathText';
 import { parseMathFunction, extractFormulaFromText, hasUnknownParameters, ParsedMathFunction, parseAsciiBBT, resolveQuestionDiagram } from '../utils/mathGraphParser';
 import {
