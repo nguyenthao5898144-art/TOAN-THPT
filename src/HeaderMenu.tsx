@@ -348,7 +348,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
               </button>
 
               {/* [3] KHO ĐỀ ĐÃ LƯU (NGÂN HÀNG ĐỀ) */}
-              <button
+             {/* <button
                 onClick={() => setActiveTab('bank')}
                 id="btn_menu_bank"
                 className={`px-2.5 py-1.5 rounded-md font-medium transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
@@ -365,7 +365,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
                     {savedCount}
                   </span>
                 )}
-              </button>
+              </button> */}
             </nav>
           )}
 
