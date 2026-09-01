@@ -14,12 +14,13 @@ import { AssignmentModal } from './19';
 import { StudentPortal } from './14';
 import { exportTestToWord } from './wordExporter';
 import { saveTestToBank } from './testBankStorage';
+import { Send, UserCheck, Sparkles, FileText } from 'lucide-react';
 
 export default function App() {
   // 1. Tự động nhận diện nếu link mở ở chế độ học sinh làm bài
   const isStudentMode = new URLSearchParams(window.location.search).get('mode') === 'student';
 
-  // 2. Cấu hình & Đề thi mặc định ban đầu (Đầy đủ thuộc tính)
+  // 2. Cấu hình & Đề thi mặc định ban đầu
   const [currentTest, setCurrentTest] = useState<GeneratedTest>(() => {
     const defaultCfg = {
       title: 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN THPT - GDPT 2018',
@@ -38,7 +39,6 @@ export default function App() {
     try {
       return createDefaultTest(defaultCfg as any);
     } catch (e) {
-      console.warn('Fallback test init:', e);
       return {
         id: `test_${Date.now()}`,
         title: defaultCfg.title,
@@ -106,9 +106,35 @@ export default function App() {
         onExportWord={handleExportWord}
         onGenerateNew={() => setIsGenModalOpen(true)}
         onOpenUpload={() => setIsUploadModalOpen(true)}
+        onOpenAssign={() => setIsAssignModalOpen(true)}
         onQuickSaveToBank={handleQuickSaveToBank}
         isGenerating={isGenerating}
       />
+
+      {/* Nút hành động nhanh Giao bài trực tuyến đặt ngay dưới thanh Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsAssignModalOpen(true)}
+            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer ring-2 ring-emerald-300"
+          >
+            <Send className="w-4 h-4" /> 📲 GIAO BÀI CHO HỌC SINH (TẠO LINK)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsGenModalOpen(true)}
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300" /> TẠO ĐỀ THEO MA TRẬN
+          </button>
+        </div>
+
+        <div className="text-xs font-semibold text-slate-500">
+          Đề hiện tại: <strong className="text-slate-800">{currentTest.title}</strong> ({currentTest.questions.length} câu)
+        </div>
+      </div>
 
       {/* Vùng hiển thị nội dung chính theo Tab */}
       <main className="max-w-7xl mx-auto p-4 sm:p-6">
@@ -142,7 +168,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Trợ lý AI Gemini hỗ trợ soạn đề (Góc phải dưới) */}
+      {/* Trợ lý AI Gemini hỗ trợ soạn đề */}
       <AssistantChat
         currentTest={currentTest}
         onGenerateCommand={(prompt) => {
@@ -151,15 +177,14 @@ export default function App() {
         isGenerating={isGenerating}
       />
 
-      {/* CỬA SỔ NỔI (MODAL POPUP) TẠO ĐỀ THI BẬT LÊN TRÊN CÙNG */}
+      {/* CỬA SỔ MODAL TẠO ĐỀ THI THEO MA TRẬN */}
       {isGenModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-300 relative p-4 sm:p-6">
-            {/* Nút Đóng góc trên bên phải */}
             <button
               type="button"
               onClick={() => setIsGenModalOpen(false)}
-              className="absolute top-4 right-4 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 rounded-xl text-xs font-bold transition-all cursor-pointer z-50 shadow-sm"
+              className="absolute top-4 right-4 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer z-50 shadow-sm"
               title="Đóng bảng tạo đề"
             >
               ✕ Đóng bảng
@@ -190,6 +215,15 @@ export default function App() {
         </div>
       )}
 
+      {/* CỬA SỔ GIAO BÀI KIỂM TRA CHO HỌC SINH (TẠO LINK) */}
+      {isAssignModalOpen && (
+        <AssignmentModal
+          isOpen={isAssignModalOpen}
+          onClose={() => setIsAssignModalOpen(false)}
+          currentConfig={currentTest.config}
+        />
+      )}
+
       {/* Modal Chỉnh sửa chi tiết câu hỏi */}
       {editingQuestion && (
         <EditorModal
@@ -211,15 +245,6 @@ export default function App() {
               questions: appendMode ? [...prev.questions, ...importedQuestions] : importedQuestions,
             }));
           }}
-        />
-      )}
-
-      {/* Modal Giao bài kiểm tra cho học sinh */}
-      {isAssignModalOpen && (
-        <AssignmentModal
-          isOpen={isAssignModalOpen}
-          onClose={() => setIsAssignModalOpen(false)}
-          currentConfig={currentTest.config}
         />
       )}
     </div>
