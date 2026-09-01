@@ -12,15 +12,14 @@ import { QuestionGeneratorModal } from './QuestionGeneratorModal';
 import { AssistantChat } from './AssistantChat';
 import { AssignmentModal } from './19';
 import { StudentPortal } from './14';
+import { ClassManager } from './18';
 import { exportTestToWord } from './wordExporter';
 import { saveTestToBank } from './testBankStorage';
-import { Send, UserCheck, Sparkles, FileText } from 'lucide-react';
+import { Send, Sparkles, Users } from 'lucide-react';
 
 export default function App() {
-  // 1. Tự động nhận diện nếu link mở ở chế độ học sinh làm bài
   const isStudentMode = new URLSearchParams(window.location.search).get('mode') === 'student';
 
-  // 2. Cấu hình & Đề thi mặc định ban đầu
   const [currentTest, setCurrentTest] = useState<GeneratedTest>(() => {
     const defaultCfg = {
       title: 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN THPT - GDPT 2018',
@@ -49,16 +48,14 @@ export default function App() {
     }
   });
 
-  const [activeTab, setActiveTab] = useState<'generator' | 'slides' | 'editor' | 'matrix' | 'bank'>('generator');
+  const [activeTab, setActiveTab] = useState<'generator' | 'slides' | 'editor' | 'matrix' | 'bank' | 'classes'>('generator');
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
 
-  // Trạng thái mở các Modal chức năng
   const [isGenModalOpen, setIsGenModalOpen] = useState<boolean>(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-  // Nếu là chế độ học sinh -> Hiển thị cổng làm bài trực tuyến
   if (isStudentMode) {
     return (
       <StudentPortal
@@ -68,7 +65,6 @@ export default function App() {
     );
   }
 
-  // Xử lý lưu câu hỏi sau khi chỉnh sửa
   const handleSaveQuestion = (updated: Question) => {
     setCurrentTest((prev) => ({
       ...prev,
@@ -77,7 +73,6 @@ export default function App() {
     setEditingQuestion(null);
   };
 
-  // Xử lý xóa câu hỏi
   const handleDeleteQuestion = (id: string) => {
     setCurrentTest((prev) => ({
       ...prev,
@@ -85,12 +80,10 @@ export default function App() {
     }));
   };
 
-  // Xuất đề thi ra file Word (.docx)
   const handleExportWord = () => {
     exportTestToWord(currentTest);
   };
 
-  // Lưu nhanh đề thi vào Kho dữ liệu
   const handleQuickSaveToBank = () => {
     saveTestToBank(currentTest);
     alert('Đã lưu đề thi vào Kho Lưu Trữ thành công!');
@@ -111,30 +104,32 @@ export default function App() {
         isGenerating={isGenerating}
       />
 
-      {/* Nút hành động nhanh Giao bài trực tuyến đặt ngay dưới thanh Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsAssignModalOpen(true)}
-            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer ring-2 ring-emerald-300"
-          >
-            <Send className="w-4 h-4" /> 📲 GIAO BÀI CHO HỌC SINH (TẠO LINK)
-          </button>
+      {/* Nút hành động nhanh dưới Header */}
+      {activeTab !== 'classes' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsAssignModalOpen(true)}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer ring-2 ring-emerald-300"
+            >
+              <Send className="w-4 h-4" /> 📲 GIAO BÀI CHO HỌC SINH (TẠO LINK)
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setIsGenModalOpen(true)}
-            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4 text-amber-300" /> TẠO ĐỀ THEO MA TRẬN
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => setIsGenModalOpen(true)}
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" /> TẠO ĐỀ THEO MA TRẬN
+            </button>
+          </div>
 
-        <div className="text-xs font-semibold text-slate-500">
-          Đề hiện tại: <strong className="text-slate-800">{currentTest.title}</strong> ({currentTest.questions.length} câu)
+          <div className="text-xs font-semibold text-slate-500">
+            Đề hiện tại: <strong className="text-slate-800">{currentTest.title}</strong> ({currentTest.questions.length} câu)
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Vùng hiển thị nội dung chính theo Tab */}
       <main className="max-w-7xl mx-auto p-4 sm:p-6">
@@ -166,9 +161,14 @@ export default function App() {
             }}
           />
         )}
+
+        {/* TAB HIỂN THỊ QUẢN LÝ LỚP HỌC */}
+        {activeTab === 'classes' && (
+          <ClassManager />
+        )}
       </main>
 
-      {/* Trợ lý AI Gemini hỗ trợ soạn đề */}
+      {/* Trợ lý AI Gemini */}
       <AssistantChat
         currentTest={currentTest}
         onGenerateCommand={(prompt) => {
@@ -215,7 +215,7 @@ export default function App() {
         </div>
       )}
 
-      {/* CỬA SỔ GIAO BÀI KIỂM TRA CHO HỌC SINH (TẠO LINK) */}
+      {/* CỬA SỔ GIAO BÀI CHO HỌC SINH */}
       {isAssignModalOpen && (
         <AssignmentModal
           isOpen={isAssignModalOpen}
