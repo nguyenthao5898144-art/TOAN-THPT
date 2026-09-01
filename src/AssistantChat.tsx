@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ChatMessage, GeneratedTest } from '../types';
+import { ChatMessage, GeneratedTest } from './types';
 import { MessageSquare, Send, Bot, User, Sparkles, X, Minimize2, Maximize2, RefreshCw, GripVertical, Move } from 'lucide-react';
 
 interface AssistantChatProps {
