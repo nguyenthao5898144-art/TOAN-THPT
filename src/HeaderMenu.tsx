@@ -4,21 +4,16 @@ import {
   Upload,
   UserCheck,
   FolderArchive,
-  Move,
   Pin,
   PinOff,
   RotateCcw,
   GripVertical,
   ChevronUp,
   ChevronDown,
-  BookOpen,
-  Send,
+  Download,
   FileText,
   Layers,
   Table,
-  Award,
-  Download,
-  RefreshCw,
 } from 'lucide-react';
 
 export interface HeaderMenuProps {
@@ -41,12 +36,9 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
   onGenerateNew,
   onOpenUpload,
   onOpenAssign,
-  onQuickSaveToBank,
   isGenerating = false,
   questionCount,
-  savedCount = 0,
 }) => {
-  // Trạng thái ghim nổi (Floating) hoặc ghim cố định trên đầu trang
   const [isFloating, setIsFloating] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem('header_menu_is_floating');
@@ -65,7 +57,6 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
     }
   });
 
-  // Tọa độ vị trí nổi
   const [position, setPosition] = useState<{ x: number; y: number }>(() => {
     try {
       const saved = localStorage.getItem('header_menu_position');
@@ -90,30 +81,16 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
     posY: 0,
   });
 
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Lưu trạng thái cài đặt vào localStorage
   useEffect(() => {
     try {
       localStorage.setItem('header_menu_is_floating', JSON.stringify(isFloating));
-    } catch {}
-  }, [isFloating]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem('header_menu_is_collapsed', JSON.stringify(isCollapsed));
-    } catch {}
-  }, [isCollapsed]);
-
-  useEffect(() => {
-    if (isFloating) {
-      try {
+      if (isFloating) {
         localStorage.setItem('header_menu_position', JSON.stringify(position));
-      } catch {}
-    }
-  }, [position, isFloating]);
+      }
+    } catch {}
+  }, [isFloating, isCollapsed, position]);
 
-  // Xử lý kéo thả vị trí nổi
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (!isFloating) return;
@@ -146,7 +123,6 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     }
-
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
@@ -162,7 +138,6 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
 
   return (
     <div
-      ref={menuRef}
       style={
         isFloating
           ? {
@@ -173,22 +148,21 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
             }
           : {}
       }
-      className={`transition-all ${
+      className={
         isFloating
           ? 'shadow-2xl rounded-2xl border border-slate-700 bg-slate-900/95 backdrop-blur-md text-white p-2.5 max-w-4xl w-[94vw] sm:w-auto'
           : 'bg-slate-900 border-b border-slate-800 text-white p-3 shadow-md'
-      }`}
+      }
     >
       <div className="flex flex-col space-y-2">
-        {/* HÀNG 1: THƯƠNG HIỆU & NÚT ĐIỀU HƯỚNG CỐT LÕI */}
+        {/* HÀNG 1: LOGO VÀ CÁC NÚT LỆNH CHÍNH */}
         <div className="flex items-center justify-between gap-3">
-          {/* Logo & Tên phần mềm */}
           <div className="flex items-center space-x-2.5">
             {isFloating && (
               <button
                 onMouseDown={handleMouseDown}
                 className="p-1 text-slate-400 hover:text-white cursor-move"
-                title="Giữ chuột để di chuyển menu nổi"
+                title="Giữ chuột để kéo di chuyển menu"
               >
                 <GripVertical className="w-4 h-4" />
               </button>
@@ -211,7 +185,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
             </div>
           </div>
 
-          {/* Các nút lệnh quan trọng: Tạo đề, Tải lên, Kho đề, Giao bài */}
+          {/* CÁC NÚT BẤM CHỨC NĂNG */}
           {!isCollapsed && (
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
               {/* NÚT 1: TẠO ĐỀ MỚI */}
@@ -219,15 +193,14 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
                 type="button"
                 onClick={() => {
                   setActiveTab('generator');
-                  onGenerateNew && onGenerateNew();
+                  if (onGenerateNew) onGenerateNew();
                 }}
-                id="btn_menu_generate"
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer shadow-sm ${
+                className={
                   activeTab === 'generator'
-                    ? 'bg-blue-600 text-white ring-2 ring-blue-300'
-                    : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
-                }`}
-                title="Tạo đề thi mới theo ma trận đặc tả"
+                    ? 'px-3 py-1.5 rounded-lg font-bold bg-blue-600 text-white ring-2 ring-blue-300 flex items-center space-x-1.5 cursor-pointer shadow-sm'
+                    : 'px-3 py-1.5 rounded-lg font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 flex items-center space-x-1.5 cursor-pointer'
+                }
+                title="Tạo đề thi mới theo ma trận"
               >
                 <Sparkles className="w-3.5 h-3.5 text-blue-200" />
                 <span> TẠO ĐỀ MỚI</span>
@@ -237,9 +210,8 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
               <button
                 type="button"
                 onClick={onOpenUpload}
-                id="btn_menu_upload"
-                className="px-3 py-1.5 rounded-lg font-bold bg-cyan-700 text-cyan-100 hover:bg-cyan-600 transition-all flex items-center space-x-1.5 whitespace-nowrap shadow-sm cursor-pointer"
-                title="Tải lên file câu hỏi (.docx, .doc, .txt)"
+                className="px-3 py-1.5 rounded-lg font-bold bg-cyan-700 text-cyan-100 hover:bg-cyan-600 flex items-center space-x-1.5 cursor-pointer shadow-sm"
+                title="Tải lên file câu hỏi Word"
               >
                 <Upload className="w-3.5 h-3.5 text-cyan-300" />
                 <span> Tải lên</span>
@@ -249,8 +221,135 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('bank')}
-                id="btn_menu_bank"
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer shadow-sm ${
+                className={
                   activeTab === 'bank'
-                    ? 'bg-amber-600 text-white ring-2 ring-amber-300'
-                    : 'bg-slate-800 text-slate-2
+                    ? 'px-3 py-1.5 rounded-lg font-bold bg-amber-600 text-white ring-2 ring-amber-300 flex items-center space-x-1.5 cursor-pointer shadow-sm'
+                    : 'px-3 py-1.5 rounded-lg font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 flex items-center space-x-1.5 cursor-pointer'
+                }
+                title="Kho lưu trữ các đề thi đã tạo"
+              >
+                <FolderArchive className="w-3.5 h-3.5 text-amber-300" />
+                <span> Kho đề đã lưu</span>
+              </button>
+
+              {/* NÚT 4: GIAO BÀI CHO HỌC SINH (LẤY LINK) */}
+              <button
+                type="button"
+                onClick={onOpenAssign}
+                className="px-3 py-1.5 rounded-lg font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center space-x-1.5 cursor-pointer shadow-sm ring-1 ring-emerald-300"
+                title="Tạo link và giao bài cho học sinh"
+              >
+                <UserCheck className="w-3.5 h-3.5 text-emerald-200" />
+                <span> Giao bài học sinh</span>
+              </button>
+
+              {/* NÚT XUẤT WORD */}
+              {onExportWord && (
+                <button
+                  type="button"
+                  onClick={onExportWord}
+                  className="px-3 py-1.5 rounded-lg font-bold bg-blue-800 hover:bg-blue-700 text-white flex items-center space-x-1.5 cursor-pointer shadow-sm"
+                  title="Xuất đề thi ra file Word (.docx)"
+                >
+                  <Download className="w-3.5 h-3.5 text-blue-200" />
+                  <span>Xuất Word</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* CÔNG CỤ GHIM / THU GỌN */}
+          <div className="flex items-center space-x-1 text-slate-400">
+            <button
+              type="button"
+              onClick={() => setIsFloating(!isFloating)}
+              className="p-1.5 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+              title={isFloating ? 'Ghim cố định lên đầu trang' : 'Bật chế độ menu nổi'}
+            >
+              {isFloating ? <Pin className="w-3.5 h-3.5 text-blue-400" /> : <PinOff className="w-3.5 h-3.5" />}
+            </button>
+
+            {isFloating && (
+              <button
+                type="button"
+                onClick={handleResetPosition}
+                className="p-1.5 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                title="Đặt lại vị trí"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="p-1.5 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+              title={isCollapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
+            >
+              {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* HÀNG 2: CÁC TAB CHỨC NĂNG */}
+        {!isCollapsed && (
+          <div className="flex items-center space-x-1.5 border-t border-slate-800/80 pt-2 text-xs overflow-x-auto">
+            <button
+              type="button"
+              onClick={() => setActiveTab('generator')}
+              className={
+                activeTab === 'generator'
+                  ? 'px-3 py-1.5 rounded-lg font-bold bg-blue-600 text-white flex items-center space-x-1.5'
+                  : 'px-3 py-1.5 rounded-lg font-bold text-slate-300 hover:bg-slate-800 hover:text-white flex items-center space-x-1.5'
+              }
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Đề thi ({questionCount} câu)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('slides')}
+              className={
+                activeTab === 'slides'
+                  ? 'px-3 py-1.5 rounded-lg font-bold bg-blue-600 text-white flex items-center space-x-1.5'
+                  : 'px-3 py-1.5 rounded-lg font-bold text-slate-300 hover:bg-slate-800 hover:text-white flex items-center space-x-1.5'
+              }
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Trình chiếu Slide</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('matrix')}
+              className={
+                activeTab === 'matrix'
+                  ? 'px-3 py-1.5 rounded-lg font-bold bg-blue-600 text-white flex items-center space-x-1.5'
+                  : 'px-3 py-1.5 rounded-lg font-bold text-slate-300 hover:bg-slate-800 hover:text-white flex items-center space-x-1.5'
+              }
+            >
+              <Table className="w-3.5 h-3.5" />
+              <span>Ma trận & Bản đặc tả</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('bank')}
+              className={
+                activeTab === 'bank'
+                  ? 'px-3 py-1.5 rounded-lg font-bold bg-blue-600 text-white flex items-center space-x-1.5'
+                  : 'px-3 py-1.5 rounded-lg font-bold text-slate-300 hover:bg-slate-800 hover:text-white flex items-center space-x-1.5'
+              }
+            >
+              <FolderArchive className="w-3.5 h-3.5" />
+              <span>Kho lưu trữ đề</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default HeaderMenu;
