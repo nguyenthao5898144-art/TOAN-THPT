@@ -1,13 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, X, Loader2, FileCode, Layers, Sparkles, Files, Filter } from 'lucide-react';
-import { Question, MultipleChoiceQuestion, TrueFalseQuestion, ShortAnswerQuestion, CognitiveLevel } from '../types';
+import { Question, MultipleChoiceQuestion, TrueFalseQuestion, ShortAnswerQuestion, CognitiveLevel } from './types';
 import mammoth from 'mammoth';
-import { MATH_12_SYLLABUS } from '../data/math12Syllabus';
-import { autoDeduplicateQuestions } from '../utils/deduplication';
-import { processQuestionTableToImage } from '../utils/tableImageGenerator';
-import { ensureUniqueDiagramsInTest, sanitizeQuestionMath } from '../utils/testGenerator';
-import { detectQuestionVisuals, filterQuestionsByVisualCategory } from '../utils/visualDetector';
-import { extractTikZFromText } from '../utils/tikzParser';
+import { MATH_12_SYLLABUS } from './math12Syllabus';
+import { autoDeduplicateQuestions } from './deduplication';
+import { processQuestionTableToImage } from './tableImageGenerator';
+import { ensureUniqueDiagramsInTest, sanitizeQuestionMath } from './testGenerator';
+import { detectQuestionVisuals, filterQuestionsByVisualCategory } from './visualDetector';
+import { extractTikZFromText } from './tikzParser';
 
 interface FileUploadModalProps {
   isOpen: boolean;
