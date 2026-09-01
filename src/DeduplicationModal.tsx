@@ -4,7 +4,7 @@ import {
   findDuplicateQuestionGroups,
   autoDeduplicateQuestions,
   DuplicateGroup,
-} from '../utils/deduplication';
+} from './utils/deduplication';
 import { MathText } from './MathText';
 import {
   X,
