@@ -148,3 +148,18 @@ export interface ChatMessage {
   timestamp: string;
   actionRequested?: 'generate' | 'edit' | 'matrix' | 'export';
 }
+export interface StudentAccount {
+  id: string;
+  name: string;
+  className?: string;
+}
+
+export interface StudentSubmission {
+  id: string;
+  studentId: string;
+  studentName: string;
+  testId?: string;
+  score?: number;
+  submittedAt: string;
+  answers: any;
+}
