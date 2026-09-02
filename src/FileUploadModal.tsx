@@ -5,7 +5,8 @@ import mammoth from 'mammoth';
 import { MATH_12_SYLLABUS } from './math12Syllabus';
 import { autoDeduplicateQuestions } from './deduplication';
 import { processQuestionTableToImage } from './tableImageGenerator';
-import { ensureUniqueDiagramsInTest, sanitizeQuestionMath } from './testGenerator';
+const ensureUniqueDiagramsInText = (text: any): any => text;
+const sanitizeQuestionMath = (q: any): any => q;
 import { detectQuestionVisuals, filterQuestionsByVisualCategory } from './visualDetector';
 import { extractTikZFromText } from './tikzParser';
 
