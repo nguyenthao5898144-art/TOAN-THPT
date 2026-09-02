@@ -1,7 +1,19 @@
 import { GeneratedTest, Question, TestConfig, StudentAccount } from './types';
 
 // ==============================================================
-// 1. NGÂN HÀNG CÂU HỎI TOÁN 11 CHUẨN GDPT 2018 (KHÔNG CÓ ĐẠO HÀM ĐƠN ĐIỆU CỦA LỚP 12)
+// 1. HÀM LÀM SẠCH CÔNG THỨC TOÁN CHO EDITOR MODAL
+// ==============================================================
+export const sanitizeQuestionMath = (question: Question | any): Question => {
+  if (!question) return question;
+  return {
+    ...question,
+    content: question.content ? String(question.content).trim() : '',
+    solution: question.solution ? String(question.solution).trim() : '',
+  };
+};
+
+// ==============================================================
+// 2. NGÂN HÀNG CÂU HỎI TOÁN 11 CHUẨN GDPT 2018 (KHÔNG CÓ ĐẠO HÀM LỚP 12)
 // ==============================================================
 export const MATH_11_QUESTIONS: Question[] = [
   {
@@ -62,7 +74,7 @@ export const MATH_11_QUESTIONS: Question[] = [
       { key: 'D', text: '$54$' },
     ],
     correctAnswer: 'A',
-    solution: 'Ta có $u_3 = u_1 \\cdot q^2 = 2 \\cdot 3^2 = 18$.',
+    solution: 'Theo công thức cấp số nhân: $u_3 = u_1 \\cdot q^2 = 2 \\cdot 3^2 = 18$.',
   },
   {
     id: 'q11_5',
@@ -92,7 +104,7 @@ export const MATH_11_QUESTIONS: Question[] = [
       { key: 'D', text: '$1$' },
     ],
     correctAnswer: 'A',
-    solution: 'Rút gọn: $\\lim_{x \\to 2} \\frac{(x-2)(x+2)}{x-2} = \\lim_{x \\to 2} (x+2) = 4$.',
+    solution: 'Rút gọn phân thức: $\\lim_{x \\to 2} \\frac{(x-2)(x+2)}{x-2} = \\lim_{x \\to 2} (x+2) = 4$.',
   },
   {
     id: 'q11_7',
@@ -128,7 +140,7 @@ export const MATH_11_QUESTIONS: Question[] = [
     id: 'q11_9',
     type: 'multiple_choice',
     level: 'ThongHieu',
-    topicName: 'Phương trình tiếp tuyến lớp 11',
+    topicName: 'Tiếp tuyến của đồ thị hàm số',
     content: 'Hệ số góc của tiếp tuyến của parabol $y = x^2 - 2x + 3$ tại điểm có hoành độ $x_0 = 2$ bằng:',
     options: [
       { key: 'A', text: '$2$' },
@@ -143,7 +155,7 @@ export const MATH_11_QUESTIONS: Question[] = [
     id: 'q11_10',
     type: 'multiple_choice',
     level: 'VanDung',
-    topicName: 'Phương trình mũ và logarit 11',
+    topicName: 'Phương trình logarit 11',
     content: 'Nghiệm của phương trình logarit $\\log_2(x - 1) = 3$ là:',
     options: [
       { key: 'A', text: '$x = 9$' },
@@ -299,7 +311,7 @@ export const MATH_11_QUESTIONS: Question[] = [
 ];
 
 // ==============================================================
-// 2. NGÂN HÀNG CÂU HỎI TOÁN 10 CHUẨN GDPT 2018 (CÓ BẢNG XÉT DẤU TAM THỨC BẬC HAI)
+// 3. NGÂN HÀNG CÂU HỎI TOÁN 10 CHUẨN GDPT 2018 (CÓ BẢNG XÉT DẤU TAM THỨC BẬC HAI)
 // ==============================================================
 export const MATH_10_QUESTIONS: Question[] = [
   {
@@ -350,7 +362,7 @@ export const MATH_10_QUESTIONS: Question[] = [
 ];
 
 // ==============================================================
-// 3. NGÂN HÀNG CÂU HỎI TOÁN 12 (CÓ BẢNG BIẾN THIÊN & BẢNG XÉT DẤU)
+// 4. NGÂN HÀNG CÂU HỎI TOÁN 12 (CÓ BẢNG BIẾN THIÊN & BẢNG XÉT DẤU)
 // ==============================================================
 export const MATH_12_QUESTIONS: Question[] = [
   {
@@ -386,7 +398,7 @@ export const MATH_12_QUESTIONS: Question[] = [
 ];
 
 // ==============================================================
-// 4. HÀM TẠO ĐỀ BẢO ĐẢM 100% ĐÚNG THEO KHỐI LỚP VÀ MA TRẬN
+// 5. HÀM TẠO ĐỀ BẢO ĐẢM 100% ĐÚNG THEO KHỐI LỚP VÀ MA TRẬN
 // ==============================================================
 export const createDefaultTest = (config: TestConfig): GeneratedTest => {
   const grade = String(config.grade || '11');
