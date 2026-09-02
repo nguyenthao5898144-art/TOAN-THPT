@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { GeneratedTest, Question, TestConfig } from './types';
+import { GeneratedTest, Question } from './types';
 import { createDefaultTest } from './testGenerator';
-import { HeaderMenu } from './HeaderMenu';
+import { HeaderMenu, ActiveTabType } from './HeaderMenu';
 import { QuestionList } from './QuestionList';
 import { SlideViewer } from './SlideViewer';
 import { MatrixTable } from './MatrixTable';
@@ -47,14 +47,12 @@ export default function App() {
     }
   });
 
-  const [activeTab, setActiveTab] = useState<'generator' | 'slides' | 'editor' | 'matrix' | 'bank' | 'classes'>('generator');
+  // Tab đang hoạt động mặc định: 'generator' (Xem đề thi)
+  const [activeTab, setActiveTab] = useState<ActiveTabType>('generator');
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
-
-  const [isGenModalOpen, setIsGenModalOpen] = useState<boolean>(false);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
-  const [isAssignModalOpen, setIsAssignModalOpen] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
+  // Nếu là chế độ học sinh làm bài
   if (isStudentMode) {
     return (
       <StudentPortal
@@ -64,6 +62,7 @@ export default function App() {
     );
   }
 
+  // Cập nhật câu hỏi khi sửa
   const handleSaveQuestion = (updated: Question) => {
     setCurrentTest((prev) => ({
       ...prev,
@@ -72,6 +71,7 @@ export default function App() {
     setEditingQuestion(null);
   };
 
+  // Xóa câu hỏi
   const handleDeleteQuestion = (id: string) => {
     setCurrentTest((prev) => ({
       ...prev,
@@ -79,10 +79,12 @@ export default function App() {
     }));
   };
 
+  // Xuất file Word
   const handleExportWord = () => {
     exportTestToWord(currentTest);
   };
 
+  // Lưu vào kho
   const handleQuickSaveToBank = () => {
     saveTestToBank(currentTest);
     alert('Đã lưu đề thi vào Kho Lưu Trữ thành công!');
@@ -90,20 +92,17 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 font-sans flex">
-      {/* 1. CỘT MENU CHỨC NĂNG DỌC BÊN TRÁI */}
+      {/* 1. CỘT MENU DỌC CỐ ĐỊNH BÊN TRÁI (TẤT CẢ CHỨC NĂNG NẰM Ở ĐÂY) */}
       <HeaderMenu
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         questionCount={currentTest.questions.length}
         onExportWord={handleExportWord}
-        onGenerateNew={() => setIsGenModalOpen(true)}
-        onOpenUpload={() => setIsUploadModalOpen(true)}
-        onOpenAssign={() => setIsAssignModalOpen(true)}
       />
 
-      {/* 2. VÙNG NỘI DUNG BÊN PHẢI VỚI HEADER CANH GIỮA TRANG TRỌNG */}
+      {/* 2. VÙNG HIỂN THỊ DUY NHẤT NỘI DUNG THEO MENU ĐƯỢC CHỌN */}
       <div className="flex-1 min-h-screen flex flex-col min-w-0">
-        {/* HEADER CHÍNH NẰM TRÊN CÙNG VÀ CANH GIỮA */}
+        {/* HEADER CHÍNH CANH GIỮA TRANG WEB */}
         <header className="bg-slate-900 text-white py-4 px-6 shadow-md border-b border-slate-800">
           <div className="max-w-4xl mx-auto flex flex-col items-center justify-center text-center space-y-1">
             <div className="flex items-center justify-center gap-2.5">
@@ -117,14 +116,71 @@ export default function App() {
                 GDPT 2018
               </span>
             </div>
-            <p className="text-xs text-slate-300 font-medium">
+            <p className="text-xs sm:text-sm text-slate-300 font-medium">
               Tác giả: <strong className="text-white">NGUYỄN QUỐC TÂM</strong> • THPT MAI THANH THẾ
             </p>
           </div>
         </header>
 
-        {/* NỘI DUNG CHÍNH CỦA TAB ĐƯỢC CHỌN */}
+        {/* NỘI DUNG ĐỘC LẬP CHÍNH XÁC THEO TAB ĐƯỢC CHỌN */}
         <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
+          {/* 1. MÀN HÌNH TẠO ĐỀ MỚI THEO MA TRẬN */}
+          {activeTab === 'create' && (
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-5xl mx-auto">
+              <QuestionGeneratorModal
+                config={currentTest.config}
+                setConfig={(newConfig) => {
+                  if (typeof newConfig === 'function') {
+                    setCurrentTest((prev) => ({ ...prev, config: newConfig(prev.config) }));
+                  } else {
+                    setCurrentTest((prev) => ({ ...prev, config: newConfig }));
+                  }
+                }}
+                onGenerate={(overrideConfig) => {
+                  const targetConfig = overrideConfig || currentTest.config;
+                  try {
+                    const newTest = createDefaultTest(targetConfig);
+                    setCurrentTest(newTest);
+                    setActiveTab('generator'); // Tự động chuyển sang xem đề sau khi tạo
+                  } catch (err) {
+                    console.error('Lỗi tạo đề:', err);
+                  }
+                }}
+                isGenerating={isGenerating}
+              />
+            </div>
+          )}
+
+          {/* 2. MÀN HÌNH TẢI LÊN ĐỀ WORD */}
+          {activeTab === 'upload' && (
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-4xl mx-auto">
+              <FileUploadModal
+                isOpen={true}
+                onClose={() => setActiveTab('generator')}
+                onImportQuestions={(importedQuestions, appendMode) => {
+                  setCurrentTest((prev) => ({
+                    ...prev,
+                    questions: appendMode ? [...prev.questions, ...importedQuestions] : importedQuestions,
+                  }));
+                  setActiveTab('generator');
+                }}
+              />
+            </div>
+          )}
+
+          {/* 3. MÀN HÌNH GIAO BÀI CHO HỌC SINH */}
+          {activeTab === 'assign' && (
+            <AssignmentModal
+              isOpen={true}
+              onClose={() => setActiveTab('generator')}
+              currentConfig={currentTest.config}
+            />
+          )}
+
+          {/* 4. MÀN HÌNH QUẢN LÝ LỚP HỌC */}
+          {activeTab === 'classes' && <ClassManager />}
+
+          {/* 5. MÀN HÌNH XEM ĐỀ THI */}
           {activeTab === 'generator' && (
             <QuestionList
               test={currentTest}
@@ -135,8 +191,13 @@ export default function App() {
             />
           )}
 
+          {/* 6. MÀN HÌNH TRÌNH CHIẾU SLIDE */}
           {activeTab === 'slides' && <SlideViewer test={currentTest} />}
+
+          {/* 7. MÀN HÌNH MA TRẬN & BẢN ĐẶC TẢ */}
           {activeTab === 'matrix' && <MatrixTable test={currentTest} />}
+
+          {/* 8. MÀN HÌNH KHO LƯU TRỮ ĐỀ */}
           {activeTab === 'bank' && (
             <TestBankModal
               isOpen={true}
@@ -147,7 +208,6 @@ export default function App() {
               }}
             />
           )}
-          {activeTab === 'classes' && <ClassManager />}
         </main>
       </div>
 
@@ -160,74 +220,12 @@ export default function App() {
         isGenerating={isGenerating}
       />
 
-      {/* CỬA SỔ MODAL TẠO ĐỀ THI THEO MA TRẬN */}
-      {isGenModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-300 relative p-4 sm:p-6">
-            <button
-              type="button"
-              onClick={() => setIsGenModalOpen(false)}
-              className="absolute top-4 right-4 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer z-50 shadow-sm"
-              title="Đóng bảng tạo đề"
-            >
-              ✕ Đóng bảng
-            </button>
-
-            <QuestionGeneratorModal
-              config={currentTest.config}
-              setConfig={(newConfig) => {
-                if (typeof newConfig === 'function') {
-                  setCurrentTest((prev) => ({ ...prev, config: newConfig(prev.config) }));
-                } else {
-                  setCurrentTest((prev) => ({ ...prev, config: newConfig }));
-                }
-              }}
-              onGenerate={(overrideConfig) => {
-                setIsGenModalOpen(false);
-                const targetConfig = overrideConfig || currentTest.config;
-                try {
-                  const newTest = createDefaultTest(targetConfig);
-                  setCurrentTest(newTest);
-                } catch (err) {
-                  console.error('Lỗi tạo đề:', err);
-                }
-              }}
-              isGenerating={isGenerating}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* CỬA SỔ GIAO BÀI CHO HỌC SINH */}
-      {isAssignModalOpen && (
-        <AssignmentModal
-          isOpen={isAssignModalOpen}
-          onClose={() => setIsAssignModalOpen(false)}
-          currentConfig={currentTest.config}
-        />
-      )}
-
-      {/* Modal Chỉnh sửa chi tiết câu hỏi */}
+      {/* Modal Chỉnh sửa chi tiết 1 câu hỏi khi bấm nút Sửa */}
       {editingQuestion && (
         <EditorModal
           question={editingQuestion}
           onSave={handleSaveQuestion}
           onClose={() => setEditingQuestion(null)}
-        />
-      )}
-
-      {/* Modal Tải file Word lên */}
-      {isUploadModalOpen && (
-        <FileUploadModal
-          isOpen={isUploadModalOpen}
-          onClose={() => setIsUploadModalOpen(false)}
-          onImportQuestions={(importedQuestions, appendMode) => {
-            setIsUploadModalOpen(false);
-            setCurrentTest((prev) => ({
-              ...prev,
-              questions: appendMode ? [...prev.questions, ...importedQuestions] : importedQuestions,
-            }));
-          }}
         />
       )}
     </div>
