@@ -107,7 +107,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
     const defaultCfg = testConfig || {
       title: assignmentTitle || 'BÀI KIỂM TRA TOÁN THPT - GDPT 2018',
       grade: '12',
-      durationMinutes: 45,
+      durationMinutes: 90,
       selectedTopicIds: [],
       selectedOutcomes: [],
     };
@@ -539,7 +539,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
             </div>
 
             {/* ======================================================= */}
-            {/* PHẦN II: TRẮC NGHIỆM ĐÚNG / SAI (CÂU 13 ĐẾN CÂU 16) */}
+            {/* PHẦN II: TRẮC NGHIỆM ĐÚNG / SAI (CÂU 1 ĐẾN CÂU 4) */}
             {/* ======================================================= */}
             <div className="space-y-4 pt-4">
               <div className="bg-indigo-900 text-white p-4 sm:p-5 rounded-2xl shadow-md space-y-1">
@@ -617,7 +617,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
             </div>
 
             {/* ======================================================= */}
-            {/* PHẦN III: TRẮC NGHIỆM TRẢ LỜI NGẮN (CÂU 17 ĐẾN CÂU 22) */}
+            {/* PHẦN III: TRẮC NGHIỆM TRẢ LỜI NGẮN (CÂU 1 ĐẾN CÂU 6) */}
             {/* ======================================================= */}
             <div className="space-y-4 pt-4">
               <div className="bg-purple-900 text-white p-4 sm:p-5 rounded-2xl shadow-md space-y-1">
