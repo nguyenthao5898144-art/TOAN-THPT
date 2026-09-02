@@ -539,7 +539,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
             </div>
 
             {/* ======================================================= */}
-            {/* PHẦN II: TRẮC NGHIỆM ĐÚNG / SAI (CÂU 13 ĐẾN CÂU 16) */}
+            {/* PHẦN II: TRẮC NGHIỆM ĐÚNG / SAI (CÂU 11 ĐẾN CÂU 4) */}
             {/* ======================================================= */}
             <div className="space-y-4 pt-4">
               <div className="bg-indigo-900 text-white p-4 sm:p-5 rounded-2xl shadow-md space-y-1">
@@ -557,10 +557,10 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
               </div>
 
               {part2Questions.map((q, idx) => (
-                <div key={q.id} id={`q_${idx + 13}`} className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div key={q.id} id={`q_${idx + 1}`} className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
                   <div className="flex items-start gap-3">
                     <span className="px-3 py-1 bg-indigo-100 text-indigo-900 rounded-lg text-xs font-black shrink-0">
-                      Câu {idx + 13} (Câu {idx + 1} Phần II)
+                      Câu {idx + 1} (Câu {idx + 1} Phần II)
                     </span>
                     <div className="flex-1 text-sm font-semibold text-slate-900 leading-relaxed">
                       <MathText text={q.content} />
@@ -617,7 +617,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
             </div>
 
             {/* ======================================================= */}
-            {/* PHẦN III: TRẮC NGHIỆM TRẢ LỜI NGẮN (CÂU 17 ĐẾN CÂU 22) */}
+            {/* PHẦN III: TRẮC NGHIỆM TRẢ LỜI NGẮN (CÂU 11 ĐẾN CÂU 6) */}
             {/* ======================================================= */}
             <div className="space-y-4 pt-4">
               <div className="bg-purple-900 text-white p-4 sm:p-5 rounded-2xl shadow-md space-y-1">
@@ -630,15 +630,15 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
                   </span>
                 </div>
                 <p className="text-xs text-purple-100 italic">
-                  Thí sinh trả lời từ câu 17 đến câu 22. Điền kết quả số vào ô trống. Mỗi câu trả lời đúng được 0,5 điểm.
+                  Thí sinh trả lời từ câu 1 đến câu 6. Điền kết quả số vào ô trống. Mỗi câu trả lời đúng được 0,5 điểm.
                 </p>
               </div>
 
               {part3Questions.map((q, idx) => (
-                <div key={q.id} id={`q_${idx + 17}`} className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div key={q.id} id={`q_${idx + 1}`} className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
                   <div className="flex items-start gap-3">
                     <span className="px-3 py-1 bg-purple-100 text-purple-900 rounded-lg text-xs font-black shrink-0">
-                      Câu {idx + 17} (Câu {idx + 1} Phần III)
+                      Câu {idx + 1} (Câu {idx + 1} Phần III)
                     </span>
                     <div className="flex-1 text-sm font-semibold text-slate-900 leading-relaxed">
                       <MathText text={q.content} />
