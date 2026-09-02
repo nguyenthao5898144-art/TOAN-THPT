@@ -255,7 +255,7 @@ export default function App() {
           {isAtHome && (
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Banner chào mừng xanh đen sang trọng */}
-              <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 text-white p-6 sm:p-7 rounded-3xl shadow-xl flex items-center justify-between">
+             {/* <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 text-white p-6 sm:p-7 rounded-3xl shadow-xl flex items-center justify-between">
                 <div className="space-y-1">
                   <h2 className="text-xl sm:text-2xl font-black flex items-center gap-2">
                     Chào mừng Thầy Nguyễn Quốc Tâm 👋
@@ -264,7 +264,7 @@ export default function App() {
                     Hệ thống Khảo sát, Soạn đề & Quản lý học tập môn Toán THPT theo Chương trình GDPT 2018
                   </p>
                 </div>
-              </div>
+              </div>*/}
 
               {/* NHÓM 1: KHẢO SÁT & SOẠN ĐỀ THI (3 THẺ LỚN) */}
               <div className="space-y-2.5">
