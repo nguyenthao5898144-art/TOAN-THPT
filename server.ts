@@ -78,7 +78,7 @@ ${gradeConstraint}
 CẤU TRÚC ĐỀ THI CHUẨN ĐỊNH DẠNG BỘ GD&ĐT (TỔNG CỘNG 22 CÂU - 10 ĐIỂM):
 - PHẦN I: Gồm 12 câu trắc nghiệm 4 lựa chọn (A, B, C, D). Mỗi câu đúng 0.25đ (Tổng 3.0đ).
 - PHẦN II: Gồm 4 câu trắc nghiệm Đúng / Sai. Mỗi câu gồm 4 ý a, b, c, d (Tổng 4.0đ).
-- PHẦN III: Gồm 6 câu trắc nghiệm Trả lời ngắn. Kết quả là số thực, phân số hoặc số nguyên (Tổng 3.0đ).
+- PHẦN III: Gồm 6 câu trắc nghiệm Trả lời ngắn. Kết quả là số thực có đúng 4 ký tự (Tổng 3.0đ).
 
 Công thức Toán bọc trong dấu $...$.
 Hãy trả về DUY NHẤT một chuỗi JSON thuần túy (không kèm Markdown giải thích ngoài JSON):
@@ -96,7 +96,7 @@ Hãy trả về DUY NHẤT một chuỗi JSON thuần túy (không kèm Markdown
       "solution": "Lời giải chi tiết..."
     },
     {
-      "id": "q13",
+      "id": "q1",
       "type": "true_false",
       "level": "ThongHieu",
       "content": "Câu dẫn Phần II kèm bảng biến thiên / bảng xét dấu nếu có...",
@@ -109,7 +109,7 @@ Hãy trả về DUY NHẤT một chuỗi JSON thuần túy (không kèm Markdown
       "solution": "Lời giải chi tiết..."
     },
     {
-      "id": "q17",
+      "id": "q1",
       "type": "short_answer",
       "level": "VanDung",
       "content": "Nội dung câu hỏi trả lời ngắn...",
