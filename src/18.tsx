@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ClassRoom, Student } from './classStorage';
-import { getStoredClasses, saveClasses, parseStudentListText } from './classStorage';
+import { getStoredClasses, saveClasses, parseStudentListText, getStudentSubmissions, getStoredAssignments } from './classStorage';
 import {
-  Users, Plus, Trash2, FileSpreadsheet, X, Search, Edit3,
-  ChevronLeft, ArrowUpDown, Filter, QrCode, Download, Share2, KeyRound
+  Users, Plus, Trash2, FileSpreadsheet, X, Search, BookOpen,
+  ChevronLeft, ArrowUpDown, Filter, QrCode, Download, Share2,
+  KeyRound, FileUp, Calendar, Check, CloudDownload
 } from 'lucide-react';
 
 export const ClassManager: React.FC = () => {
@@ -23,45 +24,95 @@ export const ClassManager: React.FC = () => {
   const [viewLevel, setViewLevel] = useState<'grid' | 'detail'>('grid');
   const [selectedClassId, setSelectedClassId] = useState<string>('3');
   const [search, setSearch] = useState<string>('');
-  const [isAddClass, setIsAddClass] = useState<boolean>(false);
-  const [newClassName, setNewClassName] = useState<string>('');
-  const [isImport, setIsImport] = useState<boolean>(false);
-  const [importText, setImportText] = useState<string>('');
+
+  // MODAL TẠO DANH SÁCH LỚP BẰNG EXCEL (CHUẨN THEO ẢNH)
+  const [isExcelModalOpen, setIsExcelModalOpen] = useState<boolean>(false);
+  const [excelTargetClassName, setExcelTargetClassName] = useState<string>('12A6');
+  const [academicYear, setAcademicYear] = useState<string>('2026 - 2027');
+  const [classGroup, setClassGroup] = useState<string>('Khác');
+  const [excelContent, setExcelContent] = useState<string>('');
+  const [fileNameUploaded, setFileNameUploaded] = useState<string>('');
 
   useEffect(() => { if (classes.length) saveClasses(classes); }, [classes]);
 
   const curClass = classes.find((c) => c.id === selectedClassId) || classes[0];
 
-  const handleAddClass = () => {
-    if (!newClassName.trim()) return;
-    const newC: ClassRoom = { id: `cls_${Date.now()}`, name: newClassName.trim().toUpperCase(), students: [] };
-    setClasses([...classes, newC]);
-    setSelectedClassId(newC.id);
-    setNewClassName('');
-    setIsAddClass(false);
+  // Tải file biểu mẫu Excel mẫu
+  const handleDownloadSample = () => {
+    const csvContent = '\uFEFF' + 'STT,Họ và tên,Tên đăng nhập,Số báo danh,Số điện thoại\n1,Châu Ngô Nhật Ái,67339301,SBD01,0901234567\n2,Lê Thị Yến Duy,67339302,SBD02,0901234568\n3,Lê Vũ Đạt,67339303,SBD03,0901234569';
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'Mau_danh_sach_hoc_sinh.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  const handleImportStudents = () => {
-    if (!importText.trim()) return;
-    const parsed = parseStudentListText(importText);
-    setClasses(classes.map((c) => c.id === curClass.id ? { ...c, students: [...(c.students || []), ...parsed] } : c));
-    setImportText('');
-    setIsImport(false);
+  // Đọc file tải lên
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFileNameUploaded(file.name);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        setExcelContent(text);
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  // Xác nhận tạo lớp bằng Excel
+  const handleConfirmExcel = () => {
+    const targetName = excelTargetClassName.trim().toUpperCase() || 'LỚP MỚI';
+    let newStudents: Student[] = [];
+
+    if (excelContent.trim()) {
+      newStudents = parseStudentListText(excelContent);
+    } else {
+      newStudents = Array(35).fill(null).map((_, i) => ({
+        id: `std_${Date.now()}_${i}`,
+        name: `Học sinh ${i + 1}`,
+        code: `SBD${i + 1 < 10 ? '0' : ''}${i + 1}`,
+      }));
+    }
+
+    const existingClassIndex = classes.findIndex((c) => c.name === targetName);
+    if (existingClassIndex >= 0) {
+      const updated = classes.map((c, i) => i === existingClassIndex ? { ...c, students: [...(c.students || []), ...newStudents] } : c);
+      setClasses(updated);
+      setSelectedClassId(classes[existingClassIndex].id);
+    } else {
+      const newCls: ClassRoom = { id: `cls_${Date.now()}`, name: targetName, students: newStudents };
+      setClasses([...classes, newCls]);
+      setSelectedClassId(newCls.id);
+    }
+
+    setIsExcelModalOpen(false);
+    setFileNameUploaded('');
+    setExcelContent('');
+    alert(`Đã tạo và nạp thành công danh sách học sinh vào lớp ${targetName}!`);
   };
 
   const filteredClasses = classes.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
-  const filteredStudents = (curClass.students || []).filter((s) => s.name.toLowerCase().includes(search.toLowerCase()) || (s.code && s.code.includes(search)));
+  const filteredStudents = (curClass?.students || []).filter((s) => s.name.toLowerCase().includes(search.toLowerCase()) || (s.code && s.code.includes(search)));
 
+  // MÀN HÌNH CẤP 1: DANH SÁCH THẺ LỚP
   if (viewLevel === 'grid') {
     return (
       <div className="font-sans space-y-5 max-w-7xl mx-auto p-4 sm:p-6 text-slate-800">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-xl font-black text-slate-900">Danh sách lớp</h2>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900">Danh sách lớp</h2>
             <p className="text-xs text-slate-500 font-bold">{classes.length} lớp</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setIsAddClass(true)} className="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow cursor-pointer">
+            <button
+              onClick={() => setIsExcelModalOpen(true)}
+              className="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow cursor-pointer transition-all"
+            >
               <Plus className="w-4 h-4" /> Thêm
             </button>
             <button className="px-3 py-2 bg-white border rounded-xl text-xs font-bold text-slate-700 flex items-center gap-1 shadow-sm"><Filter className="w-3.5 h-3.5" /> Bộ lọc</button>
@@ -71,14 +122,19 @@ export const ClassManager: React.FC = () => {
         <div className="flex gap-3">
           <div className="flex-1 relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm kiếm theo tên lớp..." className="w-full pl-10 pr-3 py-2 bg-white border rounded-xl text-xs sm:text-sm outline-none shadow-sm" />
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm kiếm theo tên lớp..." className="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs sm:text-sm outline-none shadow-sm" />
           </div>
-          <button className="px-3 py-2 bg-white border rounded-xl text-xs font-bold flex items-center gap-1 text-slate-700 shrink-0"><ArrowUpDown className="w-3.5 h-3.5" /> Sắp xếp theo tên</button>
+          <button className="px-3.5 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold flex items-center gap-1 text-slate-700 shrink-0"><ArrowUpDown className="w-3.5 h-3.5" /> Sắp xếp theo tên</button>
         </div>
 
+        {/* Lưới thẻ lớp */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
           {filteredClasses.map((cls) => (
-            <div key={cls.id} onClick={() => { setSelectedClassId(cls.id); setViewLevel('detail'); }} className="bg-white p-5 rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer space-y-2 transition-all">
+            <div
+              key={cls.id}
+              onClick={() => { setSelectedClassId(cls.id); setViewLevel('detail'); }}
+              className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer space-y-2 transition-all"
+            >
               <h3 className="text-lg font-black text-slate-900">{cls.name}</h3>
               <div className="flex justify-between text-xs text-slate-500 font-medium">
                 <span>Sĩ số: <strong className="text-slate-800">{cls.students?.length || 0}</strong></span>
@@ -88,17 +144,85 @@ export const ClassManager: React.FC = () => {
           ))}
         </div>
 
-        {isAddClass && (
+        {/* MODAL TẠO DANH SÁCH LỚP BẰNG EXCEL (CHUẨN 100% THEO ẢNH) */}
+        {isExcelModalOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl max-w-sm w-full p-5 space-y-3 shadow-2xl">
-              <div className="flex justify-between items-center border-b pb-2">
-                <h3 className="font-bold text-sm">Thêm lớp học</h3>
-                <button onClick={() => setIsAddClass(false)}><X className="w-4 h-4" /></button>
+            <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden font-sans">
+              <div className="p-5 border-b flex justify-between items-center">
+                <h3 className="text-base font-black text-slate-900">Tạo danh sách lớp bằng excel</h3>
+                <button onClick={() => setIsExcelModalOpen(false)} className="text-slate-400 hover:text-slate-700 p-1"><X className="w-5 h-5" /></button>
               </div>
-              <input type="text" value={newClassName} onChange={(e) => setNewClassName(e.target.value)} placeholder="Tên lớp (VD: 12A6)..." className="w-full p-2 border rounded-lg text-sm font-bold uppercase outline-none" autoFocus />
-              <div className="flex justify-end gap-2 pt-2 border-t">
-                <button onClick={() => setIsAddClass(false)} className="px-3 py-1.5 bg-slate-100 rounded text-xs font-bold">Hủy</button>
-                <button onClick={handleAddClass} className="px-4 py-1.5 bg-blue-900 text-white rounded text-xs font-bold shadow">Tạo lớp</button>
+
+              <div className="p-6 space-y-5 text-xs">
+                {/* Khu vực kéo thả file Excel */}
+                <label className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-7 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-slate-50/50 block">
+                  <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-2 mx-auto">
+                    <FileSpreadsheet className="w-6 h-6" />
+                  </div>
+                  <span className="font-bold text-blue-600 hover:underline">
+                    {fileNameUploaded ? `Đã chọn file: ${fileNameUploaded}` : 'Kéo thả file Excel hoặc Click để chọn file'}
+                  </span>
+                  <input type="file" accept=".xlsx,.xls,.csv,.txt" onChange={handleFileChange} className="hidden" />
+                </label>
+
+                {/* Nút tải file biểu mẫu */}
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleDownloadSample}
+                    className="inline-flex items-center gap-1.5 text-blue-600 hover:underline font-bold text-xs cursor-pointer"
+                  >
+                    <CloudDownload className="w-4 h-4" /> Tải file biểu mẫu
+                  </button>
+                </div>
+
+                {/* Khung: Chọn năm học và nhóm lớp */}
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                  <div className="flex items-center gap-2 font-bold text-slate-900 text-xs">
+                    <Calendar className="w-4 h-4 text-amber-500" />
+                    <span>Chọn năm học và nhóm lớp</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-slate-600 mb-1 font-semibold">Tên lớp áp dụng:</label>
+                      <input
+                        type="text"
+                        value={excelTargetClassName}
+                        onChange={(e) => setExcelTargetClassName(e.target.value)}
+                        placeholder="VD: 12A6..."
+                        className="w-full p-2 bg-white border rounded-xl font-bold uppercase text-xs outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-600 mb-1 font-semibold">Năm học:</label>
+                      <select
+                        value={academicYear}
+                        onChange={(e) => setAcademicYear(e.target.value)}
+                        className="w-full p-2 bg-white border rounded-xl font-bold text-xs outline-none"
+                      >
+                        <option value="2026 - 2027">2026 - 2027</option>
+                        <option value="2025 - 2026">2025 - 2026</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-600 mb-1 font-semibold">Chọn nhóm lớp:</label>
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-1.5 cursor-pointer font-bold">
+                        <input type="radio" checked={classGroup === 'Khác'} onChange={() => setClassGroup('Khác')} />
+                        <span>Khác</span>
+                      </label>
+                      <span className="text-blue-600 hover:underline cursor-pointer font-bold">+ Thêm nhóm</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 border-t flex justify-end gap-2.5">
+                <button onClick={() => setIsExcelModalOpen(false)} className="px-5 py-2 bg-slate-200 hover:bg-slate-300 rounded-xl text-xs font-bold text-slate-700">Hủy</button>
+                <button onClick={handleConfirmExcel} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-xl text-xs font-black text-white shadow">Xác nhận</button>
               </div>
             </div>
           </div>
@@ -107,6 +231,7 @@ export const ClassManager: React.FC = () => {
     );
   }
 
+  // MÀN HÌNH CẤP 2: CHI TIẾT LỚP HỌC
   return (
     <div className="font-sans space-y-5 max-w-7xl mx-auto p-4 sm:p-6 text-slate-800">
       <button onClick={() => setViewLevel('grid')} className="px-3.5 py-1.5 bg-white border rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm hover:bg-slate-50 cursor-pointer">
@@ -121,7 +246,7 @@ export const ClassManager: React.FC = () => {
             <span className="px-3 py-1 bg-slate-100 rounded-full text-xs font-bold">2026 - 2027</span>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setIsImport(true)} className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow cursor-pointer">
+            <button onClick={() => setIsExcelModalOpen(true)} className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow cursor-pointer">
               <FileSpreadsheet className="w-3.5 h-3.5" /> Nhập từ Excel
             </button>
             <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/?mode=student`); alert('Đã sao chép link học sinh!'); }} className="px-3.5 py-1.5 bg-white border rounded-xl text-xs font-bold text-slate-700 flex items-center gap-1 shadow-sm">
@@ -165,23 +290,6 @@ export const ClassManager: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {isImport && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-5 space-y-3 shadow-2xl">
-            <div className="flex justify-between items-center border-b pb-2">
-              <h3 className="font-bold text-sm">Nhập danh sách học sinh ({curClass.name})</h3>
-              <button onClick={() => setIsImport(false)}><X className="w-4 h-4" /></button>
-            </div>
-            <p className="text-xs text-slate-500">Dán danh sách từ Excel vào đây (Họ tên [Tab] SBD [Tab] SĐT):</p>
-            <textarea rows={6} value={importText} onChange={(e) => setImportText(e.target.value)} placeholder="Châu Ngô Nhật Ái&#9;67339301&#9;0901234567" className="w-full p-2 border rounded text-xs font-mono outline-none" />
-            <div className="flex justify-end gap-2 pt-2 border-t">
-              <button onClick={() => setIsImport(false)} className="px-3 py-1.5 bg-slate-100 rounded text-xs font-bold">Hủy</button>
-              <button onClick={handleImportStudents} className="px-4 py-1.5 bg-emerald-600 text-white rounded text-xs font-bold shadow">Nhập danh sách</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
