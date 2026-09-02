@@ -30,58 +30,66 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// ROUTE TỰ ĐỘNG SINH ĐỀ THI TOÁN THPT - ĐÃ XỬ LÝ LÀM SẠCH CHUỖI JSON CHỐNG LỖI 500
+// ROUTE TỰ ĐỘNG BIÊN SOẠN ĐỀ THI - KHÓA CHẶT 100% THEO MA TRẬN & KHỐI LỚP CỦA GIÁO VIÊN
 app.post('/api/generate-exam', async (req, res) => {
   try {
-    const { config, student } = req.body;
+    const { config, student, topicNames, lessonNames } = req.body;
     const grade = String(config?.grade || '12');
     const title = config?.title || `BÀI KIỂM TRA TOÁN ${grade} - GDPT 2018`;
     const outcomes = (config?.selectedOutcomes || []).join('; ');
+    const chosenTopics = (topicNames || []).join(', ');
+    const chosenLessons = (lessonNames || []).join(', ');
 
-    let gradeConstraint = '';
-    if (grade === '10') {
-      gradeConstraint = `
-*** QUY ĐỊNH BẮT BUỘC VỀ PHẠM VI KIẾN THỨC TOÁN LỚP 10 ***:
-- Đây là đề thi dành riêng cho TOÁN LỚP 10.
-- TUYỆT ĐỐI KHÔNG ĐƯỢC sử dụng kiến thức Đạo hàm, Nguyên hàm, Tích phân, Mũ - Logarit, Hình học Oxyz.
-- CHỈ ĐƯỢC SỬ DỤNG kiến thức Toán 10: Mệnh đề, Tập hợp, Bất phương trình & Hệ BPT bậc nhất hai ẩn, Hàm số bậc hai, Dấu của tam thức bậc hai, Hệ thức lượng, Vectơ, Tọa độ Oxy, Đại số tổ hợp, Thống kê và Xác suất lớp 10.`;
-    } else if (grade === '11') {
-      gradeConstraint = `
-*** QUY ĐỊNH BẮT BUỘC VỀ PHẠM VI KIẾN THỨC TOÁN LỚP 11 ***:
-- Đây là đề thi dành riêng cho TOÁN LỚP 11.
-- TUYỆT ĐỐI KHÔNG ĐƯỢC đưa kiến thức Tích phân, Tọa độ không gian Oxyz.
-- CHỈ ĐƯỢC SỬ DỤNG kiến thức Toán 11: Hàm số lượng giác & Phương trình lượng giác, Cấp số cộng, Cấp số nhân, Giới hạn, Hàm số liên tục, Hình không gian (Song song, Vuông góc), Mũ & Logarit, Đạo hàm lớp 11, Các quy tắc xác suất.`;
+    // 1. RÀO CHẮN KIẾN THỨC CỰC KỲ NGHIÊM NGẶT THEO KHỐI LỚP
+    let gradeRule = '';
+    if (grade === '11') {
+      gradeRule = `
+*** CẢNH BÁO QUAN TRỌNG VỀ PHẠM VI KIẾN THỨC TOÁN LỚP 11 ***:
+- Đây là đề kiểm tra môn TOÁN LỚP 11 theo Chương trình GDPT 2018.
+- TUYỆT ĐỐI NGHIÊM CẤM đưa các câu hỏi về: 
+  + Tính đơn điệu của hàm số (đồng biến, nghịch biến bằng đạo hàm f'(x) > 0, f'(x) < 0) - ĐÂY LÀ BÀI 1 TOÁN 12!
+  + Cực trị hàm số, Giá trị lớn nhất - nhỏ nhất, Tiệm cận của hàm số - ĐÂY LÀ TOÁN 12!
+  + Nguyên hàm, Tích phân, Tọa độ không gian Oxyz - ĐÂY LÀ TOÁN 12!
+- CHỈ ĐƯỢC BIÊN SOẠN CÂU HỎI TRONG PHẠM VI TOÁN 11:
+  1. Hàm số lượng giác và phương trình lượng giác cơ bản (sin x = m, cos x = m...)
+  2. Dãy số, Cấp số cộng (u_n = u_1 + (n-1)d), Cấp số nhân (u_n = u_1 * q^(n-1))
+  3. Giới hạn dãy số và Giới hạn hàm số (dạng 0/0, vô cùng / vô cùng), Hàm số liên tục
+  4. Hình học không gian 11: Đường thẳng song song, vuông góc mặt phẳng, góc giữa đường thẳng và mặt phẳng
+  5. Hàm số mũ và hàm số logarit lớp 11 (tính chất lũy thừa, phương trình logarit cơ bản)
+  6. Đạo hàm lớp 11 (định nghĩa đạo hàm, quy tắc tính đạo hàm đa thức, lượng giác, phương trình tiếp tuyến y = f'(x0)(x - x0) + y0)
+  7. Các quy tắc tính xác suất (biến cố giao, biến cố hợp, xác suất có điều kiện lớp 11).`;
+    } else if (grade === '10') {
+      gradeRule = `
+*** CẢNH BÁO QUAN TRỌNG VỀ PHẠM VI KIẾN THỨC TOÁN LỚP 10 ***:
+- Đây là đề kiểm tra môn TOÁN LỚP 10 theo Chương trình GDPT 2018.
+- TUYỆT ĐỐI NGHIÊM CẤM đưa kiến thức Đạo hàm, Tích phân, Lượng giác phức tạp hay Oxyz của lớp 11, 12!
+- CHỈ DÙNG KIẾN THỨC TOÁN 10: Mệnh đề, Tập hợp, Bất phương trình bậc nhất 2 ẩn, Hàm số bậc hai, Dấu tam thức bậc hai, Hệ thức lượng trong tam giác, Vectơ, Tọa độ Oxy (đường thẳng, đường tròn), Đại số tổ hợp (hoán vị, chỉnh hợp, tổ hợp), Xác suất lớp 10.`;
     } else {
-      gradeConstraint = `
-*** QUY ĐỊNH VỀ PHẠM VI KIẾN THỨC TOÁN LỚP 12 ***:
-- Sử dụng các chuyên đề Toán 12: Ứng dụng đạo hàm để khảo sát và vẽ đồ thị hàm số, Nguyên hàm, Tích phân, Tọa độ không gian Oxyz, Thống kê số liệu ghép nhóm, Xác suất có điều kiện và công thức Bayes.`;
+      gradeRule = `
+*** KIẾN THỨC TOÁN LỚP 12 ***:
+- Sử dụng các chuyên đề Toán 12: Ứng dụng đạo hàm khảo sát hàm số, Nguyên hàm - Tích phân, Tọa độ Oxyz, Thống kê ghép nhóm, Xác suất có điều kiện và công thức Bayes.`;
     }
 
     const prompt = `
-Bạn là Chuyên gia Khảo thí và Đo lường Giáo dục môn Toán THPT theo Chương trình GDPT 2018 của Bộ GD&ĐT Việt Nam.
-Hãy biên soạn một đề kiểm tra chuẩn cấu trúc cho:
-- Môn Toán Khối: ${grade}
-- Tiêu đề đề thi: ${title}
-- Yêu cầu cần đạt: ${outcomes || 'Theo ma trận đặc tả chuẩn môn Toán lớp ' + grade}
-${gradeConstraint}
+Bạn là Chuyên gia Khảo thí môn Toán THPT của Bộ GD&ĐT Việt Nam theo Chương trình GDPT 2018.
+Nhiệm vụ: Biên soạn một đề kiểm tra chuẩn cấu trúc cho học sinh:
+- Môn: Toán Khối ${grade}
+- Tiêu đề: ${title}
+- Các chuyên đề được giáo viên chọn: ${chosenTopics || 'Theo chương trình Toán ' + grade}
+- Các bài học được giáo viên chọn: ${chosenLessons || 'Theo ma trận của giáo viên'}
+- Yêu cầu cần đạt: ${outcomes || 'Chuẩn GDPT 2018 môn Toán ' + grade}
 
-*** NGUYÊN TẮC BẮT BUỘC VỀ BẢNG BIẾN THIÊN & BẢNG XÉT DẤU (THAY THẾ MÔ TẢ CHAY) ***:
-1. Các câu hỏi về chiều biến thiên, cực trị, dấu tam thức bậc hai, dấu đạo hàm BẮT BUỘC vẽ bảng trực quan dạng mảng LaTeX:
-   "Cho hàm số $y = f(x)$ có bảng biến thiên như sau:
-   $$\\begin{array}{c|ccccc}
-   x & -\\infty & & 2 & & +\\infty \\\\ \\hline
-   f'(x) & & - & 0 & + & \\\\ \\hline
-   f(x) & +\\infty & \\searrow & -3 & \\nearrow & +\\infty
-   \\end{array}$$"
-2. TUYỆT ĐỐI KHÔNG dùng câu văn miêu tả chay.
+${gradeRule}
 
-CẤU TRÚC ĐỀ THI CHUẨN ĐỊNH DẠNG BỘ GD&ĐT (TỔNG CỘNG 22 CÂU - 10 ĐIỂM):
-- PHẦN I: Gồm 12 câu trắc nghiệm 4 lựa chọn (A, B, C, D). Mỗi câu đúng 0.25đ (Tổng 3.0đ).
-- PHẦN II: Gồm 4 câu trắc nghiệm Đúng / Sai. Mỗi câu gồm 4 ý a, b, c, d (Tổng 4.0đ).
-- PHẦN III: Gồm 6 câu trắc nghiệm Trả lời ngắn. Kết quả là số thực có đúng 4 ký tự (Tổng 3.0đ).
+*** BẮT BUỘC DÙNG BẢNG BIẾN THIÊN HOẶC BẢNG XÉT DẤU DẠNG LATEX CHO CÂU HỎI VỀ HÀM SỐ / DẤU TAM THỨC: ***
+TUYỆT ĐỐI KHÔNG viết mô tả chay bằng câu chữ. Phải vẽ bảng bằng \\begin{array}{c|ccccc}...\\end{array}.
 
-Công thức Toán bọc trong dấu $...$.
-Hãy trả về DUY NHẤT một chuỗi JSON thuần túy (không kèm Markdown giải thích ngoài JSON):
+CẤU TRÚC ĐỀ THI ĐỊNH DẠNG BỘ GD&ĐT (22 CÂU - 10 ĐIỂM):
+- PHẦN I: Gồm 12 câu trắc nghiệm 4 lựa chọn (A, B, C, D), mỗi câu 0.25đ.
+- PHẦN II: Gồm 4 câu trắc nghiệm Đúng/Sai, mỗi câu 4 ý a, b, c, d.
+- PHẦN III: Gồm 6 câu trắc nghiệm Trả lời ngắn điền đáp số.
+
+Trả về DUY NHẤT một chuỗi JSON thuần túy:
 {
   "title": "${title}",
   "grade": "${grade}",
@@ -90,16 +98,18 @@ Hãy trả về DUY NHẤT một chuỗi JSON thuần túy (không kèm Markdown
       "id": "q1",
       "type": "multiple_choice",
       "level": "NhanBiet",
-      "content": "Nội dung câu hỏi Toán ${grade} có công thức $...$ hoặc bảng LaTeX $...$",
+      "topicName": "Tên bài học",
+      "content": "Nội dung câu hỏi Toán ${grade} chuẩn xác $...$",
       "options": [{"key": "A", "text": "$...$"}, {"key": "B", "text": "$...$"}, {"key": "C", "text": "$...$"}, {"key": "D", "text": "$...$"}],
       "correctAnswer": "A",
       "solution": "Lời giải chi tiết..."
     },
     {
-      "id": "q1",
+      "id": "q13",
       "type": "true_false",
       "level": "ThongHieu",
-      "content": "Câu dẫn Phần II kèm bảng biến thiên / bảng xét dấu nếu có...",
+      "topicName": "Tên bài học",
+      "content": "Nội dung câu dẫn $...$",
       "statements": [
         {"id": "a", "text": "Mệnh đề 1", "isCorrect": true},
         {"id": "b", "text": "Mệnh đề 2", "isCorrect": false},
@@ -109,9 +119,10 @@ Hãy trả về DUY NHẤT một chuỗi JSON thuần túy (không kèm Markdown
       "solution": "Lời giải chi tiết..."
     },
     {
-      "id": "q1",
+      "id": "q17",
       "type": "short_answer",
       "level": "VanDung",
+      "topicName": "Tên bài học",
       "content": "Nội dung câu hỏi trả lời ngắn...",
       "correctAnswer": "5",
       "solution": "Lời giải chi tiết..."
@@ -128,7 +139,6 @@ Hãy trả về DUY NHẤT một chuỗi JSON thuần túy (không kèm Markdown
       },
     });
 
-    // LÀM SẠCH CHUỖI JSON ĐẢM BẢO KHÔNG BỊ CRASH
     let rawText = response.text || '{}';
     rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
     const firstBrace = rawText.indexOf('{');
@@ -140,8 +150,7 @@ Hãy trả về DUY NHẤT một chuỗi JSON thuần túy (không kèm Markdown
     const parsed = JSON.parse(rawText);
     res.json(parsed);
   } catch (error: any) {
-    console.error('Lỗi sinh đề AI (chuyển sang chế độ dự phòng):', error);
-    // Trả về đối tượng an toàn để frontend tự fallback, không bao giờ báo lỗi 500
+    console.error('Lỗi sinh đề AI (chuyển sang chế độ chuẩn):', error);
     res.json({ error: error.message, fallback: true });
   }
 });
