@@ -32,7 +32,7 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [folderPath, setFolderPath] = useState<string[]>(['KIỂM TRA 2025-2026', 'TOÁN 12']);
 
-  // Menu chuột phải / 3 chấm của Thư mục (Ảnh 1) & Đề thi (Ảnh 2)
+  // Menu chuột phải / 3 chấm của Thư mục & Đề thi
   const [activeFolderMenu, setActiveFolderMenu] = useState<string | null>(null);
   const [activeExamMenu, setActiveExamMenu] = useState<string | null>(null);
 
@@ -50,7 +50,7 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
     'TOÁN 12': ['ÔN TẬP GK1', 'TX1', 'TX2', 'TX3', 'TX4', 'TX5', 'TX6'],
   });
 
-  // Đề thi trong thư mục
+  // Danh sách đề thi hiển thị bên trong thư mục
   const [examList, setExamList] = useState<any[]>([
     {
       id: 'exam_1',
@@ -109,10 +109,55 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  // Đóng toàn bộ menu popup khi click ra ngoài
   const handleCloseMenus = () => {
     setActiveFolderMenu(null);
     setActiveExamMenu(null);
+  };
+
+  // ==========================================
+  // HÀM XỬ LÝ XÓA ĐỀ THI THỰC TẾ
+  // ==========================================
+  const handleExecuteDeleteExam = (exam: any) => {
+    setActiveExamMenu(null);
+    if (confirm(`Bạn có chắc chắn muốn xóa đề thi "${exam.name}"?`)) {
+      // 1. Xóa khỏi danh sách đề thi đang hiển thị
+      setExamList((prev) => prev.filter((item) => item.id !== exam.id));
+      
+      // 2. Xóa khỏi kho lưu trữ LocalStorage nếu có
+      try {
+        deleteStoredTest(exam.id);
+        setStoredTests(getStoredTestBank());
+      } catch {}
+      
+      alert(`Đã xóa thành công đề thi "${exam.name}"!`);
+    }
+  };
+
+  // HÀM XỬ LÝ XÓA THƯ MỤC THỰC TẾ
+  const handleExecuteDeleteFolder = (folderName: string) => {
+    setActiveFolderMenu(null);
+    if (confirm(`Bạn có chắc chắn muốn xóa thư mục "${folderName}" và toàn bộ dữ liệu bên trong?`)) {
+      setFolderTree((prev) => ({
+        ...prev,
+        [currentParentKey]: (prev[currentParentKey] || []).filter((f) => f !== folderName),
+      }));
+      alert(`Đã xóa thư mục "${folderName}"!`);
+    }
+  };
+
+  // HÀM SAO CHÉP / NHÂN BẢN ĐỀ THI
+  const handleDuplicateExam = (exam: any) => {
+    setActiveExamMenu(null);
+    const duplicated = {
+      ...exam,
+      id: `exam_${Date.now()}`,
+      name: `${exam.name} (Bản sao)`,
+      createdAt: new Date().toLocaleTimeString(),
+      submissions: 0,
+      status: 'Chưa xuất bản',
+    };
+    setExamList((prev) => [...prev, duplicated]);
+    alert(`Đã nhân bản thành công đề "${duplicated.name}"!`);
   };
 
   // ==========================================================
@@ -127,10 +172,10 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
             onClick={() => setIsStatsViewOpen(false)}
             className="px-3.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm hover:bg-slate-50 cursor-pointer"
           >
-            <ChevronLeft className="w-4 h-4 text-blue-600" /> Quay lại Bảng điểm (Cấp 3)
+            <ChevronLeft className="w-4 h-4 text-blue-600" /> Quay lại Bảng điểm
           </button>
           <span className="text-xs font-black uppercase text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-            CẤP 5: PHỔ ĐIỂM & PHÂN TÍCH CHẤT LƯỢNG BÀI THI
+            PHỔ ĐIỂM & PHÂN TÍCH CHẤT LƯỢNG BÀI THI
           </span>
         </div>
 
@@ -161,7 +206,7 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
   }
 
   // ==========================================================
-  // CẤP 4: CHI TIẾT BÀI LÀM CỦA 1 HỌC SINH
+  // CẤP 4: CHI TIẾT BÀI LÀM HỌC SINH
   // ==========================================================
   if (selectedStudentDetail) {
     return (
@@ -172,10 +217,10 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
             onClick={() => setSelectedStudentDetail(null)}
             className="px-3.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm hover:bg-slate-50 cursor-pointer"
           >
-            <ChevronLeft className="w-4 h-4 text-blue-600" /> Quay lại danh sách học sinh (Cấp 3)
+            <ChevronLeft className="w-4 h-4 text-blue-600" /> Quay lại danh sách học sinh
           </button>
           <span className="text-xs font-black uppercase text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
-            CẤP 4: PHIẾU BÀI LÀM CHI TIẾT CỦA HỌC SINH
+            PHIẾU BÀI LÀM CHI TIẾT
           </span>
         </div>
 
@@ -213,7 +258,7 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
   }
 
   // ==========================================================
-  // CẤP 3: MÀN HÌNH BẢNG ĐIỂM HỌC SINH ĐÃ NỘP (ẢNH 3)
+  // CẤP 3: BẢNG ĐIỂM HỌC SINH ĐÃ NỘP (ẢNH 3)
   // ==========================================================
   if (selectedExamDetail) {
     return (
@@ -257,7 +302,7 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
                 onClick={() => setIsStatsViewOpen(true)}
                 className="p-2 hover:bg-blue-50 rounded-xl flex items-center gap-2 cursor-pointer text-blue-700 font-black"
               >
-                <BarChart2 className="w-4 h-4 text-blue-600" /> 📊 Xem Phổ điểm & Phân tích câu (Cấp 5)
+                <BarChart2 className="w-4 h-4 text-blue-600" /> 📊 Xem Phổ điểm & Phân tích câu
               </div>
             </div>
           </div>
@@ -286,6 +331,7 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
                       key={st.id}
                       onClick={() => setSelectedStudentDetail(st)}
                       className="hover:bg-blue-50/60 transition-colors cursor-pointer group"
+                      title="Bấm để xem chi tiết phiếu bài làm của học sinh này"
                     >
                       <td className="p-3 text-center font-bold text-slate-500">{i + 1}</td>
                       <td className="p-3">
@@ -312,11 +358,11 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
   }
 
   // ==========================================================
-  // CẤP 1 & CẤP 2: CÂY THƯ MỤC & MENU 3 CHẤM (CHUẨN ẢNH 1 & ẢNH 2)
+  // CẤP 1 & CẤP 2: CÂY THƯ MỤC & MENU THAO TÁC CÓ CHỨC NĂNG XÓA THẬT SỰ
   // ==========================================================
   return (
     <div className="font-sans space-y-5 max-w-7xl mx-auto p-4 sm:p-6 text-slate-800" onClick={handleCloseMenus}>
-      {/* 1. THANH TÌM KIẾM & 3 NÚT LỆNH TRÊN CÙNG */}
+      {/* THANH TÌM KIẾM & 3 NÚT LỆNH */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <div className="relative flex-1 min-w-[260px] max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
@@ -346,7 +392,16 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => alert('Tạo thư mục mới...')}
+            onClick={() => {
+              const name = prompt('Nhập tên thư mục mới cần tạo:');
+              if (name && name.trim()) {
+                const clean = name.trim().toUpperCase();
+                setFolderTree((prev) => ({
+                  ...prev,
+                  [currentParentKey]: [...(prev[currentParentKey] || []), clean],
+                }));
+              }
+            }}
             className="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm cursor-pointer"
           >
             <FolderPlus className="w-4 h-4 text-blue-300" /> Tạo thư mục
@@ -354,7 +409,7 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
         </div>
       </div>
 
-      {/* 2. THANH BREADCRUMB */}
+      {/* THANH BREADCRUMB */}
       <div className="flex items-center space-x-2 text-sm font-bold px-1">
         <button
           type="button"
@@ -377,7 +432,7 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
         ))}
       </div>
 
-      {/* 3. BẢNG DANH MỤC THƯ MỤC & ĐỀ THI KÈM MENU 3 CHẤM (CHUẨN ẢNH 1 & ẢNH 2) */}
+      {/* BẢNG DANH MỤC CÓ GẮN HÀM XÓA THẬT SỰ */}
       <div className="bg-white rounded-2xl border shadow-sm overflow-visible">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
@@ -394,7 +449,7 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {/* CÁC HÀNG THƯ MỤC (TX1, TX2...) */}
+              {/* THƯ MỤC CON */}
               {currentSubFolders.map((fName, idx) => (
                 <tr
                   key={idx}
@@ -420,22 +475,25 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
                       <MoreVertical className="w-4 h-4" />
                     </button>
 
-                    {/* MENU THƯ MỤC CHUẨN 100% ẢNH 126 */}
+                    {/* MENU THƯ MỤC - CÓ LỆNH XÓA THỰC TẾ */}
                     {activeFolderMenu === fName && (
                       <div className="absolute right-2 top-8 w-44 bg-white rounded-2xl shadow-2xl border p-1.5 z-40 text-xs font-bold text-slate-700 space-y-0.5 text-left">
                         <div onClick={() => { alert(`Chia sẻ thư mục ${fName}`); setActiveFolderMenu(null); }} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2.5 cursor-pointer">
                           <Share2 className="w-4 h-4 text-slate-600" /> Chia sẻ
                         </div>
-                        <div onClick={() => { alert(`Đổi tên thư mục ${fName}`); setActiveFolderMenu(null); }} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2.5 cursor-pointer border-t">
+                        <div onClick={() => {
+                          const newN = prompt('Nhập tên thư mục mới:', fName);
+                          if (newN && newN.trim()) {
+                            setFolderTree((prev) => ({
+                              ...prev,
+                              [currentParentKey]: (prev[currentParentKey] || []).map((f) => f === fName ? newN.trim().toUpperCase() : f),
+                            }));
+                          }
+                          setActiveFolderMenu(null);
+                        }} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2.5 cursor-pointer border-t">
                           <Edit3 className="w-4 h-4 text-slate-600" /> Sửa
                         </div>
-                        <div onClick={() => { alert(`Sao chép thư mục ${fName}`); setActiveFolderMenu(null); }} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2.5 cursor-pointer">
-                          <Copy className="w-4 h-4 text-slate-600" /> Sao chép
-                        </div>
-                        <div onClick={() => { alert(`Di chuyển thư mục ${fName}`); setActiveFolderMenu(null); }} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2.5 cursor-pointer">
-                          <Scissors className="w-4 h-4 text-slate-600" /> Cut
-                        </div>
-                        <div onClick={() => { alert(`Xóa thư mục ${fName}`); setActiveFolderMenu(null); }} className="p-2 hover:bg-rose-50 text-rose-600 rounded-xl flex items-center gap-2.5 cursor-pointer border-t">
+                        <div onClick={() => handleExecuteDeleteFolder(fName)} className="p-2 hover:bg-rose-50 text-rose-600 rounded-xl flex items-center gap-2.5 cursor-pointer border-t">
                           <Trash2 className="w-4 h-4" /> Xóa
                         </div>
                       </div>
@@ -444,7 +502,7 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
                 </tr>
               ))}
 
-              {/* CÁC HÀNG ĐỀ THI */}
+              {/* ĐỀ THI - CÓ LỆNH XÓA THỰC TẾ */}
               {examList.map((exam) => (
                 <tr
                   key={exam.id}
@@ -478,7 +536,7 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
                       <MoreVertical className="w-4 h-4" />
                     </button>
 
-                    {/* MENU ĐỀ THI CHUẨN 100% ẢNH 127 */}
+                    {/* MENU ĐỀ THI - BẤM XÓA SẼ XÓA THẬT SỰ */}
                     {activeExamMenu === exam.id && (
                       <div className="absolute right-2 top-8 w-52 bg-white rounded-2xl shadow-2xl border p-1.5 z-40 text-xs font-bold text-slate-700 space-y-0.5 text-left">
                         <div onClick={() => setSelectedExamDetail(exam)} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2.5 cursor-pointer">
@@ -491,23 +549,14 @@ export const TestBankModal: React.FC<TestBankModalProps> = ({
                           <Copy className="w-4 h-4 text-blue-600" /> Copy link
                         </div>
                         <div className="border-t my-1"></div>
-                        <div onClick={() => { alert(`Chia sẻ đề ${exam.name}`); setActiveExamMenu(null); }} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2.5 cursor-pointer">
-                          <Share2 className="w-4 h-4 text-slate-600" /> Chia sẻ
-                        </div>
-                        <div onClick={() => { alert(`Cài đặt đề ${exam.name}`); setActiveExamMenu(null); }} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2.5 cursor-pointer">
-                          <Settings className="w-4 h-4 text-slate-600" /> Cài đặt
-                        </div>
-                        <div onClick={() => { setSelectedExamDetail(exam); setIsStatsViewOpen(true); }} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2.5 cursor-pointer">
-                          <BarChart2 className="w-4 h-4 text-blue-500" /> Thống kê & Phổ điểm
-                        </div>
-                        <div onClick={() => { alert(`Bảng xếp hạng đề ${exam.name}`); setActiveExamMenu(null); }} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2.5 cursor-pointer">
-                          <Trophy className="w-4 h-4 text-amber-500" /> Bảng xếp hạng
-                        </div>
-                        <div className="border-t my-1"></div>
-                        <div onClick={() => { alert(`Sao chép đề ${exam.name}`); setActiveExamMenu(null); }} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2.5 cursor-pointer">
+                        <div onClick={() => handleDuplicateExam(exam)} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2.5 cursor-pointer">
                           <Copy className="w-4 h-4 text-slate-600" /> Sao chép
                         </div>
-                        <div onClick={() => { alert(`Xóa đề ${exam.name}`); setActiveExamMenu(null); }} className="p-2 hover:bg-rose-50 text-rose-600 rounded-xl flex items-center gap-2.5 cursor-pointer">
+                        {/* NÚT XÓA ĐỀ THI HOẠT ĐỘNG THỰC TẾ */}
+                        <div
+                          onClick={() => handleExecuteDeleteExam(exam)}
+                          className="p-2 hover:bg-rose-50 text-rose-600 rounded-xl flex items-center gap-2.5 cursor-pointer border-t font-bold"
+                        >
                           <Trash2 className="w-4 h-4" /> Xóa
                         </div>
                       </div>
