@@ -1,158 +1,72 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ChatMessage, GeneratedTest } from './types';
-import {
-  MessageSquare, Send, Bot, Sparkles, X, Minimize2, Maximize2,
-  RefreshCw, GripVertical, Move, ChevronDown
-} from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ChatMessage } from './types';
+import { Bot, Send, X, Minimize2, GripVertical, RefreshCw } from 'lucide-react';
 
-export interface AssistantChatProps {
-  currentTest?: GeneratedTest;
-  onGenerateCommand?: (prompt: string) => void;
-  isGenerating?: boolean;
-}
-
-export const AssistantChat: React.FC<AssistantChatProps> = ({
-  currentTest,
-  onGenerateCommand,
-  isGenerating = false,
-}) => {
+export const AssistantChat: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [isMinimized, setIsMinimized] = useState<boolean>(false); // Thu nhỏ thành nút tròn
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);   // Phóng to khung chat
+  const [isMini, setIsMini] = useState<boolean>(false);
   const [inputText, setInputText] = useState<string>('');
   const [isTyping, setIsTyping] = useState<boolean>(false);
-
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      id: 'msg_init',
+      id: '1',
       sender: 'assistant',
-      text: 'Xin chào Thầy/Cô! Tôi là Trợ lý AI môn Toán THPT. Thầy/Cô cần hỗ trợ tạo câu hỏi, giải chi tiết hay điều chỉnh ma trận đề thi không ạ?',
+      text: 'Xin chào Thầy! Em là Trợ lý AI Toán THPT. Thầy cần hỗ trợ soạn đề thi hay giải toán không ạ?',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
 
-  // ==========================================
-  // XỬ LÝ DI CHUYỂN KÉO THẢ TỰ DO TRÊN MÀN HÌNH
-  // ==========================================
-  const [position, setPosition] = useState<{ x: number; y: number }>(() => {
-    if (typeof window !== 'undefined') {
-      return { x: window.innerWidth - 220, y: window.innerHeight - 80 };
-    }
-    return { x: 500, y: 500 };
-  });
+  const [pos, setPos] = useState<{ x: number; y: number }>(() => ({
+    x: typeof window !== 'undefined' ? window.innerWidth - 200 : 400,
+    y: typeof window !== 'undefined' ? window.innerHeight - 80 : 500,
+  }));
 
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const dragRef = useRef<{ startX: number; startY: number; initX: number; initY: number; moved: boolean }>({
-    startX: 0,
-    startY: 0,
-    initX: 0,
-    initY: 0,
-    moved: false,
-  });
+  const [isDrag, setIsDrag] = useState<boolean>(false);
+  const dragRef = useRef({ startX: 0, startY: 0, initX: 0, initY: 0, moved: false });
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const chatBottomRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isOpen]);
 
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isOpen]);
-
-  // Bắt đầu kéo chuột
-  const handleStartDrag = (clientX: number, clientY: number) => {
-    setIsDragging(true);
-    dragRef.current = {
-      startX: clientX,
-      startY: clientY,
-      initX: position.x,
-      initY: position.y,
-      moved: false,
-    };
+  const startDrag = (cx: number, cy: number) => {
+    setIsDrag(true);
+    dragRef.current = { startX: cx, startY: cy, initX: pos.x, initY: pos.y, moved: false };
   };
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
+    const onMove = (e: MouseEvent) => {
+      if (!isDrag) return;
       const dx = e.clientX - dragRef.current.startX;
       const dy = e.clientY - dragRef.current.startY;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-        dragRef.current.moved = true;
-      }
-      const newX = Math.max(10, Math.min(window.innerWidth - 180, dragRef.current.initX + dx));
-      const newY = Math.max(10, Math.min(window.innerHeight - 70, dragRef.current.initY + dy));
-      setPosition({ x: newX, y: newY });
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragRef.current.moved = true;
+      const nx = Math.max(10, Math.min(window.innerWidth - 160, dragRef.current.initX + dx));
+      const ny = Math.max(10, Math.min(window.innerHeight - 60, dragRef.current.initY + dy));
+      setPos({ x: nx, y: ny });
     };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging || !e.touches[0]) return;
-      const t = e.touches[0];
-      const dx = t.clientX - dragRef.current.startX;
-      const dy = t.clientY - dragRef.current.startY;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-        dragRef.current.moved = true;
-      }
-      const newX = Math.max(10, Math.min(window.innerWidth - 180, dragRef.current.initX + dx));
-      const newY = Math.max(10, Math.min(window.innerHeight - 70, dragRef.current.initY + dy));
-      setPosition({ x: newX, y: newY });
-    };
-
-    const handleStopDrag = () => {
-      setIsDragging(false);
-    };
-
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleStopDrag);
-      window.addEventListener('touchmove', handleTouchMove);
-      window.addEventListener('touchend', handleStopDrag);
+    const onUp = () => setIsDrag(false);
+    if (isDrag) {
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
     }
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleStopDrag);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleStopDrag);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
     };
-  }, [isDragging]);
+  }, [isDrag]);
 
-  // Gửi tin nhắn đến AI Gemini
-  const handleSendMessage = async (textToSend?: string) => {
-    const text = textToSend || inputText;
-    if (!text || !text.trim()) return;
-
-    const userMsg: ChatMessage = {
-      id: `msg_${Date.now()}`,
-      sender: 'user',
-      text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
+  const handleSend = async () => {
+    if (!inputText.trim()) return;
+    const text = inputText.trim();
+    const uMsg: ChatMessage = { id: `u_${Date.now()}`, sender: 'user', text, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+    setMessages((p) => [...p, uMsg]);
     setInputText('');
     setIsTyping(true);
 
     try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const botMsg: ChatMessage = {
-          id: `msg_bot_${Date.now()}`,
-          sender: 'assistant',
-          text: data.text || 'Tôi đã xử lý yêu cầu của Thầy/Cô.',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages((prev) => [...prev, botMsg]);
-      }
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text }) });
+      const data = await res.json();
+      setMessages((p) => [...p, { id: `b_${Date.now()}`, sender: 'assistant', text: data.text || 'Đã xử lý xong.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     } catch {
-      const fallbackMsg: ChatMessage = {
-        id: `msg_fallback_${Date.now()}`,
-        sender: 'assistant',
-        text: 'Em đã nhận lệnh từ Thầy/Cô và đang tự động chuẩn hóa câu hỏi.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages((prev) => [...prev, fallbackMsg]);
+      setMessages((p) => [...p, { id: `b_${Date.now()}`, sender: 'assistant', text: 'Em đã tiếp nhận yêu cầu từ Thầy.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     } finally {
       setIsTyping(false);
     }
@@ -160,50 +74,75 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({
 
   return (
     <>
-      {/* 1. NÚT TRỢ LÝ AI NỔI TỰ DO (KÉO THẢ DI CHUYỂN & THU NHỎ ĐƯỢC) */}
       {!isOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            left: `${position.x}px`,
-            top: `${position.y}px`,
-            zIndex: 50,
-          }}
-          className="select-none"
-        >
-          {isMinimized ? (
-            /* DẠNG THU NHỎ: NÚT TRÒN SIÊU GỌN W-12 H-12 */
+        <div style={{ position: 'fixed', left: `${pos.x}px`, top: `${pos.y}px`, zIndex: 50 }}>
+          {isMini ? (
             <div
-              onMouseDown={(e) => handleStartDrag(e.clientX, e.clientY)}
-              onTouchStart={(e) => e.touches[0] && handleStartDrag(e.touches[0].clientX, e.touches[0].clientY)}
-              onClick={() => {
-                if (!dragRef.current.moved) {
-                  setIsMinimized(false);
-                  setIsOpen(true);
-                }
-              }}
-              className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full flex items-center justify-center shadow-2xl cursor-move border-2 border-white/40 group relative transition-transform hover:scale-105"
-              title="Nhấn giữ để di chuyển • Nhấp để mở Trợ lý AI"
+              onMouseDown={(e) => startDrag(e.clientX, e.clientY)}
+              onClick={() => { if (!dragRef.current.moved) { setIsMini(false); setIsOpen(true); } }}
+              className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-full flex items-center justify-center shadow-2xl cursor-move border-2 border-white relative transition-transform hover:scale-105"
+              title="Kéo di chuyển • Nhấp để mở"
             >
-              <Bot className="w-6 h-6 text-white" />
+              <Bot className="w-6 h-6" />
               <span className="absolute top-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full"></span>
             </div>
           ) : (
-            /* DẠNG ĐẦY ĐỦ: VIÊN THUỐC CÓ TÊN "TRỢ LÝ AI", NÚT THU NHỎ & ICON KÉO */
             <div
-              onMouseDown={(e) => handleStartDrag(e.clientX, e.clientY)}
-              onTouchStart={(e) => e.touches[0] && handleStartDrag(e.touches[0].clientX, e.touches[0].clientY)}
-              className="flex items-center bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-1 pl-3 pr-2 rounded-full shadow-2xl border border-white/30 cursor-move transition-all group"
-              title="Nhấn giữ để di chuyển đến bất kỳ đâu trên màn hình"
+              onMouseDown={(e) => startDrag(e.clientX, e.clientY)}
+              className="flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white p-1 pl-2.5 pr-2 rounded-full shadow-2xl border border-white/30 cursor-move"
+              title="Kéo di chuyển"
             >
-              {/* Tay cầm kéo di chuyển */}
-              <GripVertical className="w-3.5 h-3.5 text-white/60 mr-1 shrink-0" />
+              <GripVertical className="w-3.5 h-3.5 text-white/70 mr-1 shrink-0" />
+              <div onClick={() => { if (!dragRef.current.moved) setIsOpen(true); }} className="flex items-center gap-1.5 cursor-pointer py-1 pr-1.5">
+                <Bot className="w-4 h-4" />
+                <span className="text-xs font-black tracking-wide">Trợ lý AI</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+              </div>
+              <button type="button" onClick={(e) => { e.stopPropagation(); setIsMini(true); }} className="p-1 hover:bg-white/20 rounded-full text-white/80" title="Thu nhỏ">
+                <Minimize2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
-              {/* Chữ bấm mở chat */}
-              <div
-                onClick={() => {
-                  if (!dragRef.current.moved) {
-                    setIsOpen(true);
-                  }
-                }}
-                className="flex items-center gap-2 cursor-pointer py-1.5 pr
+      {isOpen && (
+        <div className="fixed bottom-4 right-4 w-[90vw] sm:w-[380px] h-[500px] max-h-[85vh] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden z-50 animate-in fade-in">
+          <div className="p-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex justify-between items-center shadow">
+            <div className="flex items-center gap-2">
+              <Bot className="w-5 h-5" />
+              <div>
+                <h4 className="font-bold text-xs leading-tight flex items-center gap-1">Trợ lý AI <span className="w-2 h-2 bg-emerald-400 rounded-full"></span></h4>
+                <p className="text-[10px] text-blue-100">Gemini 2.5 Flash</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <button onClick={() => { setIsOpen(false); setIsMini(true); }} className="p-1 hover:bg-white/20 rounded-lg text-white" title="Thu nhỏ"><Minimize2 className="w-4 h-4" /></button>
+              <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-white/20 rounded-lg text-white" title="Đóng"><X className="w-4 h-4" /></button>
+            </div>
+          </div>
+
+          <div className="flex-1 p-3 overflow-y-auto space-y-2.5 bg-slate-50 text-xs">
+            {messages.map((m) => (
+              <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] p-3 rounded-2xl ${m.sender === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white text-slate-800 rounded-tl-none border shadow-sm'}`}>
+                  {m.text}
+                  <span className={`block text-[9px] mt-1 text-right ${m.sender === 'user' ? 'text-blue-200' : 'text-slate-400'}`}>{m.timestamp}</span>
+                </div>
+              </div>
+            ))}
+            {isTyping && <div className="text-[11px] text-slate-400 p-2 flex items-center gap-1"><RefreshCw className="w-3 h-3 animate-spin text-blue-600" /> AI đang trả lời...</div>}
+            <div ref={chatEndRef} />
+          </div>
+
+          <div className="p-2.5 bg-white border-t flex gap-1.5">
+            <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} placeholder="Nhập câu hỏi cho AI..." className="flex-1 p-2 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500" />
+            <button onClick={handleSend} className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow cursor-pointer"><Send className="w-4 h-4" /></button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default AssistantChat;
