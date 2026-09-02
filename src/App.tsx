@@ -12,12 +12,13 @@ import { AssistantChat } from './AssistantChat';
 import { AssignmentModal } from './19';
 import { StudentPortal } from './14';
 import { ClassManager } from './18';
+import { QuestionBankManager } from './QuestionBankManager';
 import { exportTestToWord } from './wordExporter';
 import { saveTestToBank } from './testBankStorage';
 import {
-  Home, FileText, FolderArchive, Users, BookOpen, Layers,
-  Table, Sparkles, Upload, Send, Download, ArrowLeft,
-  Award, Bookmark, Landmark, Layers as StackIcon
+  Home, FileText, FolderArchive, BookOpen, Layers,
+  Table, Sparkles, Send, Download, ArrowLeft,
+  Bookmark, Landmark, Layers as StackIcon
 } from 'lucide-react';
 
 export type ActiveTabType = 'home' | 'create' | 'upload' | 'assign' | 'classes' | 'generator' | 'slides' | 'matrix' | 'bank';
@@ -83,11 +84,6 @@ export default function App() {
 
   const handleExportWord = () => {
     exportTestToWord(currentTest);
-  };
-
-  const handleQuickSaveToBank = () => {
-    saveTestToBank(currentTest);
-    alert('Đã lưu đề thi vào Kho Lưu Trữ thành công!');
   };
 
   const isAtHome = activeTab === 'home';
@@ -226,7 +222,7 @@ export default function App() {
 
         {/* NỘI DUNG CHÍNH */}
         <main className="flex-1 p-4 sm:p-8 overflow-y-auto">
-          {/* MÀN HÌNH CHÍNH (ĐÚNG 100% CÁC THẺ THEO MẪU ẢNH) */}
+          {/* MÀN HÌNH CHÍNH (ĐÚNG 100% THEO MẪU ẢNH) */}
           {isAtHome && (
             <div className="max-w-6xl mx-auto space-y-8">
               {/* NHÓM 1: QUẢN LÝ HỌC TẬP (3 THẺ LỚN) */}
@@ -235,7 +231,6 @@ export default function App() {
                   Quản lý học tập
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  {/* Thẻ Bài tập */}
                   <div
                     onClick={() => setActiveTab('assign')}
                     className="p-8 bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]"
@@ -246,7 +241,6 @@ export default function App() {
                     <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Bài tập</span>
                   </div>
 
-                  {/* Thẻ Đề thi */}
                   <div
                     onClick={() => setActiveTab('create')}
                     className="p-8 bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]"
@@ -257,7 +251,6 @@ export default function App() {
                     <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Đề thi</span>
                   </div>
 
-                  {/* Thẻ Quản lý lớp */}
                   <div
                     onClick={() => setActiveTab('classes')}
                     className="p-8 bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]"
@@ -276,7 +269,6 @@ export default function App() {
                   Nội dung & Công cụ
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  {/* Thẻ Kho nội dung */}
                   <div
                     onClick={() => setActiveTab('bank')}
                     className="p-8 bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]"
@@ -287,7 +279,7 @@ export default function App() {
                     <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Kho nội dung</span>
                   </div>
 
-                  {/* Thẻ Ngân hàng câu hỏi */}
+                  {/* THẺ NGÂN HÀNG CÂU HỎI -> MỞ QUESTIONBANKMANAGER */}
                   <div
                     onClick={() => setActiveTab('matrix')}
                     className="p-8 bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]"
@@ -298,7 +290,6 @@ export default function App() {
                     <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Ngân hàng câu hỏi</span>
                   </div>
 
-                  {/* Thẻ Khóa học */}
                   <div
                     onClick={() => setActiveTab('slides')}
                     className="p-8 bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]"
@@ -357,7 +348,7 @@ export default function App() {
             </div>
           )}
 
-          {/* GIAO DIỆN BÀI TẬP & GIAO BÀI CHO HỌC SINH */}
+          {/* GIAO DIỆN BÀI TẬP & GIAO BÀI */}
           {activeTab === 'assign' && (
             <AssignmentModal
               isOpen={true}
@@ -380,11 +371,11 @@ export default function App() {
             />
           )}
 
-          {/* GIAO DIỆN TRÌNH CHIẾU SLIDE / KHÓA HỌC */}
+          {/* GIAO DIỆN TRÌNH CHIẾU SLIDE */}
           {activeTab === 'slides' && <SlideViewer test={currentTest} />}
 
-          {/* GIAO DIỆN MA TRẬN & BẢN ĐẶC TẢ */}
-          {activeTab === 'matrix' && <MatrixTable test={currentTest} />}
+          {/* GIAO DIỆN NGÂN HÀNG CÂU HỎI (CHUẨN ẢNH 129 & 130) */}
+          {activeTab === 'matrix' && <QuestionBankManager />}
 
           {/* GIAO DIỆN KHO NỘI DUNG / LƯU TRỮ ĐỀ */}
           {activeTab === 'bank' && (
@@ -409,7 +400,7 @@ export default function App() {
         isGenerating={isGenerating}
       />
 
-      {/* Modal Chỉnh sửa chi tiết 1 câu hỏi */}
+      {/* Modal Sửa câu hỏi */}
       {editingQuestion && (
         <EditorModal
           question={editingQuestion}
