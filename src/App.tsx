@@ -21,7 +21,7 @@ import {
   Bookmark, Landmark, Layers as StackIcon, RefreshCw
 } from 'lucide-react';
 
-export type ActiveTabType = 'home' | 'create' | 'upload' | 'assign' | 'classes' | 'generator' | 'slides' | 'matrix' | 'bank';
+export type ActiveTabType = 'home' | 'create' | 'upload' | 'assign' | 'classes' | 'generator' | 'slides' | 'matrix' | 'bank' | 'question-bank';
 
 export default function App() {
   const isStudentMode = new URLSearchParams(window.location.search).get('mode') === 'student';
@@ -51,13 +51,10 @@ export default function App() {
   });
 
   const [activeTab, setActiveTab] = useState<ActiveTabType>('home');
-  // LƯU LỊCH SỬ CÁC BƯỚC ĐÃ ĐI ĐỂ QUAY LẠI TỪNG BƯỚC MỘT
   const [tabHistory, setTabHistory] = useState<ActiveTabType[]>([]);
-
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-  // Hàm chuyển màn hình có ghi nhớ lịch sử
   const handleNavigate = (newTab: ActiveTabType) => {
     if (newTab !== activeTab) {
       setTabHistory((prev) => [...prev, activeTab]);
@@ -65,7 +62,6 @@ export default function App() {
     }
   };
 
-  // HÀM QUAY LẠI 1 BƯỚC TRƯỚC ĐÓ
   const handleGoBack = () => {
     if (tabHistory.length > 0) {
       const prevTab = tabHistory[tabHistory.length - 1];
@@ -113,7 +109,7 @@ export default function App() {
     }
   };
 
-  // TẠO ĐỀ THI BẰNG AI GEMINI
+  // TẠO ĐỀ BẰNG AI GEMINI ĐỒNG BỘ ĐÚNG MA TRẬN
   const handleGenerateExamWithAI = async (overrideConfig?: TestConfig) => {
     const targetConfig = overrideConfig || currentTest.config;
     setIsGenerating(true);
@@ -139,7 +135,7 @@ export default function App() {
         }
       }
     } catch (err) {
-      console.warn('AI fallback:', err);
+      console.warn('Lỗi AI, chuyển sang chế độ chuẩn:', err);
     }
 
     if (!newTest) {
@@ -155,7 +151,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex">
-      {/* THANH ICON BÊN TRÁI */}
+      {/* CỘT ICON SIDEBAR */}
       <aside className="w-16 bg-blue-900 text-white min-h-screen h-screen sticky top-0 flex flex-col items-center justify-between py-5 shrink-0 shadow-lg z-30">
         <div className="flex flex-col items-center space-y-6 w-full">
           <div
@@ -169,27 +165,26 @@ export default function App() {
           <div className="flex flex-col items-center space-y-3 w-full">
             <button type="button" onClick={() => handleNavigate('home')} className={`p-3 rounded-2xl transition-all ${activeTab === 'home' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Màn hình chính"><Home className="w-5 h-5" /></button>
             <button type="button" onClick={() => handleNavigate('assign')} className={`p-3 rounded-2xl transition-all ${activeTab === 'assign' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Bài tập"><FileText className="w-5 h-5" /></button>
-            <button type="button" onClick={() => handleNavigate('create')} className={`p-3 rounded-2xl transition-all ${activeTab === 'create' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Đề thi"><Sparkles className="w-5 h-5 text-amber-300" /></button>
+            <button type="button" onClick={() => handleNavigate('create')} className={`p-3 rounded-2xl transition-all ${activeTab === 'create' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Tạo đề mới"><Sparkles className="w-5 h-5 text-amber-300" /></button>
             <button type="button" onClick={() => handleNavigate('classes')} className={`p-3 rounded-2xl transition-all ${activeTab === 'classes' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Quản lý lớp"><StackIcon className="w-5 h-5" /></button>
             <button type="button" onClick={() => handleNavigate('bank')} className={`p-3 rounded-2xl transition-all ${activeTab === 'bank' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Kho nội dung"><BookOpen className="w-5 h-5" /></button>
-            <button type="button" onClick={() => handleNavigate('matrix')} className={`p-3 rounded-2xl transition-all ${activeTab === 'matrix' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Ngân hàng câu hỏi"><Landmark className="w-5 h-5" /></button>
-            <button type="button" onClick={() => handleNavigate('slides')} className={`p-3 rounded-2xl transition-all ${activeTab === 'slides' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Khóa học / Slide"><Bookmark className="w-5 h-5" /></button>
+            <button type="button" onClick={() => handleNavigate('matrix')} className={`p-3 rounded-2xl transition-all ${activeTab === 'matrix' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Ma trận & Bản đặc tả"><Table className="w-5 h-5" /></button>
+            <button type="button" onClick={() => handleNavigate('question-bank')} className={`p-3 rounded-2xl transition-all ${activeTab === 'question-bank' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Ngân hàng câu hỏi"><Landmark className="w-5 h-5" /></button>
+            <button type="button" onClick={() => handleNavigate('slides')} className={`p-3 rounded-2xl transition-all ${activeTab === 'slides' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Trình chiếu Slide"><Bookmark className="w-5 h-5" /></button>
           </div>
         </div>
         <div className="text-[10px] text-blue-300 font-mono">2026</div>
       </aside>
 
-      {/* VÙNG NỘI DUNG CHÍNH */}
+      {/* VÙNG NỘI DUNG */}
       <div className="flex-1 min-h-screen flex flex-col min-w-0">
         <header className="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between shadow-sm sticky top-0 z-20">
           <div className="w-36">
-            {/* NÚT QUAY LẠI 1 BƯỚC TRƯỚC ĐÓ */}
             {!isAtHome && (
               <button
                 type="button"
                 onClick={handleGoBack}
-                className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-blue-200 shadow-sm cursor-pointer transition-all"
-                title="Quay lại bước trước đó"
+                className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-blue-200 shadow-sm cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4 text-blue-600" /> Quay lại
               </button>
@@ -218,23 +213,23 @@ export default function App() {
         )}
 
         <main className="flex-1 p-4 sm:p-8 overflow-y-auto">
-          {/* MÀN HÌNH CHÍNH */}
+          {/* TRANG CHỦ */}
           {isAtHome && (
             <div className="max-w-6xl mx-auto space-y-8">
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-slate-900 px-1">Quản lý học tập</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  <div onClick={() => handleNavigate('assign')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105"><FileText className="w-7 h-7" /></div>
-                    <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Bài tập</span>
+                  <div onClick={() => handleNavigate('assign')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 min-h-[150px]">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><FileText className="w-7 h-7" /></div>
+                    <span className="font-bold text-sm text-slate-800">Bài tập</span>
                   </div>
-                  <div onClick={() => handleNavigate('create')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105"><Sparkles className="w-7 h-7" /></div>
-                    <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Đề thi</span>
+                  <div onClick={() => handleNavigate('create')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 min-h-[150px]">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><Sparkles className="w-7 h-7" /></div>
+                    <span className="font-bold text-sm text-slate-800">Đề thi</span>
                   </div>
-                  <div onClick={() => handleNavigate('classes')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105"><StackIcon className="w-7 h-7" /></div>
-                    <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Quản lý lớp</span>
+                  <div onClick={() => handleNavigate('classes')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 min-h-[150px]">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><StackIcon className="w-7 h-7" /></div>
+                    <span className="font-bold text-sm text-slate-800">Quản lý lớp</span>
                   </div>
                 </div>
               </div>
@@ -242,25 +237,27 @@ export default function App() {
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-slate-900 px-1">Nội dung & Công cụ</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  <div onClick={() => handleNavigate('bank')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105"><BookOpen className="w-7 h-7" /></div>
-                    <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Kho nội dung</span>
+                  <div onClick={() => handleNavigate('bank')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 min-h-[150px]">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><BookOpen className="w-7 h-7" /></div>
+                    <span className="font-bold text-sm text-slate-800">Kho nội dung</span>
                   </div>
-                  <div onClick={() => handleNavigate('matrix')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105"><Landmark className="w-7 h-7" /></div>
-                    <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Ngân hàng câu hỏi</span>
+                  {/* THẺ MA TRẬN & BẢN ĐẶC TẢ */}
+                  <div onClick={() => handleNavigate('matrix')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 min-h-[150px]">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><Table className="w-7 h-7" /></div>
+                    <span className="font-bold text-sm text-slate-800">Ma trận & Bản đặc tả</span>
                   </div>
-                  <div onClick={() => handleNavigate('slides')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105"><Bookmark className="w-7 h-7" /></div>
-                    <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Khóa học</span>
+                  <div onClick={() => handleNavigate('slides')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 min-h-[150px]">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><Bookmark className="w-7 h-7" /></div>
+                    <span className="font-bold text-sm text-slate-800">Khóa học / Slide</span>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
+          {/* CÁC MÀN HÌNH CHỨC NĂNG */}
           {activeTab === 'create' && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-5xl mx-auto">
+            <div className="bg-white p-6 rounded-2xl border shadow-sm max-w-5xl mx-auto">
               <QuestionGeneratorModal
                 config={currentTest.config}
                 setConfig={(newConfig) => {
@@ -277,7 +274,7 @@ export default function App() {
           )}
 
           {activeTab === 'upload' && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-4xl mx-auto">
+            <div className="bg-white p-6 rounded-2xl border shadow-sm max-w-4xl mx-auto">
               <FileUploadModal isOpen={true} onClose={handleGoBack} onImportQuestions={(imported) => { setCurrentTest((prev) => ({ ...prev, questions: imported })); handleNavigate('generator'); }} />
             </div>
           )}
@@ -285,6 +282,7 @@ export default function App() {
           {activeTab === 'assign' && <AssignmentModal isOpen={true} onClose={handleGoBack} currentConfig={currentTest.config} />}
           {activeTab === 'classes' && <ClassManager />}
 
+          {/* XEM ĐỀ THI HIỆN TẠI */}
           {activeTab === 'generator' && (
             <QuestionList
               test={currentTest}
@@ -295,8 +293,16 @@ export default function App() {
             />
           )}
 
+          {/* TRÌNH CHIẾU SLIDE */}
           {activeTab === 'slides' && <SlideViewer test={currentTest} />}
-          {activeTab === 'matrix' && <QuestionBankManager />}
+
+          {/* MA TRẬN & BẢN ĐẶC TẢ ĐỒNG BỘ 100% VỚI ĐỀ THI */}
+          {activeTab === 'matrix' && <MatrixTable test={currentTest} />}
+
+          {/* NGÂN HÀNG CÂU HỎI */}
+          {activeTab === 'question-bank' && <QuestionBankManager />}
+
+          {/* KHO LƯU TRỮ ĐỀ */}
           {activeTab === 'bank' && <TestBankModal isOpen={true} onClose={handleGoBack} onSelectTest={(t) => { setCurrentTest(t); handleNavigate('generator'); }} />}
         </main>
       </div>
