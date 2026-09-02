@@ -13,7 +13,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 
-export type ActiveTabType = 'create' | 'upload' | 'assign' | 'classes' | 'generator' | 'slides' | 'matrix' | 'bank';
+export type ActiveTabType = 'home' | 'create' | 'upload' | 'assign' | 'classes' | 'generator' | 'slides' | 'matrix' | 'bank';
 
 export interface HeaderMenuProps {
   activeTab: ActiveTabType;
@@ -30,9 +30,8 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
 }) => {
   return (
     <aside className="w-64 sm:w-72 bg-slate-900 text-white min-h-screen h-screen sticky top-0 flex flex-col justify-between border-r border-slate-800 p-4 shrink-0 shadow-2xl overflow-y-auto font-sans">
-      {/* 1. KHỐI LOGO & MENU ĐIỀU HƯỚNG DỌC */}
       <div className="space-y-4">
-        {/* Tiêu đề thanh công cụ */}
+        {/* Tiêu đề Bảng điều khiển */}
         <div className="pb-3 border-b border-slate-800 flex items-center justify-between">
           <span className="text-xs font-black tracking-wider text-slate-300 uppercase flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-blue-400" /> BẢNG ĐIỀU KHIỂN
@@ -42,19 +41,19 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
           </span>
         </div>
 
-        {/* DANH SÁCH TOÀN BỘ CÁC MENU DỌC (BẤM VÀO MỤC NÀO HIỆN MỤC ĐÓ) */}
+        {/* DANH SÁCH MENU DỌC TRANG CHỦ */}
         <div className="space-y-1.5">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-1">
             Chức năng chính
           </span>
 
-          {/* 1. TẠO ĐỀ MỚI (MA TRẬN) */}
+          {/* 1. TẠO ĐỀ MỚI */}
           <button
             type="button"
             onClick={() => setActiveTab('create')}
             className={`w-full px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer text-left ${
               activeTab === 'create'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg ring-2 ring-blue-400'
+                ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-400'
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
             }`}
           >
@@ -62,7 +61,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
             <span>✨ Tạo đề mới (Ma trận)</span>
           </button>
 
-          {/* 2. TẢI LÊN FILE WORD */}
+          {/* 2. TẢI LÊN ĐỀ WORD */}
           <button
             type="button"
             onClick={() => setActiveTab('upload')}
@@ -164,7 +163,7 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
             <span>🗄️ Kho lưu trữ đề</span>
           </button>
 
-          {/* 9. XUẤT ĐỀ RA FILE WORD */}
+          {/* 9. XUẤT FILE WORD */}
           {onExportWord && (
             <button
               type="button"
@@ -178,7 +177,6 @@ export const HeaderMenu: React.FC<HeaderMenuProps> = ({
         </div>
       </div>
 
-      {/* FOOTER BÊN DƯỚI CỘT */}
       <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-400 text-center space-y-0.5">
         <p className="font-bold text-slate-300">THPT MAI THANH THẾ</p>
         <p className="text-[10px] text-slate-500">Năm học 2026 - 2027</p>
