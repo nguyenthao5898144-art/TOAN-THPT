@@ -28,7 +28,7 @@ export default function App() {
 
   const [currentTest, setCurrentTest] = useState<GeneratedTest>(() => {
     const defaultCfg = {
-      title: 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN 12 - GDPT 2018',
+      title: 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN THPT - GDPT 2018',
       grade: '12',
       durationMinutes: 45,
       selectedTopicIds: [],
@@ -51,8 +51,30 @@ export default function App() {
   });
 
   const [activeTab, setActiveTab] = useState<ActiveTabType>('home');
+  // LƯU LỊCH SỬ CÁC BƯỚC ĐÃ ĐI ĐỂ QUAY LẠI TỪNG BƯỚC MỘT
+  const [tabHistory, setTabHistory] = useState<ActiveTabType[]>([]);
+
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+
+  // Hàm chuyển màn hình có ghi nhớ lịch sử
+  const handleNavigate = (newTab: ActiveTabType) => {
+    if (newTab !== activeTab) {
+      setTabHistory((prev) => [...prev, activeTab]);
+      setActiveTab(newTab);
+    }
+  };
+
+  // HÀM QUAY LẠI 1 BƯỚC TRƯỚC ĐÓ
+  const handleGoBack = () => {
+    if (tabHistory.length > 0) {
+      const prevTab = tabHistory[tabHistory.length - 1];
+      setTabHistory((prev) => prev.slice(0, prev.length - 1));
+      setActiveTab(prevTab);
+    } else {
+      setActiveTab('home');
+    }
+  };
 
   if (isStudentMode) {
     return (
@@ -91,16 +113,13 @@ export default function App() {
     }
   };
 
-  // ==========================================================
-  // HÀM TẠO ĐỀ THI MỚI BẰNG AI GEMINI BÁM SÁT ĐÚNG KHỐI LỚP 10/11/12
-  // ==========================================================
+  // TẠO ĐỀ THI BẰNG AI GEMINI
   const handleGenerateExamWithAI = async (overrideConfig?: TestConfig) => {
     const targetConfig = overrideConfig || currentTest.config;
     setIsGenerating(true);
     let newTest: GeneratedTest | null = null;
 
     try {
-      // Gửi đúng khối lớp (grade 10, 11 hoặc 12) sang AI
       const res = await fetch('/api/generate-exam', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -120,17 +139,16 @@ export default function App() {
         }
       }
     } catch (err) {
-      console.warn('Lỗi kết nối AI, kích hoạt chế độ dự phòng:', err);
+      console.warn('AI fallback:', err);
     }
 
-    // Dự phòng tự động nếu AI phản hồi chậm
     if (!newTest) {
       newTest = createDefaultTest(targetConfig);
     }
 
     setCurrentTest(newTest);
     setIsGenerating(false);
-    setActiveTab('generator'); // Tự động chuyển sang xem toàn bộ đề thi vừa tạo
+    handleNavigate('generator');
   };
 
   const isAtHome = activeTab === 'home';
@@ -141,7 +159,7 @@ export default function App() {
       <aside className="w-16 bg-blue-900 text-white min-h-screen h-screen sticky top-0 flex flex-col items-center justify-between py-5 shrink-0 shadow-lg z-30">
         <div className="flex flex-col items-center space-y-6 w-full">
           <div
-            onClick={() => setActiveTab('home')}
+            onClick={() => handleNavigate('home')}
             className="w-10 h-10 rounded-2xl bg-blue-600 hover:bg-blue-500 flex items-center justify-center font-black text-xs cursor-pointer shadow"
             title="Màn hình chính"
           >
@@ -149,13 +167,13 @@ export default function App() {
           </div>
 
           <div className="flex flex-col items-center space-y-3 w-full">
-            <button type="button" onClick={() => setActiveTab('home')} className={`p-3 rounded-2xl transition-all ${activeTab === 'home' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Màn hình chính"><Home className="w-5 h-5" /></button>
-            <button type="button" onClick={() => setActiveTab('assign')} className={`p-3 rounded-2xl transition-all ${activeTab === 'assign' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Bài tập"><FileText className="w-5 h-5" /></button>
-            <button type="button" onClick={() => setActiveTab('create')} className={`p-3 rounded-2xl transition-all ${activeTab === 'create' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Tạo đề mới"><Sparkles className="w-5 h-5 text-amber-300" /></button>
-            <button type="button" onClick={() => setActiveTab('classes')} className={`p-3 rounded-2xl transition-all ${activeTab === 'classes' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Quản lý lớp"><StackIcon className="w-5 h-5" /></button>
-            <button type="button" onClick={() => setActiveTab('bank')} className={`p-3 rounded-2xl transition-all ${activeTab === 'bank' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Kho nội dung"><BookOpen className="w-5 h-5" /></button>
-            <button type="button" onClick={() => setActiveTab('matrix')} className={`p-3 rounded-2xl transition-all ${activeTab === 'matrix' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Ngân hàng câu hỏi"><Landmark className="w-5 h-5" /></button>
-            <button type="button" onClick={() => setActiveTab('slides')} className={`p-3 rounded-2xl transition-all ${activeTab === 'slides' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Trình chiếu Slide"><Bookmark className="w-5 h-5" /></button>
+            <button type="button" onClick={() => handleNavigate('home')} className={`p-3 rounded-2xl transition-all ${activeTab === 'home' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Màn hình chính"><Home className="w-5 h-5" /></button>
+            <button type="button" onClick={() => handleNavigate('assign')} className={`p-3 rounded-2xl transition-all ${activeTab === 'assign' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Bài tập"><FileText className="w-5 h-5" /></button>
+            <button type="button" onClick={() => handleNavigate('create')} className={`p-3 rounded-2xl transition-all ${activeTab === 'create' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Đề thi"><Sparkles className="w-5 h-5 text-amber-300" /></button>
+            <button type="button" onClick={() => handleNavigate('classes')} className={`p-3 rounded-2xl transition-all ${activeTab === 'classes' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Quản lý lớp"><StackIcon className="w-5 h-5" /></button>
+            <button type="button" onClick={() => handleNavigate('bank')} className={`p-3 rounded-2xl transition-all ${activeTab === 'bank' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Kho nội dung"><BookOpen className="w-5 h-5" /></button>
+            <button type="button" onClick={() => handleNavigate('matrix')} className={`p-3 rounded-2xl transition-all ${activeTab === 'matrix' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Ngân hàng câu hỏi"><Landmark className="w-5 h-5" /></button>
+            <button type="button" onClick={() => handleNavigate('slides')} className={`p-3 rounded-2xl transition-all ${activeTab === 'slides' ? 'bg-white/20 text-white shadow' : 'text-blue-200 hover:bg-white/10'}`} title="Khóa học / Slide"><Bookmark className="w-5 h-5" /></button>
           </div>
         </div>
         <div className="text-[10px] text-blue-300 font-mono">2026</div>
@@ -165,13 +183,15 @@ export default function App() {
       <div className="flex-1 min-h-screen flex flex-col min-w-0">
         <header className="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between shadow-sm sticky top-0 z-20">
           <div className="w-36">
+            {/* NÚT QUAY LẠI 1 BƯỚC TRƯỚC ĐÓ */}
             {!isAtHome && (
               <button
                 type="button"
-                onClick={() => setActiveTab('home')}
-                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-blue-200"
+                onClick={handleGoBack}
+                className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-blue-200 shadow-sm cursor-pointer transition-all"
+                title="Quay lại bước trước đó"
               >
-                <ArrowLeft className="w-4 h-4" /> Màn hình chính
+                <ArrowLeft className="w-4 h-4 text-blue-600" /> Quay lại
               </button>
             )}
           </div>
@@ -190,7 +210,6 @@ export default function App() {
           </div>
         </header>
 
-        {/* THÔNG BÁO AI ĐANG TẠO ĐỀ NẾU ĐANG CHẠY */}
         {isGenerating && (
           <div className="bg-blue-600 text-white px-4 py-2.5 text-xs font-bold flex items-center justify-center gap-2 shadow-inner">
             <RefreshCw className="w-4 h-4 animate-spin text-amber-300" />
@@ -199,21 +218,21 @@ export default function App() {
         )}
 
         <main className="flex-1 p-4 sm:p-8 overflow-y-auto">
-          {/* TRANG CHỦ */}
+          {/* MÀN HÌNH CHÍNH */}
           {isAtHome && (
             <div className="max-w-6xl mx-auto space-y-8">
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-slate-900 px-1">Quản lý học tập</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  <div onClick={() => setActiveTab('assign')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
+                  <div onClick={() => handleNavigate('assign')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
                     <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105"><FileText className="w-7 h-7" /></div>
                     <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Bài tập</span>
                   </div>
-                  <div onClick={() => setActiveTab('create')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
+                  <div onClick={() => handleNavigate('create')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
                     <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105"><Sparkles className="w-7 h-7" /></div>
                     <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Đề thi</span>
                   </div>
-                  <div onClick={() => setActiveTab('classes')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
+                  <div onClick={() => handleNavigate('classes')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
                     <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105"><StackIcon className="w-7 h-7" /></div>
                     <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Quản lý lớp</span>
                   </div>
@@ -223,15 +242,15 @@ export default function App() {
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-slate-900 px-1">Nội dung & Công cụ</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  <div onClick={() => setActiveTab('bank')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
+                  <div onClick={() => handleNavigate('bank')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
                     <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105"><BookOpen className="w-7 h-7" /></div>
                     <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Kho nội dung</span>
                   </div>
-                  <div onClick={() => setActiveTab('matrix')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
+                  <div onClick={() => handleNavigate('matrix')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
                     <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105"><Landmark className="w-7 h-7" /></div>
                     <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Ngân hàng câu hỏi</span>
                   </div>
-                  <div onClick={() => setActiveTab('slides')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
+                  <div onClick={() => handleNavigate('slides')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]">
                     <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105"><Bookmark className="w-7 h-7" /></div>
                     <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Khóa học</span>
                   </div>
@@ -240,7 +259,6 @@ export default function App() {
             </div>
           )}
 
-          {/* MÀN HÌNH TẠO ĐỀ MỚI - GỌI TRỰC TIẾP AI GEMINI */}
           {activeTab === 'create' && (
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-5xl mx-auto">
               <QuestionGeneratorModal
@@ -260,27 +278,26 @@ export default function App() {
 
           {activeTab === 'upload' && (
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-4xl mx-auto">
-              <FileUploadModal isOpen={true} onClose={() => setActiveTab('home')} onImportQuestions={(imported) => { setCurrentTest((prev) => ({ ...prev, questions: imported })); setActiveTab('generator'); }} />
+              <FileUploadModal isOpen={true} onClose={handleGoBack} onImportQuestions={(imported) => { setCurrentTest((prev) => ({ ...prev, questions: imported })); handleNavigate('generator'); }} />
             </div>
           )}
 
-          {activeTab === 'assign' && <AssignmentModal isOpen={true} onClose={() => setActiveTab('home')} currentConfig={currentTest.config} />}
+          {activeTab === 'assign' && <AssignmentModal isOpen={true} onClose={handleGoBack} currentConfig={currentTest.config} />}
           {activeTab === 'classes' && <ClassManager />}
 
-          {/* MÀN HÌNH XEM ĐỀ THI ĐÃ TẠO */}
           {activeTab === 'generator' && (
             <QuestionList
               test={currentTest}
               onEditQuestion={(q) => setEditingQuestion(q)}
               onDeleteQuestion={handleDeleteQuestion}
               onSaveToBank={handleQuickSaveToBank}
-              onOpenBank={() => setActiveTab('bank')}
+              onOpenBank={() => handleNavigate('bank')}
             />
           )}
 
           {activeTab === 'slides' && <SlideViewer test={currentTest} />}
           {activeTab === 'matrix' && <QuestionBankManager />}
-          {activeTab === 'bank' && <TestBankModal isOpen={true} onClose={() => setActiveTab('home')} onSelectTest={(t) => { setCurrentTest(t); setActiveTab('generator'); }} />}
+          {activeTab === 'bank' && <TestBankModal isOpen={true} onClose={handleGoBack} onSelectTest={(t) => { setCurrentTest(t); handleNavigate('generator'); }} />}
         </main>
       </div>
 
