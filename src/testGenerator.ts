@@ -1,7 +1,7 @@
 import { GeneratedTest, Question, TestConfig, StudentAccount } from './types';
 
 // ==============================================================
-// 1. HÀM LÀM SẠCH CÔNG THỨC TOÁN CHO EDITOR MODAL
+// 1. CÁC HÀM TIỆN ÍCH CHO FILE UPLOAD & EDITOR MODAL
 // ==============================================================
 export const sanitizeQuestionMath = (question: Question | any): Question => {
   if (!question) return question;
@@ -12,8 +12,13 @@ export const sanitizeQuestionMath = (question: Question | any): Question => {
   };
 };
 
+export const ensureUniqueDiagramsInText = (text: string | any): any => {
+  if (typeof text !== 'string') return text;
+  return text;
+};
+
 // ==============================================================
-// 2. NGÂN HÀNG CÂU HỎI TOÁN 11 CHUẨN GDPT 2018 (KHÔNG CÓ ĐẠO HÀM LỚP 12)
+// 2. NGÂN HÀNG CÂU HỎI TOÁN 11 CHUẨN GDPT 2018 (KHÔNG CÓ ĐẠO HÀM ĐƠN ĐIỆU CỦA LỚP 12)
 // ==============================================================
 export const MATH_11_QUESTIONS: Question[] = [
   {
@@ -51,7 +56,7 @@ export const MATH_11_QUESTIONS: Question[] = [
     type: 'multiple_choice',
     level: 'NhanBiet',
     topicName: 'Cấp số cộng',
-    content: 'Cho cấp số cộng $(u_n)$ có số hạng đầu $u_1 = 3$ và công sai $d = 4$. Số hạng thứ hai $u_2$ bằng:',
+    content: 'Cho cấp số cộng $(u_n)$ có số hạng đầu $u_1 = 3$ và công sai $d = 4$. Giá trị của số hạng thứ hai $u_2$ bằng:',
     options: [
       { key: 'A', text: '$7$' },
       { key: 'B', text: '$12$' },
@@ -119,7 +124,7 @@ export const MATH_11_QUESTIONS: Question[] = [
       { key: 'D', text: '$BC \\perp (SAB)$' },
     ],
     correctAnswer: 'A',
-    solution: 'Do $SA \\perp (ABCD)$ nên $SC$ là đường xiên, do đó $SC$ không thể vuông góc với đáy $(ABCD)$.',
+    solution: 'Vì $SA \\perp (ABCD)$ nên $SC$ là đường xiên, do đó $SC$ không thể vuông góc với đáy $(ABCD)$.',
   },
   {
     id: 'q11_8',
@@ -140,7 +145,7 @@ export const MATH_11_QUESTIONS: Question[] = [
     id: 'q11_9',
     type: 'multiple_choice',
     level: 'ThongHieu',
-    topicName: 'Tiếp tuyến của đồ thị hàm số',
+    topicName: 'Phương trình tiếp tuyến lớp 11',
     content: 'Hệ số góc của tiếp tuyến của parabol $y = x^2 - 2x + 3$ tại điểm có hoành độ $x_0 = 2$ bằng:',
     options: [
       { key: 'A', text: '$2$' },
@@ -259,7 +264,7 @@ export const MATH_11_QUESTIONS: Question[] = [
     type: 'short_answer',
     level: 'ThongHieu',
     topicName: 'Cấp số cộng',
-    content: 'Cho cấp số cộng $(u_n)$ có $u_1 = 5$ và công sai $d = 3$. Tìm giá trị của số hạng $u_{10}$:',
+    content: 'Cho cấp số cộng $(u_n)$ có $u_1 = 5$ và công sai $d = 3$. Tìm giá trị của số hạng thứ 10 ($u_{10}$):',
     correctAnswer: '32',
     solution: '$u_{10} = u_1 + 9d = 5 + 9(3) = 32$.',
   },
