@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TestConfig, GeneratedTest, StudentAccount, StudentSubmission } from './types';
 import { generateUniqueTestForStudent } from './testGenerator';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
-import { resolveQuestionDiagram } from './mathGraphParser';
 import { getStoredClasses, saveStudentSubmission, ClassRoom } from './classStorage';
 import {
-  Play, Clock, CheckCircle2, Award, LogIn, UserCheck,
-  Send, AlertCircle, RefreshCw, Trophy, BookOpen, User, KeyRound, Check
+  Play, Clock, Award, LogIn, Send, AlertCircle, Trophy, BookOpen,
+  Sparkles, CheckCircle2, User, KeyRound, Check
 } from 'lucide-react';
 
 interface StudentPortalProps {
@@ -19,16 +18,13 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
   const assignmentId = new URLSearchParams(window.location.search).get('assignmentId') || 'assign_default';
   const classes: ClassRoom[] = getStoredClasses();
 
-  // Chế độ đăng nhập: 'select' (Chọn tên trong lớp) hoặc 'input' (Gõ tài khoản)
   const [loginMode, setLoginMode] = useState<'select' | 'input'>('select');
   const [selectedClassId, setSelectedClassId] = useState<string>(classes[0]?.id || '');
   const [selectedStudentName, setSelectedStudentName] = useState<string>('');
-
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('123');
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Trạng thái phiên đăng nhập của học sinh
   const [currentUser, setCurrentUser] = useState<StudentAccount | null>(() => {
     try {
       const saved = localStorage.getItem('current_student_session');
@@ -38,21 +34,21 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
     }
   });
 
-  // Trạng thái làm bài
+  // Trạng thái AI đang tạo đề thi
+  const [isAiGenerating, setIsAiGenerating] = useState<boolean>(false);
+
   const [isExamStarted, setIsExamStarted] = useState<boolean>(false);
   const [studentTest, setStudentTest] = useState<GeneratedTest | null>(null);
   const [timeLeftSeconds, setTimeLeftSeconds] = useState<number>((testConfig?.durationMinutes || 45) * 60);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [submissionResult, setSubmissionResult] = useState<StudentSubmission | null>(null);
 
-  // Câu trả lời của học sinh
   const [mcqAnswers, setMcqAnswers] = useState<Record<string, string>>({});
   const [tfAnswers, setTfAnswers] = useState<Record<string, Record<string, boolean>>>({});
   const [saAnswers, setSaAnswers] = useState<Record<string, string>>({});
 
   const currentSelectedClass = classes.find((c) => c.id === selectedClassId) || classes[0];
 
-  // 1. XỬ LÝ ĐĂNG NHẬP THEO CHỌN TÊN TRONG LỚP (CÁCH 1)
   const handleQuickSelectLogin = () => {
     if (!selectedStudentName.trim()) {
       setLoginError('Vui lòng chọn hoặc nhập họ và tên của bạn!');
@@ -61,14 +57,13 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
     const userObj: StudentAccount = {
       id: `std_${Date.now()}`,
       name: selectedStudentName.trim(),
-      className: currentSelectedClass?.name || '12A1',
+      className: currentSelectedClass?.name || '12A6',
     };
     setCurrentUser(userObj);
     localStorage.setItem('current_student_session', JSON.stringify(userObj));
     setLoginError(null);
   };
 
-  // 2. XỬ LÝ ĐĂNG NHẬP THEO TÀI KHOẢN / MÃ HỌC SINH (CÁCH 2)
   const handleInputLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const query = usernameInput.trim().toLowerCase();
@@ -76,11 +71,8 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
       setLoginError('Vui lòng nhập mã học sinh hoặc họ tên!');
       return;
     }
-
-    // Tìm trong danh sách tất cả các lớp
     let foundStudent: any = null;
-    let foundClassName = '12A1';
-
+    let foundClassName = '12A6';
     for (const cls of classes) {
       const match = (cls.students || []).find(
         (s) => s.name.toLowerCase() === query || (s.code && s.code.toLowerCase() === query)
@@ -91,13 +83,11 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
         break;
       }
     }
-
     const userObj: StudentAccount = {
       id: foundStudent?.id || `std_${Date.now()}`,
       name: foundStudent?.name || usernameInput.trim(),
       className: foundClassName,
     };
-
     setCurrentUser(userObj);
     localStorage.setItem('current_student_session', JSON.stringify(userObj));
     setLoginError(null);
@@ -111,19 +101,55 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
     localStorage.removeItem('current_student_session');
   };
 
-  // Bắt đầu làm bài -> Tự động sinh đề riêng biệt cho học sinh
-  const handleStartExam = () => {
+  // ==============================================================
+  // HỌC SINH BẤM "BẮT ĐẦU LÀM BÀI" -> AI TỰ ĐỘNG TẠO ĐỀ MỚI THEO MA TRẬN
+  // ==============================================================
+  const handleStartExam = async () => {
     if (!currentUser) return;
+    setIsAiGenerating(true);
+
     const defaultCfg = testConfig || {
-      title: assignmentTitle || 'BÀI KIỂM TRA TOÁN THPT',
+      title: assignmentTitle || 'BÀI KIỂM TRA TOÁN THPT - GDPT 2018',
       grade: '12',
       durationMinutes: 45,
       selectedTopicIds: [],
+      selectedOutcomes: [],
     };
 
-    const uniqueTest = generateUniqueTestForStudent(defaultCfg as any, currentUser);
-    setStudentTest(uniqueTest);
+    let generatedExam: GeneratedTest | null = null;
+
+    // 1. Gọi AI Gemini từ máy chủ để sinh đề thi mới 100% bám sát ma trận của Thầy
+    try {
+      const res = await fetch('/api/generate-exam', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: defaultCfg, student: currentUser }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.questions && data.questions.length >= 10) {
+          generatedExam = {
+            id: `test_ai_${Date.now()}`,
+            title: data.title || defaultCfg.title,
+            config: defaultCfg,
+            questions: data.questions,
+            createdAt: new Date().toISOString(),
+          } as any;
+        }
+      }
+    } catch (err) {
+      console.warn('AI exam fallback activated:', err);
+    }
+
+    // 2. Dự phòng an toàn nếu mất mạng -> Tự động xáo trộn đề chuẩn ma trận của giáo viên
+    if (!generatedExam) {
+      generatedExam = generateUniqueTestForStudent(defaultCfg as any, currentUser);
+    }
+
+    setStudentTest(generatedExam);
     setTimeLeftSeconds((defaultCfg.durationMinutes || 45) * 60);
+    setIsAiGenerating(false);
     setIsExamStarted(true);
     setIsSubmitted(false);
   };
@@ -144,7 +170,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
     return () => clearInterval(timer);
   }, [isExamStarted, isSubmitted]);
 
-  // Chấm điểm và Nộp bài
+  // Chấm điểm và lưu kết quả
   const handleSubmitExam = () => {
     if (!studentTest || !currentUser) return;
     let earnedScore = 0;
@@ -152,9 +178,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
 
     questions.forEach((q) => {
       if (q.type === 'multiple_choice') {
-        if (mcqAnswers[q.id] === (q as any).correctAnswer) {
-          earnedScore += 0.25;
-        }
+        if (mcqAnswers[q.id] === (q as any).correctAnswer) earnedScore += 0.25;
       } else if (q.type === 'true_false') {
         const userSts = tfAnswers[q.id] || {};
         const sts = (q as any).statements || [];
@@ -169,14 +193,11 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
       } else if (q.type === 'short_answer') {
         const userAns = (saAnswers[q.id] || '').trim().toLowerCase();
         const correctAns = ((q as any).correctAnswer || '').trim().toLowerCase();
-        if (userAns && correctAns && userAns === correctAns) {
-          earnedScore += 0.5;
-        }
+        if (userAns && correctAns && userAns === correctAns) earnedScore += 0.5;
       }
     });
 
     const finalScore = Math.min(10, Math.round(earnedScore * 10) / 10);
-
     const submission: StudentSubmission = {
       id: `sub_${Date.now()}`,
       studentId: currentUser.id,
@@ -212,7 +233,6 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
             <p className="text-xs text-slate-400">Trường THPT Mai Thanh Thế • Năm học 2026 - 2027</p>
           </div>
 
-          {/* Chọn phương thức đăng nhập */}
           <div className="flex bg-slate-800/80 p-1 rounded-xl text-xs font-bold">
             <button
               type="button"
@@ -221,7 +241,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
                 loginMode === 'select' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Chọn Lớp & Tên (Dễ nhất)
+              Chọn Lớp & Tên
             </button>
             <button
               type="button"
@@ -298,7 +318,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
           ) : (
             <form onSubmit={handleInputLogin} className="space-y-4 text-xs">
               <div>
-                <label className="block text-slate-300 font-bold mb-1.5">Tên đăng nhập / Mã học sinh / Họ tên:</label>
+                <label className="block text-slate-300 font-bold mb-1.5">Tên đăng nhập / Mã HS / Họ tên:</label>
                 <input
                   type="text"
                   value={usernameInput}
@@ -332,7 +352,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
     );
   }
 
-  // MÀN HÌNH CHUẨN BỊ / KẾT QUẢ / LÀM BÀI
+  // MÀN HÌNH CHUẨN BỊ / LÀM BÀI / KẾT QUẢ
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 font-sans pb-16">
       {/* Header học sinh */}
@@ -345,7 +365,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
             <div>
               <h2 className="text-sm font-bold text-white">{assignmentTitle || 'BÀI KIỂM TRA TOÁN THPT'}</h2>
               <p className="text-[11px] text-slate-400">
-                Thí sinh: <strong className="text-blue-300">{currentUser.name}</strong> • Lớp: <strong>{currentUser.className || '12A1'}</strong>
+                Thí sinh: <strong className="text-blue-300">{currentUser.name}</strong> • Lớp: <strong>{currentUser.className || '12A6'}</strong>
               </p>
             </div>
           </div>
@@ -366,22 +386,40 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
         </div>
       </header>
 
+      {/* MÀN HÌNH CHỜ AI TẠO ĐỀ THI */}
+      {isAiGenerating && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl text-center space-y-4 max-w-sm w-full shadow-2xl text-white animate-in fade-in">
+            <div className="w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto border border-blue-500/30">
+              <Sparkles className="w-8 h-8 animate-spin text-amber-300" />
+            </div>
+            <h3 className="text-base font-black text-white">AI ĐANG KHỞI TẠO ĐỀ THI RIÊNG</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Mô hình Gemini AI đang tự động biên soạn 22 câu hỏi theo đúng Ma trận & YCCĐ của Thầy/Cô dành riêng cho bạn...
+            </p>
+            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <div className="bg-blue-500 h-full w-2/3 animate-pulse rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
         {/* TRẠNG THÁI 1: CHƯA BẮT ĐẦU */}
-        {!isExamStarted && !isSubmitted && (
+        {!isExamStarted && !isSubmitted && !isAiGenerating && (
           <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-center space-y-5 max-w-xl mx-auto mt-6">
             <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
               <Award className="w-8 h-8" />
             </div>
             <div>
               <h3 className="text-xl font-black text-slate-900">{assignmentTitle || 'KIỂM TRA ĐỊNH KỲ TOÁN THPT'}</h3>
-              <p className="text-xs text-slate-500 mt-1">Hệ thống sẽ sinh đề thi riêng biệt ngẫu nhiên theo ma trận của giáo viên</p>
+              <p className="text-xs text-slate-500 mt-1">Hệ thống AI sẽ tự động sinh mã đề riêng ngẫu nhiên đúng theo ma trận của giáo viên</p>
             </div>
 
             <div className="bg-slate-50 p-4 rounded-2xl border text-xs text-slate-600 space-y-2 text-left">
               <p>⏱️ Thời gian làm bài: <strong>{testConfig?.durationMinutes || 45} phút</strong></p>
-              <p>📝 Cấu trúc: <strong>Trắc nghiệm 4 lựa chọn, Đúng/Sai & Trả lời ngắn</strong></p>
-              <p>🎯 Thí sinh làm bài trực tiếp và bấm "Nộp bài" khi hoàn thành.</p>
+              <p>📝 Cấu trúc đề thi GDPT 2018: <strong>Phần I (12 câu MCQ) • Phần II (4 câu Đ/S) • Phần III (6 câu Ngắn)</strong></p>
+              <p>🤖 Tự động sinh đề mới bám sát đúng YCCĐ khi bắt đầu làm bài.</p>
             </div>
 
             <button
@@ -389,7 +427,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
               onClick={handleStartExam}
               className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl shadow-lg hover:shadow-emerald-500/25 transition-all text-sm flex items-center gap-2 mx-auto cursor-pointer"
             >
-              <Play className="w-4 h-4 fill-white" /> BẮT ĐẦU LÀM BÀI
+              <Play className="w-4 h-4 fill-white" /> BẮT ĐẦU LÀM BÀI (AI SINH ĐỀ)
             </button>
           </div>
         )}
@@ -404,7 +442,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
             <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200">
               <span className="text-xs text-emerald-800 font-bold block mb-1">KẾT QUẢ ĐẠT ĐƯỢC:</span>
               <span className="text-4xl font-black text-emerald-700">{submissionResult.score} / 10</span>
-              <span className="text-xs text-slate-500 block mt-1">Điểm số đã được tự động lưu vào hệ thống của Giáo viên</span>
+              <span className="text-xs text-slate-500 block mt-1">Điểm số đã được lưu tự động vào sổ theo dõi của Thầy/Cô</span>
             </div>
           </div>
         )}
@@ -423,7 +461,6 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
                   </div>
                 </div>
 
-                {/* Sơ đồ / Hình vẽ nếu có */}
                 {q.diagramId && (
                   <div className="my-3 p-3 bg-slate-50 rounded-xl border flex justify-center">
                     <DiagramRenderer diagramId={q.diagramId} formula={(q as any).formula} questionContent={q.content} />
@@ -516,7 +553,6 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
               </div>
             ))}
 
-            {/* Nút nộp bài */}
             <div className="text-center pt-4">
               <button
                 type="button"
