@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { GeneratedTest, Question } from './types';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
 import {
   Maximize2, Minimize2, ChevronLeft, ChevronRight, Eye,
-  EyeOff, RotateCcw, BookOpen, Layers
+  EyeOff, RotateCcw, BookOpen
 } from 'lucide-react';
 
 interface SlideViewerProps {
@@ -18,7 +18,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({ test }) => {
   const [containerWidth, setContainerWidth] = useState<'3xl' | '5xl' | '7xl' | 'full'>('5xl');
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
-  // TỰ ĐỘNG LẤY ĐÚNG KHỐI LỚP CỦA ĐỀ THI (Toán 11, 10 hoặc 12)
+  // Nhận diện chính xác khối lớp của đề thi
   const grade = test.config?.grade || (test as any).grade || '11';
 
   const questions = test.questions || [];
@@ -82,9 +82,8 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({ test }) => {
 
   return (
     <div className="font-sans space-y-4">
-      {/* 1. THANH TIÊU ĐỀ & ĐIỀU KHIỂN CHUẨN 100% THEO ẢNH BẠN GỬI */}
+      {/* 1. THANH CÔNG CỤ TRÊN CÙNG */}
       <div className="bg-slate-950 text-white p-5 rounded-3xl border border-slate-800 shadow-xl space-y-4">
-        {/* Tiêu đề chính + Huy hiệu khối lớp động */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-blue-600/30 text-blue-400 flex items-center justify-center border border-blue-500/30 shadow">
@@ -95,7 +94,6 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({ test }) => {
                 <h2 className="text-base sm:text-lg font-black tracking-wide">
                   SLIDE TRÌNH CHIẾU DẠNG CÂU HỎI & ĐÁP ÁN
                 </h2>
-                {/* HUY HIỆU ĐỔI ĐÚNG KHỐI LỚP 11 */}
                 <span className="text-xs bg-emerald-700/80 text-emerald-200 px-3 py-0.5 rounded-full font-bold border border-emerald-500/30">
                   Lớp {grade} GDPT 2018
                 </span>
@@ -116,41 +114,41 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({ test }) => {
               <button
                 type="button"
                 onClick={() => setContainerWidth('3xl')}
-                className={`px-3 py-1 rounded-lg font-bold transition-all ${containerWidth === '3xl' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${containerWidth === '3xl' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
               >
                 3XL
               </button>
               <button
                 type="button"
                 onClick={() => setContainerWidth('5xl')}
-                className={`px-3 py-1 rounded-lg font-bold transition-all ${containerWidth === '5xl' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${containerWidth === '5xl' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
               >
                 5XL
               </button>
               <button
                 type="button"
                 onClick={() => setContainerWidth('7xl')}
-                className={`px-3 py-1 rounded-lg font-bold transition-all ${containerWidth === '7xl' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${containerWidth === '7xl' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
               >
                 7XL
               </button>
               <button
                 type="button"
                 onClick={() => setContainerWidth('full')}
-                className={`px-3 py-1 rounded-lg font-bold transition-all ${containerWidth === 'full' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${containerWidth === 'full' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
               >
                 Tràn viền
               </button>
             </div>
           </div>
 
-          {/* Cỡ chữ */}
+          {/* Cỡ chữ - CÁC NÚT ĐƯỢC VIẾT TĨNH CHẮC CHẮN 100% */}
           <div className="flex items-center gap-2">
             <span className="text-slate-400 font-bold">T Cỡ chữ:</span>
             <button
               type="button"
               onClick={() => setFontSize(Math.max(16, fontSize - 2))}
-              className="w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-lg text-white font-bold flex items-center justify-center border border-slate-700"
+              className="w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-lg text-white font-bold flex items-center justify-center border border-slate-700 cursor-pointer"
             >
               -
             </button>
@@ -158,35 +156,54 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({ test }) => {
             <button
               type="button"
               onClick={() => setFontSize(Math.min(40, fontSize + 2))}
-              className="w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-lg text-white font-bold flex items-center justify-center border border-slate-700"
+              className="w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-lg text-white font-bold flex items-center justify-center border border-slate-700 cursor-pointer"
             >
               +
             </button>
 
+            {/* 4 NÚT CỠ CHỮ TĨNH CHUẨN XÁC */}
             <div className="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700 ml-1">
-              {.map((sz) => (
-                <button
-                  key={sz}
-                  type="button"
-                  onClick={() => setFontSize(sz)}
-                  className={`px-2 py-0.5 rounded text-[11px] font-bold ${fontSize === sz ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'}`}
-                >
-                  {sz}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setFontSize(18)}
+                className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${fontSize === 18 ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'}`}
+              >
+                18
+              </button>
+              <button
+                type="button"
+                onClick={() => setFontSize(22)}
+                className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${fontSize === 22 ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'}`}
+              >
+                22
+              </button>
+              <button
+                type="button"
+                onClick={() => setFontSize(28)}
+                className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${fontSize === 28 ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'}`}
+              >
+                28
+              </button>
+              <button
+                type="button"
+                onClick={() => setFontSize(34)}
+                className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${fontSize === 34 ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'}`}
+              >
+                34
+              </button>
             </div>
 
             <button
               type="button"
               onClick={() => setFontSize(22)}
-              className="p-1.5 text-slate-400 hover:text-white ml-0.5"
+              className="p-1.5 text-slate-400 hover:text-white ml-0.5 cursor-pointer"
               title="Đặt lại cỡ chữ 22px"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Nút Toàn màn hình màu tím */}
+          {/* Toàn màn hình */}
           <button
             type="button"
             onClick={toggleFullscreen}
@@ -198,10 +215,9 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({ test }) => {
         </div>
       </div>
 
-      {/* 2. KHUNG HIỂN THỊ CÂU HỎI TRÌNH CHIẾU CHÍNH */}
+      {/* 2. KHUNG HIỂN THỊ CÂU HỎI TRÌNH CHIẾU */}
       <div className={`mx-auto ${getContainerWidthClass()} transition-all duration-300`}>
         <div className="bg-slate-950 text-white rounded-3xl border border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6">
-          {/* Header câu hỏi */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
             <div className="flex items-center gap-3">
               <span className="px-4 py-1.5 bg-blue-600 text-white font-black text-sm rounded-xl shadow">
@@ -220,19 +236,18 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({ test }) => {
             </div>
           </div>
 
-          {/* Nội dung câu hỏi (Render công thức Toán chuẩn KaTeX) */}
+          {/* Nội dung câu hỏi (Render công thức Toán bằng KaTeX) */}
           <div style={{ fontSize: `${fontSize}px`, lineHeight: 1.6 }} className="text-slate-100 font-medium leading-relaxed">
             <MathText text={currentQuestion.content} />
           </div>
 
-          {/* Sơ đồ / Hình vẽ hình học nếu có */}
           {currentQuestion.diagramId && (
             <div className="my-4 p-4 bg-slate-900 rounded-2xl border border-slate-800 flex justify-center">
               <DiagramRenderer diagramId={currentQuestion.diagramId} formula={(currentQuestion as any).formula} questionContent={currentQuestion.content} />
             </div>
           )}
 
-          {/* PHẦN I: TRẮC NGHIỆM 4 LỰA CHỌN */}
+          {/* Phần I: Trắc nghiệm 4 lựa chọn */}
           {currentQuestion.type === 'multiple_choice' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               {((currentQuestion as any).options || []).map((opt: any) => {
@@ -259,7 +274,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({ test }) => {
             </div>
           )}
 
-          {/* PHẦN II: TRẮC NGHIỆM ĐÚNG / SAI */}
+          {/* Phần II: Trắc nghiệm Đúng / Sai */}
           {currentQuestion.type === 'true_false' && (
             <div className="space-y-2.5 pt-2">
               {((currentQuestion as any).statements || []).map((st: any) => (
@@ -284,7 +299,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({ test }) => {
             </div>
           )}
 
-          {/* PHẦN III: TRẢ LỜI NGẮN */}
+          {/* Phần III: Trả lời ngắn */}
           {currentQuestion.type === 'short_answer' && showSolution && (
             <div className="p-4 bg-blue-950/60 border border-blue-700/60 rounded-2xl">
               <span className="text-xs text-blue-300 font-bold block mb-1">ĐÁP SỐ CHUẨN:</span>
@@ -294,7 +309,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({ test }) => {
             </div>
           )}
 
-          {/* LỜI GIẢI CHI TIẾT KHI BẤM XEM */}
+          {/* Hướng dẫn giải chi tiết */}
           {showSolution && currentQuestion.solution && (
             <div className="p-5 bg-slate-900/90 border border-slate-700 rounded-2xl space-y-2 animate-in fade-in">
               <span className="text-xs text-amber-400 font-bold uppercase tracking-wider block">
@@ -306,7 +321,7 @@ export const SlideViewer: React.FC<SlideViewerProps> = ({ test }) => {
             </div>
           )}
 
-          {/* THANH ĐIỀU HƯỚNG CÂU TRƯỚC / CÂU TIẾP THEO & BẬT ĐÁP ÁN */}
+          {/* Điều hướng câu hỏi */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-800">
             <button
               type="button"
