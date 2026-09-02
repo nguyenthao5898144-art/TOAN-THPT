@@ -1,14 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { TestConfig } from './types';
-import { getSyllabusByGrade, Topic, Lesson } from './math12Syllabus';
+import { getSyllabusByGrade, Topic, Lesson, MATH_12_SYLLABUS } from './math12Syllabus';
 import {
-  Sparkles, BookOpen, Clock, Table, CheckSquare, Square,
+  Sparkles, BookOpen, Clock, CheckSquare, Square,
   CheckCircle2, ChevronDown, ChevronUp, Database, RefreshCw, HelpCircle
 } from 'lucide-react';
 
 export interface QuestionGeneratorModalProps {
-  config: TestConfig;
-  setConfig: React.Dispatch<React.SetStateAction<TestConfig>>;
+  config?: TestConfig;
+  setConfig?: React.Dispatch<React.SetStateAction<TestConfig>>;
   onGenerate: (overrideConfig?: TestConfig) => void;
   onGenerateFromBank?: () => void;
   isGenerating?: boolean;
@@ -22,16 +22,22 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
   onGenerate,
   onGenerateFromBank,
   isGenerating = false,
-  onClose,
 }) => {
   // 1. Chọn Khối lớp (Toán 10, 11, 12)
   const [grade, setGrade] = useState<'10' | '11' | '12'>((config?.grade as any) || '12');
-  const [title, setTitle] = useState<string>(config?.title || `ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN ${config?.grade || '12'} - GDPT 2018`);
+  const [title, setTitle] = useState<string>(config?.title || 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN THPT - GDPT 2018');
   const [durationMinutes, setDurationMinutes] = useState<number>(config?.durationMinutes || 45);
   const [activePreset, setActivePreset] = useState<'standard' | '15min' | 'advanced'>('standard');
 
-  // Lấy danh sách chương trình theo Khối lớp đang chọn
-  const currentSyllabus = useMemo(() => getSyllabusByGrade(grade), [grade]);
+  // Lấy danh mục chương trình theo khối lớp
+  const currentSyllabus = useMemo(() => {
+    try {
+      const syl = getSyllabusByGrade(grade);
+      return syl && syl.length > 0 ? syl : MATH_12_SYLLABUS;
+    } catch {
+      return MATH_12_SYLLABUS;
+    }
+  }, [grade]);
 
   // 2. Cơ cấu Ma trận theo 3 dạng thức
   const [mcNB, setMcNB] = useState<number>(6);
@@ -47,22 +53,23 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
   const [saVD, setSaVD] = useState<number>(3);
 
   // 3. Chọn chủ đề & bài học & YCCĐ
-  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([currentSyllabus[0].id]);
-  const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>(currentSyllabus[0].lessons.map((l) => l.id));
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>(() => [currentSyllabus[0]?.id || 'topic_dao_ham']);
+  const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>(() => currentSyllabus[0]?.lessons.map((l) => l.id) || []);
   const [selectedOutcomes, setSelectedOutcomes] = useState<string[]>([]);
   const [collapsedTopicIds, setCollapsedTopicIds] = useState<string[]>([]);
   const [yccdCounts, setYccdCounts] = useState<Record<string, { nb: number; th: number; vd: number }>>({});
 
-  // Tự động cập nhật tiêu đề và chủ đề khi đổi Khối lớp
   const handleSwitchGrade = (newGrade: '10' | '11' | '12') => {
     setGrade(newGrade);
     setTitle(`ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN ${newGrade} - GDPT 2018`);
-    const newSyl = getSyllabusByGrade(newGrade);
-    if (newSyl.length > 0) {
-      setSelectedTopicIds([newSyl[0].id]);
-      setSelectedLessonIds(newSyl[0].lessons.map((l) => l.id));
-      setSelectedOutcomes([]);
-    }
+    try {
+      const newSyl = getSyllabusByGrade(newGrade);
+      if (newSyl && newSyl.length > 0) {
+        setSelectedTopicIds([newSyl[0].id]);
+        setSelectedLessonIds(newSyl[0].lessons.map((l) => l.id));
+        setSelectedOutcomes([]);
+      }
+    } catch {}
   };
 
   const totalMC = mcNB + mcTH + mcVD;
@@ -235,7 +242,7 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
   };
 
   return (
-    <div className="font-sans text-slate-800 space-y-5">
+    <div className="font-sans text-slate-800 space-y-6">
       {/* 1. BỘ CHỌN KHỐI LỚP 10, 11, 12 TRÊN CÙNG */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 p-3 rounded-2xl text-white shadow-md">
         <div className="flex items-center gap-2">
@@ -276,6 +283,36 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
         <span className="text-[11px] text-slate-300 font-semibold px-2">
           Chương trình GDPT 2018 • Khối {grade} ({currentSyllabus.length} chuyên đề)
         </span>
+      </div>
+
+      {/* THÔNG TIN CHUNG */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+        <div className="md:col-span-2">
+          <label className="block text-xs font-bold text-slate-700 mb-1">Tiêu đề đề thi / Kiểm tra:</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            placeholder="Nhập tiêu đề đề kiểm tra..."
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5 text-blue-600" /> Thời gian làm bài:
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={15}
+              max={180}
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(Number(e.target.value))}
+              className="w-24 px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs sm:text-sm text-center font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+            <span className="text-xs text-slate-600">phút</span>
+          </div>
+        </div>
       </div>
 
       {/* 2. KHỐI CHỌN CHỦ ĐỀ CỦA KHỐI LỚP ĐANG CHỌN */}
@@ -524,124 +561,4 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
                           type="number"
                           min={0}
                           value={counts.nb}
-                          onChange={(e) => updateYccdCount(row.key, 'nb', Number(e.target.value))}
-                          className="w-12 p-1 text-center font-bold border rounded bg-white"
-                        />
-                      </td>
-                      <td className="border border-slate-300 p-1 bg-indigo-50/20">
-                        <input
-                          type="number"
-                          min={0}
-                          value={counts.th}
-                          onChange={(e) => updateYccdCount(row.key, 'th', Number(e.target.value))}
-                          className="w-12 p-1 text-center font-bold border rounded bg-white"
-                        />
-                      </td>
-                      <td className="border border-slate-300 p-1 bg-emerald-50/20">
-                        <input
-                          type="number"
-                          min={0}
-                          value={counts.vd}
-                          onChange={(e) => updateYccdCount(row.key, 'vd', Number(e.target.value))}
-                          className="w-12 p-1 text-center font-bold border rounded bg-white"
-                        />
-                      </td>
-                      <td className="border border-slate-300 p-2 font-black text-slate-900 bg-slate-50">{rowTotal} câu</td>
-                    </tr>
-                  );
-                })}
-
-                <tr className="bg-slate-100 font-black text-slate-900">
-                  <td colSpan={3} className="border border-slate-300 p-2 text-right uppercase tracking-wider">
-                    TỔNG CỘNG SỐ CÂU PHÂN BỔ THEO YCCĐ (TOÁN {grade}):
-                  </td>
-                  <td className="border border-slate-300 p-2 bg-blue-100 text-blue-900">{sumYccdNB} NB</td>
-                  <td className="border border-slate-300 p-2 bg-indigo-100 text-indigo-900">{sumYccdTH} TH</td>
-                  <td className="border border-slate-300 p-2 bg-emerald-100 text-emerald-900">{sumYccdVD} VD</td>
-                  <td className="border border-slate-300 p-2 bg-emerald-800 text-white font-black text-sm">{sumYccdTotal} CÂU</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div className="p-2.5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              {isMatrixSynced ? (
-                <span className="text-emerald-700 font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  Ma trận chi tiết YCCĐ khớp 100% với tổng Ma trận Dạng câu hỏi ({totalQuestions} câu)
-                </span>
-              ) : (
-                <span className="text-amber-700 font-bold flex items-center gap-1">
-                  <HelpCircle className="w-4 h-4 text-amber-600" />
-                  Chưa khớp số câu ({sumYccdTotal} / {totalQuestions} câu). Bấm "Tự động chia đều" để đồng bộ.
-                </span>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={handleAutoDistributeYccd}
-              className="text-blue-600 hover:underline font-bold cursor-pointer"
-            >
-              Đồng bộ lại theo Ma trận Dạng câu hỏi
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* BƯỚC 3: TẠO ĐỀ THI HOÀN CHỈNH */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 bg-purple-600 text-white text-[11px] font-black rounded">BƯỚC 3</span>
-            <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-              TẠO ĐỀ THI HOÀN CHỈNH CHO TOÁN {grade} (TỪ AI HOẶC TỪ NGÂN HÀNG CÂU HỎI)
-            </h3>
-          </div>
-          <div className="text-xs font-bold text-slate-700">
-            Tổng cộng: <strong className="text-blue-700">{totalQuestions} câu hỏi</strong> | <strong className="text-emerald-700">{totalScore} điểm</strong>
-          </div>
-        </div>
-
-        {/* 2 NÚT TẠO ĐỀ CHÍNH */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-          <button
-            type="button"
-            disabled={isGenerating || selectedLessonIds.length === 0}
-            onClick={() => handleStartGenerate('ai')}
-            className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:bg-slate-300 text-white rounded-xl text-left shadow-lg hover:shadow-xl transition-all cursor-pointer space-y-1.5"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-black text-sm flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-300" /> TẠO ĐỀ TỪ AI (GEMINI) - TOÁN {grade}
-              </span>
-              <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold uppercase">Tự động 100%</span>
-            </div>
-            <p className="text-[11px] text-blue-100">
-              AI sẽ tự động biên soạn mới toàn bộ {totalQuestions} câu hỏi Toán {grade} bám sát Ma trận & YCCĐ GDPT 2018.
-            </p>
-          </button>
-
-          <button
-            type="button"
-            disabled={isGenerating || selectedLessonIds.length === 0}
-            onClick={() => handleStartGenerate('bank')}
-            className="p-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:bg-slate-300 text-white rounded-xl text-left shadow-lg hover:shadow-xl transition-all cursor-pointer space-y-1.5"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-black text-sm flex items-center gap-2">
-                <Database className="w-4 h-4 text-emerald-200" /> TẠO ĐỀ TỪ NGÂN HÀNG - TOÁN {grade}
-              </span>
-              <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold uppercase">Có sẵn mẫu</span>
-            </div>
-            <p className="text-[11px] text-emerald-100">
-              Lấy câu hỏi & bài tập chuẩn mực từ Ngân hàng câu hỏi Toán {grade} có sẵn theo đúng tỉ lệ ma trận đã cấu hình.
-            </p>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default QuestionGeneratorModal;
+                          onChange={(e) => updateYccdCount
