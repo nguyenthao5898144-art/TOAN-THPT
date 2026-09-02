@@ -18,7 +18,7 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { message } = req.body;
     if (!message || typeof message !== 'string' || !message.trim()) {
-      return res.json({ text: 'Xin chào Thầy/Cô! Vui lòng nhập nội dung cần hỗ trợ.' });
+      return res.json({ text: 'Xin chào Thầy/Cô! Tôi là Trợ lý AI môn Toán THPT.' });
     }
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -30,7 +30,7 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// ROUTE TỰ ĐỘNG BIÊN SOẠN ĐỀ THI BÁM SÁT MA TRẬN & KHỐI LỚP (CÓ BẢNG BIẾN THIÊN / BẢNG XÉT DẤU)
+// ROUTE TỰ ĐỘNG SINH ĐỀ THI TOÁN THPT - ĐÃ XỬ LÝ LÀM SẠCH CHUỖI JSON CHỐNG LỖI 500
 app.post('/api/generate-exam', async (req, res) => {
   try {
     const { config, student } = req.body;
@@ -38,55 +38,42 @@ app.post('/api/generate-exam', async (req, res) => {
     const title = config?.title || `BÀI KIỂM TRA TOÁN ${grade} - GDPT 2018`;
     const outcomes = (config?.selectedOutcomes || []).join('; ');
 
-    // 1. RÀO CHẮN KIẾN THỨC CHUẨN XÁC THEO TỪNG KHỐI LỚP (GDPT 2018)
     let gradeConstraint = '';
     if (grade === '10') {
       gradeConstraint = `
 *** QUY ĐỊNH BẮT BUỘC VỀ PHẠM VI KIẾN THỨC TOÁN LỚP 10 ***:
 - Đây là đề thi dành riêng cho TOÁN LỚP 10.
-- TUYỆT ĐỐI KHÔNG ĐƯỢC sử dụng kiến thức Đạo hàm, Nguyên hàm, Tích phân, Mũ - Logarit, Hình học Oxyz (đây là kiến thức lớp 11, 12).
-- CHỈ ĐƯỢC SỬ DỤNG các chuyên đề Toán 10: Mệnh đề, Tập hợp, Bất phương trình & Hệ BPT bậc nhất hai ẩn, Hàm số bậc hai, Dấu của tam thức bậc hai, Hệ thức lượng trong tam giác, Vectơ, Phương pháp tọa độ trong mặt phẳng Oxy (Đường thẳng, Đường tròn, Ba đường conic), Đại số tổ hợp, Thống kê và Xác suất lớp 10.`;
+- TUYỆT ĐỐI KHÔNG ĐƯỢC sử dụng kiến thức Đạo hàm, Nguyên hàm, Tích phân, Mũ - Logarit, Hình học Oxyz.
+- CHỈ ĐƯỢC SỬ DỤNG kiến thức Toán 10: Mệnh đề, Tập hợp, Bất phương trình & Hệ BPT bậc nhất hai ẩn, Hàm số bậc hai, Dấu của tam thức bậc hai, Hệ thức lượng, Vectơ, Tọa độ Oxy, Đại số tổ hợp, Thống kê và Xác suất lớp 10.`;
     } else if (grade === '11') {
       gradeConstraint = `
 *** QUY ĐỊNH BẮT BUỘC VỀ PHẠM VI KIẾN THỨC TOÁN LỚP 11 ***:
 - Đây là đề thi dành riêng cho TOÁN LỚP 11.
-- TUYỆT ĐỐI KHÔNG ĐƯỢC đưa kiến thức Tích phân, Khảo sát hàm số nâng cao, Tọa độ không gian Oxyz (kiến thức lớp 12).
-- CHỈ ĐƯỢC SỬ DỤNG các chuyên đề Toán 11: Hàm số lượng giác & Phương trình lượng giác, Cấp số cộng, Cấp số nhân, Giới hạn dãy số & hàm số, Hàm số liên tục, Hình không gian (Quan hệ song song, Quan hệ vuông góc, Góc & Khoảng cách), Mũ & Logarit, Đạo hàm lớp 11, Các quy tắc tính xác suất.`;
+- TUYỆT ĐỐI KHÔNG ĐƯỢC đưa kiến thức Tích phân, Tọa độ không gian Oxyz.
+- CHỈ ĐƯỢC SỬ DỤNG kiến thức Toán 11: Hàm số lượng giác & Phương trình lượng giác, Cấp số cộng, Cấp số nhân, Giới hạn, Hàm số liên tục, Hình không gian (Song song, Vuông góc), Mũ & Logarit, Đạo hàm lớp 11, Các quy tắc xác suất.`;
     } else {
       gradeConstraint = `
 *** QUY ĐỊNH VỀ PHẠM VI KIẾN THỨC TOÁN LỚP 12 ***:
-- Sử dụng các chuyên đề Toán 12: Ứng dụng đạo hàm để khảo sát và vẽ đồ thị hàm số, Nguyên hàm, Tích phân và Ứng dụng hình học, Phương pháp tọa độ trong không gian Oxyz, Thống kê số liệu ghép nhóm, Xác suất có điều kiện và công thức Bayes.`;
+- Sử dụng các chuyên đề Toán 12: Ứng dụng đạo hàm để khảo sát và vẽ đồ thị hàm số, Nguyên hàm, Tích phân, Tọa độ không gian Oxyz, Thống kê số liệu ghép nhóm, Xác suất có điều kiện và công thức Bayes.`;
     }
 
     const prompt = `
-Bạn là Chuyên gia Khảo thí và Đo lường Giáo dục môn Toán THPT theo Chương trình GDPT 2018 của Bộ Giáo dục và Đào tạo Việt Nam.
+Bạn là Chuyên gia Khảo thí và Đo lường Giáo dục môn Toán THPT theo Chương trình GDPT 2018 của Bộ GD&ĐT Việt Nam.
 Hãy biên soạn một đề kiểm tra chuẩn cấu trúc cho:
-- Đối tượng: Học sinh môn Toán Khối ${grade}.
+- Môn Toán Khối: ${grade}
 - Tiêu đề đề thi: ${title}
-- Yêu cầu cần đạt (YCCĐ): ${outcomes || 'Theo ma trận đặc tả chuẩn môn Toán lớp ' + grade}
+- Yêu cầu cần đạt: ${outcomes || 'Theo ma trận đặc tả chuẩn môn Toán lớp ' + grade}
 ${gradeConstraint}
 
 *** NGUYÊN TẮC BẮT BUỘC VỀ BẢNG BIẾN THIÊN & BẢNG XÉT DẤU (THAY THẾ MÔ TẢ CHAY) ***:
-1. Với các câu hỏi về:
-   - Dấu tam thức bậc hai, bất phương trình bậc hai (Toán 10)
-   - Bảng biến thiên hàm số bậc hai parabol (Toán 10)
-   - Xét dấu nhị thức, lượng giác, đạo hàm (Toán 11, 12)
-   - Chiều biến thiên, điểm cực trị, giá trị lớn nhất / nhỏ nhất, tiệm cận (Toán 12)
-2. TUYỆT ĐỐI KHÔNG dùng câu văn miêu tả chay (ví dụ KHÔNG viết: "Cho hàm số có đạo hàm dương trên khoảng...").
-3. BẮT BUỘC PHẢI TRÌNH BÀY BẢNG BIẾN THIÊN HOẶC BẢNG XÉT DẤU TRỰC QUAN bằng cú pháp mảng LaTeX:
-   Ví dụ Bảng biến thiên:
+1. Các câu hỏi về chiều biến thiên, cực trị, dấu tam thức bậc hai, dấu đạo hàm BẮT BUỘC vẽ bảng trực quan dạng mảng LaTeX:
    "Cho hàm số $y = f(x)$ có bảng biến thiên như sau:
    $$\\begin{array}{c|ccccc}
    x & -\\infty & & 2 & & +\\infty \\\\ \\hline
    f'(x) & & - & 0 & + & \\\\ \\hline
    f(x) & +\\infty & \\searrow & -3 & \\nearrow & +\\infty
    \\end{array}$$"
-   Ví dụ Bảng xét dấu:
-   "Cho tam thức bậc hai $f(x)$ có bảng xét dấu như sau:
-   $$\\begin{array}{c|ccccccc}
-   x & -\\infty & & -1 & & 3 & & +\\infty \\\\ \\hline
-   f(x) & & + & 0 & - & 0 & + &
-   \\end{array}$$"
+2. TUYỆT ĐỐI KHÔNG dùng câu văn miêu tả chay.
 
 CẤU TRÚC ĐỀ THI CHUẨN ĐỊNH DẠNG BỘ GD&ĐT (TỔNG CỘNG 22 CÂU - 10 ĐIỂM):
 - PHẦN I: Gồm 12 câu trắc nghiệm 4 lựa chọn (A, B, C, D). Mỗi câu đúng 0.25đ (Tổng 3.0đ).
@@ -141,11 +128,21 @@ Hãy trả về DUY NHẤT một chuỗi JSON thuần túy (không kèm Markdown
       },
     });
 
-    const parsed = JSON.parse(response.text || '{}');
+    // LÀM SẠCH CHUỖI JSON ĐẢM BẢO KHÔNG BỊ CRASH
+    let rawText = response.text || '{}';
+    rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const firstBrace = rawText.indexOf('{');
+    const lastBrace = rawText.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      rawText = rawText.substring(firstBrace, lastBrace + 1);
+    }
+
+    const parsed = JSON.parse(rawText);
     res.json(parsed);
   } catch (error: any) {
-    console.error('Lỗi sinh đề AI:', error);
-    res.status(500).json({ error: error.message || 'Lỗi tạo đề' });
+    console.error('Lỗi sinh đề AI (chuyển sang chế độ dự phòng):', error);
+    // Trả về đối tượng an toàn để frontend tự fallback, không bao giờ báo lỗi 500
+    res.json({ error: error.message, fallback: true });
   }
 });
 
@@ -169,4 +166,4 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Máy chủ vận hành mượt mà tại cổng kết nối: ${PORT}`));
+app.listen(PORT, () => console.log(`Máy chủ vận hành mượt mà tại cổng: ${PORT}`));
