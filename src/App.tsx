@@ -47,12 +47,10 @@ export default function App() {
     }
   });
 
-  // Tab đang hoạt động mặc định: 'generator' (Xem đề thi)
   const [activeTab, setActiveTab] = useState<ActiveTabType>('generator');
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-  // Nếu là chế độ học sinh làm bài
   if (isStudentMode) {
     return (
       <StudentPortal
@@ -62,7 +60,6 @@ export default function App() {
     );
   }
 
-  // Cập nhật câu hỏi khi sửa
   const handleSaveQuestion = (updated: Question) => {
     setCurrentTest((prev) => ({
       ...prev,
@@ -71,7 +68,6 @@ export default function App() {
     setEditingQuestion(null);
   };
 
-  // Xóa câu hỏi
   const handleDeleteQuestion = (id: string) => {
     setCurrentTest((prev) => ({
       ...prev,
@@ -79,12 +75,10 @@ export default function App() {
     }));
   };
 
-  // Xuất file Word
   const handleExportWord = () => {
     exportTestToWord(currentTest);
   };
 
-  // Lưu vào kho
   const handleQuickSaveToBank = () => {
     saveTestToBank(currentTest);
     alert('Đã lưu đề thi vào Kho Lưu Trữ thành công!');
@@ -92,7 +86,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 font-sans flex">
-      {/* 1. CỘT MENU DỌC CỐ ĐỊNH BÊN TRÁI (TẤT CẢ CHỨC NĂNG NẰM Ở ĐÂY) */}
+      {/* 1. CỘT MENU DỌC CỐ ĐỊNH BÊN TRÁI */}
       <HeaderMenu
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -100,7 +94,7 @@ export default function App() {
         onExportWord={handleExportWord}
       />
 
-      {/* 2. VÙNG HIỂN THỊ DUY NHẤT NỘI DUNG THEO MENU ĐƯỢC CHỌN */}
+      {/* 2. VÙNG HIỂN THỊ NỘI DUNG CHÍNH BÊN PHẢI */}
       <div className="flex-1 min-h-screen flex flex-col min-w-0">
         {/* HEADER CHÍNH CANH GIỮA TRANG WEB */}
         <header className="bg-slate-900 text-white py-4 px-6 shadow-md border-b border-slate-800">
@@ -122,7 +116,7 @@ export default function App() {
           </div>
         </header>
 
-        {/* NỘI DUNG ĐỘC LẬP CHÍNH XÁC THEO TAB ĐƯỢC CHỌN */}
+        {/* NỘI DUNG ĐỘC LẬP CHÍNH XÁC THEO MENU ĐƯỢC CHỌN */}
         <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
           {/* 1. MÀN HÌNH TẠO ĐỀ MỚI THEO MA TRẬN */}
           {activeTab === 'create' && (
@@ -141,7 +135,7 @@ export default function App() {
                   try {
                     const newTest = createDefaultTest(targetConfig);
                     setCurrentTest(newTest);
-                    setActiveTab('generator'); // Tự động chuyển sang xem đề sau khi tạo
+                    setActiveTab('generator');
                   } catch (err) {
                     console.error('Lỗi tạo đề:', err);
                   }
@@ -220,7 +214,7 @@ export default function App() {
         isGenerating={isGenerating}
       />
 
-      {/* Modal Chỉnh sửa chi tiết 1 câu hỏi khi bấm nút Sửa */}
+      {/* Modal Chỉnh sửa 1 câu hỏi */}
       {editingQuestion && (
         <EditorModal
           question={editingQuestion}
