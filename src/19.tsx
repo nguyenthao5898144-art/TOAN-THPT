@@ -20,10 +20,7 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
 }) => {
   const classes: ClassRoom[] = getStoredClasses();
 
-  // 1. Loại cấu hình: 'exam' (Kiểm tra) | 'practice' (Luyện tập)
-  const [configType, setConfigType] = useState<'exam' | 'practice'>('exam');
-
-  // 2. Cấu hình chung
+  // 1. Cấu hình chung
   const [title, setTitle] = useState<string>(currentConfig?.title || 'THƯỜNG XUYÊN - CẢI THIỆN ĐIỂM');
   const [grade, setGrade] = useState<string>(currentConfig?.grade || '12');
   const [purpose, setPurpose] = useState<string>('Kiểm tra định kỳ');
@@ -39,19 +36,19 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
   const [targetScope, setTargetScope] = useState<'all' | 'class' | 'student'>('class');
   const [selectedClasses, setSelectedClasses] = useState<string[]>(classes.map((c) => c.name));
 
-  // 3. Bảo mật & Giám sát
+  // 2. Bảo mật & Giám sát
   const [maxAttempts, setMaxAttempts] = useState<number>(1);
   const [examPassword, setExamPassword] = useState<string>('');
   const [enableMonitoring, setEnableMonitoring] = useState<boolean>(true);
 
-  // 4. Đảo đề & Ma trận
+  // 3. Đảo đề theo ma trận
   const [randomizeMatrix, setRandomizeMatrix] = useState<boolean>(true);
 
-  // 5. Xem điểm & đáp án
+  // 4. Xem điểm & đáp án
   const [viewScoreMode, setViewScoreMode] = useState<'no' | 'after_submit' | 'after_all'>('after_submit');
   const [viewAnswersMode, setViewAnswersMode] = useState<'no' | 'after_submit' | 'after_all'>('no');
 
-  // Link bài tập sau khi xuất bản
+  // Link bài thi sau khi xuất bản
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
@@ -107,26 +104,11 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
               Tên đề thi: <strong>{title}</strong>
             </span>
             <div className="flex items-center gap-2 mt-1">
-              {/* Nút chuyển Kiểm tra / Luyện tập */}
-              <div className="bg-slate-100 p-1 rounded-xl flex items-center text-xs font-bold border border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setConfigType('exam')}
-                  className={`px-3 py-1 rounded-lg transition-all ${
-                    configType === 'exam' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Kiểm tra
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfigType('practice')}
-                  className={`px-3 py-1 rounded-lg transition-all ${
-                    configType === 'practice' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Luyện tập
-                </button>
+              {/* 1 NÚT KIỂM TRA DUY NHẤT (ĐÃ GỘP) */}
+              <div className="inline-flex items-center">
+                <span className="px-4 py-1 bg-blue-600 text-white text-xs font-black rounded-lg shadow-sm tracking-wide uppercase">
+                  KIỂM TRA
+                </span>
               </div>
               <span className="text-xs text-slate-500 hidden sm:inline">
                 • Cấu hình dùng cho các kỳ thi nghiêm túc, bảo mật đề thi và đáp án
@@ -143,7 +125,7 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
           </button>
         </div>
 
-        {/* NỘI DUNG FORM CẤU HÌNH (CUỘN ĐƯỢC) */}
+        {/* NỘI DUNG FORM CẤU HÌNH */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6 text-xs text-slate-700">
           {/* KHỐI 1: CẤU HÌNH CHUNG */}
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
@@ -443,7 +425,7 @@ export const AssignmentModal: React.FC<AssignmentModalProps> = ({
           )}
         </div>
 
-        {/* FOOTER NÚT HÀNH ĐỘNG (LƯU NHÁP & XUẤT BẢN) */}
+        {/* FOOTER NÚT HÀNH ĐỘNG */}
         <div className="p-4 bg-white border-t border-slate-200 flex items-center justify-end gap-3 sticky bottom-0 z-20">
           <button
             type="button"
