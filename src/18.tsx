@@ -152,4 +152,75 @@ export const ClassManager: React.FC = () => {
                       <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">{st.name.slice(0, 2).toUpperCase()}</div>
                       <div>
                         <h4 className="font-bold text-slate-900">{st.name} ♂</h4>
-                        <p className="text-
+                        <p className="text-[10px] text-slate-400">ID: {st.code || '67339301'} • SĐT: {st.phone || 'Chưa có'}</p>
+                      </div>
+                    </div>
+                    <div className="col-span-2 text-center font-mono font-bold text-slate-700">{st.code || `SBD${i + 1}`}</div>
+                    <div className="col-span-2 text-center font-bold text-blue-700">15 / 22 đề thi</div>
+                    <div className="col-span-2 flex justify-center gap-1.5">
+                      <button onClick={() => { if (confirm(`Xóa "${st.name}"?`)) setClasses(classes.map((c) => c.id === curClass.id ? { ...c, students: (c.students || []).filter((s) => s.id !== st.id) } : c)); }} className="p-1 text-slate-400 hover:text-rose-600" title="Xóa"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => alert(`Đã đặt lại mật khẩu cho "${st.name}" về 123`)} className="p-1 text-amber-500 hover:text-amber-700" title="Đặt lại MK"><KeyRound className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL TẠO DANH SÁCH LỚP BẰNG EXCEL */}
+      {isExcelOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="font-black text-sm text-slate-900">Tạo danh sách lớp bằng excel</h3>
+              <button onClick={() => setIsExcelOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-6 text-center bg-slate-50/50 space-y-2">
+              <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto"><FileSpreadsheet className="w-5 h-5" /></div>
+              <p className="font-bold text-blue-600 text-xs">Kéo thả file Excel hoặc Click để chọn file</p>
+              <button type="button" onClick={handleDownloadSample} className="text-[11px] text-blue-600 hover:underline font-bold inline-flex items-center gap-1 cursor-pointer"><CloudDownload className="w-3.5 h-3.5" /> ☁ Tải file biểu mẫu</button>
+            </div>
+            <div className="p-3 bg-slate-50 border rounded-xl space-y-2 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-bold mb-1">Tên lớp áp dụng:</label>
+                  <input type="text" value={excelTargetName} onChange={(e) => setExcelTargetName(e.target.value)} className="w-full p-1.5 bg-white border rounded-lg font-bold uppercase" />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-bold mb-1">Năm học:</label>
+                  <input type="text" readOnly value="2026 - 2027" className="w-full p-1.5 bg-slate-100 border rounded-lg font-bold text-slate-600" />
+                </div>
+              </div>
+            </div>
+            <textarea rows={4} value={excelText} onChange={(e) => setExcelText(e.target.value)} placeholder="Hoặc dán danh sách họ tên từ Excel vào đây..." className="w-full p-2 border rounded-xl text-xs font-mono outline-none" />
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <button onClick={() => setIsExcelOpen(false)} className="px-4 py-1.5 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">Hủy</button>
+              <button onClick={handleConfirmExcel} className="px-5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-black shadow">Xác nhận</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL SỬA TÊN LỚP */}
+      {isRenameOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-5 space-y-3 shadow-2xl border">
+            <div className="flex justify-between items-center border-b pb-2">
+              <h3 className="font-bold text-sm">Sửa tên lớp học</h3>
+              <button onClick={() => setIsRenameOpen(false)}><X className="w-4 h-4" /></button>
+            </div>
+            <input type="text" value={renameVal} onChange={(e) => setRenameVal(e.target.value)} className="w-full p-2 border rounded-lg text-sm font-bold uppercase outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <button onClick={() => setIsRenameOpen(false)} className="px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-bold">Hủy</button>
+              <button onClick={() => { if (renameVal.trim()) { setClasses(classes.map((c) => c.id === selectedClassId ? { ...c, name: renameVal.trim().toUpperCase() } : c)); setIsRenameOpen(false); } }} className="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow">Lưu</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ClassManager;
