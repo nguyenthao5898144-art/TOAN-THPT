@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { GeneratedTest, Question } from './types';
 import { createDefaultTest } from './testGenerator';
-import { HeaderMenu, ActiveTabType } from './HeaderMenu';
 import { QuestionList } from './QuestionList';
 import { SlideViewer } from './SlideViewer';
 import { MatrixTable } from './MatrixTable';
@@ -15,7 +14,13 @@ import { StudentPortal } from './14';
 import { ClassManager } from './18';
 import { exportTestToWord } from './wordExporter';
 import { saveTestToBank } from './testBankStorage';
-import { ArrowLeft, Menu, Sparkles, BookOpen, Users, Send, FileText, Layers, Table, FolderArchive } from 'lucide-react';
+import {
+  Home, FileText, FolderArchive, Users, BookOpen, Layers,
+  Table, Sparkles, Upload, Send, Download, ArrowLeft,
+  Award, ChevronRight, Calendar
+} from 'lucide-react';
+
+export type ActiveTabType = 'home' | 'create' | 'upload' | 'assign' | 'classes' | 'generator' | 'slides' | 'matrix' | 'bank';
 
 export default function App() {
   const isStudentMode = new URLSearchParams(window.location.search).get('mode') === 'student';
@@ -48,7 +53,6 @@ export default function App() {
     }
   });
 
-  // Mặc định ở Trang chủ ('home') có đầy đủ menu dọc bên trái
   const [activeTab, setActiveTab] = useState<ActiveTabType>('home');
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -86,120 +90,346 @@ export default function App() {
     alert('Đã lưu đề thi vào Kho Lưu Trữ thành công!');
   };
 
-  // Kiểm tra xem hiện tại có đang ở Trang chủ hay đang vào giao diện của một nút
   const isAtHome = activeTab === 'home';
+
+  // Danh sách các chuyên đề Toán 12 trọng tâm gợi ý theo tuần
+  const mathTopicsPreview = [
+    { week: 'Chuyên đề 1', title: 'Ứng dụng đạo hàm để khảo sát & vẽ đồ thị hàm số', grade: 'Toán 12' },
+    { week: 'Chuyên đề 2', title: 'Tọa độ vectơ trong không gian Oxyz', grade: 'Toán 12' },
+    { week: 'Chuyên đề 3', title: 'Các số đặc trưng đo mức độ phân tán của mẫu số liệu ghép nhóm', grade: 'Toán 12' },
+    { week: 'Chuyên đề 4', title: 'Nguyên hàm, Tích phân và Ứng dụng hình học', grade: 'Toán 12' },
+    { week: 'Chuyên đề 5', title: 'Phương trình mặt phẳng, đường thẳng và mặt cầu Oxyz', grade: 'Toán 12' },
+    { week: 'Chuyên đề 6', title: 'Xác suất có điều kiện và Công thức Bayes', grade: 'Toán 12' },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 font-sans flex">
-      {/* 1. CHỈ HIỆN CỘT MENU DỌC KHI Ở TRANG CHỦ (KHI VÀO GIAO DIỆN CỦA NÚT THÌ ẨN HOÀN TOÀN) */}
-      {isAtHome && (
-        <HeaderMenu
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          questionCount={currentTest.questions.length}
-          onExportWord={handleExportWord}
-        />
-      )}
+      {/* 1. CỘT BIỂU TƯỢNG SIÊU MẢNH BÊN TRÁI (W-16) */}
+      <aside className="w-16 bg-slate-900 text-white min-h-screen h-screen sticky top-0 flex flex-col items-center justify-between py-4 shrink-0 shadow-xl z-30 border-r border-slate-800">
+        <div className="flex flex-col items-center space-y-5 w-full">
+          {/* Logo THPT */}
+          <div
+            onClick={() => setActiveTab('home')}
+            className="w-10 h-10 rounded-2xl bg-blue-600 hover:bg-blue-500 flex items-center justify-center font-black text-xs cursor-pointer shadow transition-all"
+            title="Màn hình chính"
+          >
+            THPT
+          </div>
 
-      {/* 2. VÙNG HIỂN THỊ NỘI DUNG CHÍNH (TOÀN MÀN HÌNH KHI VÀO CHỨC NĂNG) */}
-      <div className="flex-1 min-h-screen flex flex-col min-w-0">
-        {/* HEADER TRÊN CÙNG CANH GIỮA */}
-        <header className="bg-slate-900 text-white py-3.5 px-6 shadow-md border-b border-slate-800 flex items-center justify-between">
-          {/* Nút Quay lại Menu khi đang ở trong một chức năng */}
-          {!isAtHome ? (
+          {/* Các nút icon chuyển nhanh */}
+          <div className="flex flex-col items-center space-y-2.5 w-full">
             <button
               type="button"
               onClick={() => setActiveTab('home')}
-              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow cursor-pointer"
+              className={`p-3 rounded-2xl transition-all ${
+                activeTab === 'home' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              }`}
+              title="Màn hình chính"
             >
-              <ArrowLeft className="w-4 h-4" /> Quay lại Menu Trang chủ
+              <Home className="w-5 h-5" />
             </button>
-          ) : (
-            <div className="w-24"></div>
-          )}
 
-          {/* Tên phần mềm & Tác giả canh giữa */}
-          <div className="flex flex-col items-center text-center">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center font-black text-xs text-white">
-                THPT
-              </div>
-              <h1 className="font-black text-lg sm:text-xl text-white tracking-wide">
-                TOÁN THPT
-              </h1>
-              <span className="px-2 py-0.2 bg-blue-500/25 text-blue-300 rounded-full font-bold text-[10px] border border-blue-400/30">
-                GDPT 2018
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-300">
-              Tác giả: <strong className="text-white">NGUYỄN QUỐC TÂM</strong> • THPT MAI THANH THẾ
-            </p>
+            <button
+              type="button"
+              onClick={() => setActiveTab('create')}
+              className={`p-3 rounded-2xl transition-all ${
+                activeTab === 'create' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              }`}
+              title="Tạo đề mới (Ma trận)"
+            >
+              <Sparkles className="w-5 h-5 text-amber-300" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('assign')}
+              className={`p-3 rounded-2xl transition-all ${
+                activeTab === 'assign' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              }`}
+              title="Giao bài kiểm tra"
+            >
+              <Send className="w-5 h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('classes')}
+              className={`p-3 rounded-2xl transition-all ${
+                activeTab === 'classes' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              }`}
+              title="Quản lý lớp học"
+            >
+              <Users className="w-5 h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('generator')}
+              className={`p-3 rounded-2xl transition-all ${
+                activeTab === 'generator' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              }`}
+              title="Xem đề thi"
+            >
+              <FileText className="w-5 h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('slides')}
+              className={`p-3 rounded-2xl transition-all ${
+                activeTab === 'slides' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              }`}
+              title="Trình chiếu Slide"
+            >
+              <Layers className="w-5 h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('matrix')}
+              className={`p-3 rounded-2xl transition-all ${
+                activeTab === 'matrix' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              }`}
+              title="Ma trận & Bản đặc tả"
+            >
+              <Table className="w-5 h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('bank')}
+              className={`p-3 rounded-2xl transition-all ${
+                activeTab === 'bank' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              }`}
+              title="Kho lưu trữ đề"
+            >
+              <FolderArchive className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="text-[10px] text-slate-500 font-mono">2026</div>
+      </aside>
+
+      {/* 2. VÙNG NỘI DUNG CHÍNH */}
+      <div className="flex-1 min-h-screen flex flex-col min-w-0 bg-slate-50">
+        {/* THANH TIÊU ĐỀ CANH GIỮA TRANG WEB */}
+        <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-20">
+          <div className="w-36">
+            {!isAtHome && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('home')}
+                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-blue-200"
+              >
+                <ArrowLeft className="w-4 h-4" /> Màn hình chính
+              </button>
+            )}
           </div>
 
-          <div className="w-24 flex justify-end">
-            {!isAtHome && (
-              <span className="text-xs text-slate-400 font-medium">Toàn màn hình</span>
-            )}
+          {/* Tiêu đề phần mềm canh giữa trang trọng */}
+          <div className="flex items-center space-x-2">
+            <h1 className="font-black text-base sm:text-lg text-slate-900 tracking-wide">
+              TOÁN THPT
+            </h1>
+            <span className="text-[10px] px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md font-bold border border-blue-200">
+              GDPT 2018
+            </span>
+          </div>
+
+          {/* Góc phải: Tác giả & Trường */}
+          <div className="flex items-center space-x-2 text-right">
+            <div className="hidden sm:block">
+              <span className="font-bold text-slate-900 text-xs block leading-tight">Thầy Nguyễn Quốc Tâm</span>
+              <span className="text-[10px] text-slate-500">THPT Mai Thanh Thế</span>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow">
+              QT
+            </div>
           </div>
         </header>
 
-        {/* NỘI DUNG RIÊNG BIỆT CỦA TỪNG CHỨC NĂNG (HOÀN TOÀN KHÔNG CÓ NÚT LỆNH THỪA) */}
+        {/* NỘI DUNG HIỂN THỊ (BỐ CỤC DASHBOARD HOẶC CHỨC NĂNG ĐỘC LẬP) */}
         <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
-          {/* MÀN HÌNH TRANG CHỦ KHI VỪA MỞ WEB */}
+          {/* BỐ CỤC MÀN HÌNH CHÍNH (THEO ĐÚNG BỐ CỤC MẪU ẢNH) */}
           {isAtHome && (
-            <div className="max-w-4xl mx-auto space-y-6 pt-4">
-              <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-center space-y-3">
-                <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto shadow-inner">
-                  <BookOpen className="w-7 h-7" />
+            <div className="max-w-7xl mx-auto space-y-6">
+              {/* Banner chào mừng xanh đen sang trọng */}
+              <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 text-white p-6 sm:p-7 rounded-3xl shadow-xl flex items-center justify-between">
+                <div className="space-y-1">
+                  <h2 className="text-xl sm:text-2xl font-black flex items-center gap-2">
+                    Chào mừng Thầy Nguyễn Quốc Tâm 👋
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300">
+                    Hệ thống Khảo sát, Soạn đề & Quản lý học tập môn Toán THPT theo Chương trình GDPT 2018
+                  </p>
                 </div>
-                <h2 className="text-2xl font-black text-slate-900">HỆ THỐNG QUẢN TRỊ & SOẠN ĐỀ TOÁN THPT</h2>
-                <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
-                  Chào mừng Thầy <strong>NGUYỄN QUỐC TÂM</strong>! Vui lòng chọn chức năng ở cột menu dọc bên trái để bắt đầu làm việc.
-                </p>
               </div>
 
-              {/* Lưới các chức năng nhanh trên trang chủ */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                <div onClick={() => setActiveTab('create')} className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-blue-500 cursor-pointer shadow-sm hover:shadow transition-all space-y-1">
-                  <Sparkles className="w-6 h-6 text-blue-600" />
-                  <h4 className="font-bold text-sm text-slate-900">Tạo đề mới (Ma trận)</h4>
-                  <p className="text-xs text-slate-500">Soạn đề theo ma trận CV 7991 cho Toán 10, 11, 12</p>
-                </div>
+              {/* NHÓM 1: KHẢO SÁT & SOẠN ĐỀ THI (3 THẺ LỚN) */}
+              <div className="space-y-2.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 px-1">
+                  Khảo sát & Soạn thảo đề thi
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Thẻ 1: Tạo đề mới */}
+                  <div
+                    onClick={() => setActiveTab('create')}
+                    className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 group"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Sparkles className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <h4 className="font-bold text-sm text-slate-900">Tạo đề mới (Ma trận CV 7991)</h4>
+                    <p className="text-[11px] text-slate-400">Soạn đề thi chuẩn Bộ GD&ĐT cho Toán 10, 11, 12</p>
+                  </div>
 
-                <div onClick={() => setActiveTab('upload')} className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-cyan-500 cursor-pointer shadow-sm hover:shadow transition-all space-y-1">
-                  <BookOpen className="w-6 h-6 text-cyan-600" />
-                  <h4 className="font-bold text-sm text-slate-900">Tải lên đề Word</h4>
-                  <p className="text-xs text-slate-500">Nạp file .docx để bóc tách câu hỏi tự động</p>
-                </div>
+                  {/* Thẻ 2: Tải lên đề Word */}
+                  <div
+                    onClick={() => setActiveTab('upload')}
+                    className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-cyan-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 group"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Upload className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-bold text-sm text-slate-900">Tải lên đề Word</h4>
+                    <p className="text-[11px] text-slate-400">Nạp file .docx sẵn có để bóc tách câu hỏi tự động</p>
+                  </div>
 
-                <div onClick={() => setActiveTab('assign')} className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-emerald-500 cursor-pointer shadow-sm hover:shadow transition-all space-y-1">
-                  <Send className="w-6 h-6 text-emerald-600" />
-                  <h4 className="font-bold text-sm text-slate-900">Giao bài cho học sinh</h4>
-                  <p className="text-xs text-slate-500">Cấu hình kiểm tra & tạo link làm bài trực tuyến</p>
+                  {/* Thẻ 3: Xem đề thi */}
+                  <div
+                    onClick={() => setActiveTab('generator')}
+                    className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 group"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-bold text-sm text-slate-900">Xem & Hiệu chỉnh đề thi</h4>
+                    <p className="text-[11px] text-slate-400">Đang có {currentTest.questions.length} câu hỏi chuẩn hóa</p>
+                  </div>
                 </div>
+              </div>
 
-                <div onClick={() => setActiveTab('classes')} className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-emerald-500 cursor-pointer shadow-sm hover:shadow transition-all space-y-1">
-                  <Users className="w-6 h-6 text-emerald-600" />
-                  <h4 className="font-bold text-sm text-slate-900">Quản lý Lớp học</h4>
-                  <p className="text-xs text-slate-500">Tự do đặt tên lớp, dán học sinh từ Excel</p>
+              {/* NHÓM 2: GIẢNG DẠY & QUẢN LÝ HỌC SINH (3 THẺ LỚN) */}
+              <div className="space-y-2.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 px-1">
+                  Giảng dạy & Quản lý học sinh
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Giao bài học sinh */}
+                  <div
+                    onClick={() => setActiveTab('assign')}
+                    className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 group"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Send className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-bold text-sm text-slate-900">Giao bài kiểm tra trực tuyến</h4>
+                    <p className="text-[11px] text-slate-400">Cấu hình thi, đếm ngược giờ và tạo link cho học sinh</p>
+                  </div>
+
+                  {/* Quản lý lớp học */}
+                  <div
+                    onClick={() => setActiveTab('classes')}
+                    className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 group"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-bold text-sm text-slate-900">Quản lý lớp & Bảng điểm</h4>
+                    <p className="text-[11px] text-slate-400">Tự do đặt tên lớp, dán học sinh từ Excel, theo dõi điểm</p>
+                  </div>
+
+                  {/* Trình chiếu slide */}
+                  <div
+                    onClick={() => setActiveTab('slides')}
+                    className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-purple-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 group"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Layers className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-bold text-sm text-slate-900">Trình chiếu Slide bài giảng</h4>
+                    <p className="text-[11px] text-slate-400">Phục vụ trình chiếu câu hỏi và đáp án trên lớp</p>
+                  </div>
                 </div>
+              </div>
 
-                <div onClick={() => setActiveTab('generator')} className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-blue-500 cursor-pointer shadow-sm hover:shadow transition-all space-y-1">
-                  <FileText className="w-6 h-6 text-blue-600" />
-                  <h4 className="font-bold text-sm text-slate-900">Xem đề thi ({currentTest.questions.length} câu)</h4>
-                  <p className="text-xs text-slate-500">Xem và sửa chi tiết từng câu hỏi trong đề</p>
+              {/* NHÓM 3: DỮ LIỆU & XUẤT BẢN (3 THẺ LỚN) */}
+              <div className="space-y-2.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 px-1">
+                  Dữ liệu & Xuất bản tài liệu
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Ma trận & Bản đặc tả */}
+                  <div
+                    onClick={() => setActiveTab('matrix')}
+                    className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-amber-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 group"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Table className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-bold text-sm text-slate-900">Ma trận & Bản đặc tả</h4>
+                    <p className="text-[11px] text-slate-400">Xem bảng phân chia mức độ nhận thức chuẩn Bộ GD&ĐT</p>
+                  </div>
+
+                  {/* Kho lưu trữ đề */}
+                  <div
+                    onClick={() => setActiveTab('bank')}
+                    className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 group"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <FolderArchive className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-bold text-sm text-slate-900">Kho lưu trữ đề thi</h4>
+                    <p className="text-[11px] text-slate-400">Lưu và mở lại các bộ đề thi đã tạo theo năm học</p>
+                  </div>
+
+                  {/* Xuất file Word */}
+                  <div
+                    onClick={handleExportWord}
+                    className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-600 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 group"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow">
+                      <Download className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-bold text-sm text-slate-900">Xuất đề ra Word (.docx)</h4>
+                    <p className="text-[11px] text-slate-400">Tải file Word chuẩn đề thi, đáp án và ma trận</p>
+                  </div>
                 </div>
+              </div>
 
-                <div onClick={() => setActiveTab('matrix')} className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-amber-500 cursor-pointer shadow-sm hover:shadow transition-all space-y-1">
-                  <Table className="w-6 h-6 text-amber-600" />
-                  <h4 className="font-bold text-sm text-slate-900">Ma trận & Bản đặc tả</h4>
-                  <p className="text-xs text-slate-500">Xem bảng phân bổ nhận thức chuẩn Bộ GD&ĐT</p>
+              {/* NHÓM 4: GỢI Ý CHUYÊN ĐỀ TRỌNG TÂM GDPT 2018 (DÃY THẺ CUỘN NGANG) */}
+              <div className="space-y-3 pt-2">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 px-1">
+                  Gợi ý chuyên đề trọng tâm (Chương trình GDPT 2018)
+                </h3>
+                <div className="flex gap-3.5 overflow-x-auto pb-2 pr-1">
+                  {mathTopicsPreview.map((item, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => setActiveTab('create')}
+                      className="min-w-[210px] max-w-[230px] p-4 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col justify-between shrink-0 space-y-2"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-black text-blue-600">{item.week}</span>
+                          <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.2 rounded font-bold">{item.grade}</span>
+                        </div>
+                        <h5 className="text-xs font-bold text-slate-800 leading-snug line-clamp-3">
+                          {item.title}
+                        </h5>
+                      </div>
+                      <span className="text-[10px] text-slate-400 flex items-center gap-1 font-semibold pt-2 border-t border-slate-100">
+                        Soạn đề theo ma trận <ChevronRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
 
-          {/* 1. GIAO DIỆN TẠO ĐỀ MỚI THEO MA TRẬN */}
+          {/* CÁC GIAO DIỆN CHUYÊN BIỆT KHI CLICK VÀO TỪNG THẺ */}
           {activeTab === 'create' && (
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-5xl mx-auto">
               <QuestionGeneratorModal
@@ -216,7 +446,7 @@ export default function App() {
                   try {
                     const newTest = createDefaultTest(targetConfig);
                     setCurrentTest(newTest);
-                    setActiveTab('generator'); // Chuyển sang xem đề thi
+                    setActiveTab('generator');
                   } catch (err) {
                     console.error('Lỗi tạo đề:', err);
                   }
@@ -226,7 +456,6 @@ export default function App() {
             </div>
           )}
 
-          {/* 2. GIAO DIỆN TẢI LÊN ĐỀ WORD */}
           {activeTab === 'upload' && (
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-4xl mx-auto">
               <FileUploadModal
@@ -243,7 +472,6 @@ export default function App() {
             </div>
           )}
 
-          {/* 3. GIAO DIỆN GIAO BÀI CHO HỌC SINH */}
           {activeTab === 'assign' && (
             <AssignmentModal
               isOpen={true}
@@ -252,10 +480,8 @@ export default function App() {
             />
           )}
 
-          {/* 4. GIAO DIỆN QUẢN LÝ LỚP HỌC */}
           {activeTab === 'classes' && <ClassManager />}
 
-          {/* 5. GIAO DIỆN XEM ĐỀ THI */}
           {activeTab === 'generator' && (
             <QuestionList
               test={currentTest}
@@ -266,13 +492,10 @@ export default function App() {
             />
           )}
 
-          {/* 6. GIAO DIỆN TRÌNH CHIẾU SLIDE */}
           {activeTab === 'slides' && <SlideViewer test={currentTest} />}
 
-          {/* 7. GIAO DIỆN MA TRẬN & BẢN ĐẶC TẢ */}
           {activeTab === 'matrix' && <MatrixTable test={currentTest} />}
 
-          {/* 8. GIAO DIỆN KHO LƯU TRỮ ĐỀ */}
           {activeTab === 'bank' && (
             <TestBankModal
               isOpen={true}
@@ -295,7 +518,7 @@ export default function App() {
         isGenerating={isGenerating}
       />
 
-      {/* Modal Chỉnh sửa chi tiết 1 câu hỏi */}
+      {/* Modal Sửa chi tiết câu hỏi */}
       {editingQuestion && (
         <EditorModal
           question={editingQuestion}
