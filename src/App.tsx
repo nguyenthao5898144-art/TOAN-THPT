@@ -86,11 +86,21 @@ export default function App() {
     exportTestToWord(currentTest);
   };
 
+  // HÀM LƯU NHANH ĐỀ THI VÀO KHO
+  const handleQuickSaveToBank = () => {
+    try {
+      saveTestToBank(currentTest);
+      alert('Đã lưu đề thi vào Kho lưu trữ thành công!');
+    } catch (err) {
+      console.error('Lỗi lưu đề:', err);
+    }
+  };
+
   const isAtHome = activeTab === 'home';
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex">
-      {/* 1. THANH ICON BÊN TRÁI SIÊU GỌN */}
+      {/* THANH ICON SIDEBAR TRÁI */}
       <aside className="w-16 bg-blue-900 text-white min-h-screen h-screen sticky top-0 flex flex-col items-center justify-between py-5 shrink-0 shadow-lg z-30">
         <div className="flex flex-col items-center space-y-6 w-full">
           <div
@@ -184,16 +194,15 @@ export default function App() {
         <div className="text-[10px] text-blue-300 font-mono">2026</div>
       </aside>
 
-      {/* 2. VÙNG HIỂN THỊ CHÍNH */}
+      {/* VÙNG NỘI DUNG CHÍNH */}
       <div className="flex-1 min-h-screen flex flex-col min-w-0">
-        {/* TOP BAR */}
         <header className="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between shadow-sm sticky top-0 z-20">
           <div className="w-36">
             {!isAtHome && (
               <button
                 type="button"
                 onClick={() => setActiveTab('home')}
-                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-blue-200"
+                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-blue-200"
               >
                 <ArrowLeft className="w-4 h-4" /> Màn hình chính
               </button>
@@ -220,12 +229,11 @@ export default function App() {
           </div>
         </header>
 
-        {/* NỘI DUNG CHÍNH */}
         <main className="flex-1 p-4 sm:p-8 overflow-y-auto">
-          {/* MÀN HÌNH CHÍNH (ĐÚNG 100% THEO MẪU ẢNH) */}
+          {/* MÀN HÌNH CHÍNH (6 THẺ VUÔNG) */}
           {isAtHome && (
             <div className="max-w-6xl mx-auto space-y-8">
-              {/* NHÓM 1: QUẢN LÝ HỌC TẬP (3 THẺ LỚN) */}
+              {/* Nhóm 1: Quản lý học tập */}
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-slate-900 px-1">
                   Quản lý học tập
@@ -263,7 +271,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* NHÓM 2: NỘI DUNG & CÔNG CỤ (3 THẺ LỚN) */}
+              {/* Nhóm 2: Nội dung & Công cụ */}
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-slate-900 px-1">
                   Nội dung & Công cụ
@@ -279,7 +287,6 @@ export default function App() {
                     <span className="font-bold text-sm text-slate-800 group-hover:text-blue-600">Kho nội dung</span>
                   </div>
 
-                  {/* THẺ NGÂN HÀNG CÂU HỎI -> MỞ QUESTIONBANKMANAGER */}
                   <div
                     onClick={() => setActiveTab('matrix')}
                     className="p-8 bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group min-h-[150px]"
@@ -304,7 +311,7 @@ export default function App() {
             </div>
           )}
 
-          {/* GIAO DIỆN TẠO ĐỀ MỚI THEO MA TRẬN */}
+          {/* GIAO DIỆN TẠO ĐỀ MỚI */}
           {activeTab === 'create' && (
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-5xl mx-auto">
               <QuestionGeneratorModal
@@ -374,7 +381,7 @@ export default function App() {
           {/* GIAO DIỆN TRÌNH CHIẾU SLIDE */}
           {activeTab === 'slides' && <SlideViewer test={currentTest} />}
 
-          {/* GIAO DIỆN NGÂN HÀNG CÂU HỎI (CHUẨN ẢNH 129 & 130) */}
+          {/* GIAO DIỆN NGÂN HÀNG CÂU HỎI */}
           {activeTab === 'matrix' && <QuestionBankManager />}
 
           {/* GIAO DIỆN KHO NỘI DUNG / LƯU TRỮ ĐỀ */}
@@ -391,16 +398,10 @@ export default function App() {
         </main>
       </div>
 
-      {/* Trợ lý AI Gemini */}
-      <AssistantChat
-        currentTest={currentTest}
-        onGenerateCommand={(prompt) => {
-          console.log('AI Prompt:', prompt);
-        }}
-        isGenerating={isGenerating}
-      />
+      {/* Trợ lý AI */}
+      <AssistantChat />
 
-      {/* Modal Sửa câu hỏi */}
+      {/* Modal Chỉnh sửa câu hỏi */}
       {editingQuestion && (
         <EditorModal
           question={editingQuestion}
