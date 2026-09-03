@@ -130,7 +130,7 @@ export const ClassManager: React.FC = () => {
             <div className="flex justify-between items-center border-b pb-2"><h3 className="font-black text-sm">Tạo danh sách lớp bằng Excel (.xlsx)</h3><button onClick={() => setIsExcel(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button></div>
             <label className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-5 text-center bg-slate-50 space-y-1 block cursor-pointer">
               <FileSpreadsheet className="w-8 h-8 text-emerald-600 mx-auto" />
-              <p className="font-bold text-blue-600 text-xs">{fileName ? `Đã chọn: ${fileName}` : 'Kéo thả file Excel (.xlsx) hoặc Click để chọn file'}</p>
+              <p className="font-bold text-blue-600 text-xs">{fileName ? `Đã chọn: ${fileName}` : 'Kéo thả file Excel (.xlsx, .csv, .txt, .xls) hoặc Click để chọn file'}</p>
               <input type="file" accept=".xlsx,.xls,.csv,.txt" onChange={handleFile} className="hidden" />
             </label>
             <div className="text-center"><button type="button" onClick={handleDownloadSample} className="text-xs text-blue-600 hover:underline font-bold inline-flex items-center gap-1 cursor-pointer"><CloudDownload className="w-4 h-4" /> ☁ Tải file biểu mẫu chuẩn (7 cột)</button></div>
