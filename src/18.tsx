@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import JSZip from 'jszip';
 import { ClassRoom, Student, getStoredClasses, saveClasses } from './classStorage';
-import { Users, Plus, Trash2, FileSpreadsheet, X, Search, ChevronLeft, QrCode, KeyRound, CloudDownload, MoreHorizontal, Edit3, Copy } from 'lucide-react';
+import { Plus, Trash2, FileSpreadsheet, X, Search, ChevronLeft, QrCode, KeyRound, CloudDownload, MoreHorizontal, Edit3, Copy } from 'lucide-react';
 
 export const ClassManager: React.FC = () => {
   const [classes, setClasses] = useState<ClassRoom[]>(() => getStoredClasses() || [
@@ -12,17 +12,15 @@ export const ClassManager: React.FC = () => {
   ]);
 
   const [level, setLevel] = useState<'grid' | 'detail'>('grid');
-  const [selectedId, setSelectedId] = useState<string>('1');
+  const [selId, setSelId] = useState<string>('1');
   const [search, setSearch] = useState<string>('');
-  const [menuId, setMenuId] = useState<string | null>(null);
-
   const [isExcel, setIsExcel] = useState<boolean>(false);
   const [targetName, setTargetName] = useState<string>('12A6');
   const [excelText, setExcelText] = useState<string>('');
   const [fileName, setFileName] = useState<string>('');
 
   useEffect(() => { if (classes.length) saveClasses(classes); }, [classes]);
-  const curClass = classes.find((c) => c.id === selectedId) || classes[0];
+  const curClass = classes.find(c => c.id === selId) || classes[0];
 
   const handleDownloadSample = () => {
     const csv = '\uFEFFSTT,Họ và tên,Giới tính,Tên đăng nhập,Số báo danh,Số điện thoại,Ghi chú\n1,Châu Ngô Nhật Ái,Nữ,67339301,SBD01,0901234567,\n2,Lê Yến Duy,Nam,67339302,SBD02,0901234568,';
@@ -32,28 +30,20 @@ export const ClassManager: React.FC = () => {
     a.click();
   };
 
-  const parseXlsx = async (file: File) => {
-    try {
-      const zip = await JSZip.loadAsync(file);
-      const sst = (await zip.file('xl/sharedStrings.xml')?.async('text')) || '';
-      const docSst = new DOMParser().parseFromString(sst, 'text/xml');
-      const strings = Array.from(docSst.getElementsByTagName('si')).map(s => s.textContent || '');
-      const sheet = (await zip.file('xl/worksheets/sheet1.xml')?.async('text')) || '';
-      const docSheet = new DOMParser().parseFromString(sheet, 'text/xml');
-      const rows = Array.from(docSheet.getElementsByTagName('row'));
-      return rows.map(r => Array.from(r.getElementsByTagName('c')).map(c => {
-        const t = c.getAttribute('t');
-        return t === 's' ? strings[parseInt(c.textContent || '0', 10)] : (c.textContent || '');
-      }).join('\t')).join('\n');
-    } catch { return ''; }
-  };
-
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
     setFileName(f.name);
     if (f.name.endsWith('.xlsx')) {
-      setExcelText(await parseXlsx(f));
+      try {
+        const zip = await JSZip.loadAsync(f);
+        const sst = (await zip.file('xl/sharedStrings.xml')?.async('text')) || '';
+        const strings = Array.from(new DOMParser().parseFromString(sst, 'text/xml').getElementsByTagName('si')).map(s => s.textContent || '');
+        const sheet = (await zip.file('xl/worksheets/sheet1.xml')?.async('text')) || '';
+        const rows = Array.from(new DOMParser().parseFromString(sheet, 'text/xml').getElementsByTagName('row'));
+        const txt = rows.map(r => Array.from(r.getElementsByTagName('c')).map(c => (c.getAttribute('t') === 's' ? strings[parseInt(c.textContent || '0', 10)] : c.textContent) || '').join('\t')).join('\n');
+        setExcelText(txt);
+      } catch { setExcelText(''); }
     } else {
       const r = new FileReader();
       r.onload = ev => setExcelText(ev.target?.result as string);
@@ -76,40 +66,28 @@ export const ClassManager: React.FC = () => {
     const idx = classes.findIndex(c => c.name.toUpperCase() === targetName.trim().toUpperCase());
     if (idx >= 0) {
       setClasses(classes.map((c, i) => i === idx ? { ...c, students: [...(c.students || []), ...newSts] } : c));
-      setSelectedId(classes[idx].id);
+      setSelId(classes[idx].id);
     } else {
       const nc = { id: `cls_${Date.now()}`, name: targetName.trim().toUpperCase(), students: newSts };
       setClasses([...classes, nc]);
-      setSelectedId(nc.id);
+      setSelId(nc.id);
     }
     setIsExcel(false);
-    setFileName('');
-    setExcelText('');
     alert(`Đã nạp ${newSts.length} học sinh thành công!`);
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 text-slate-800 space-y-4 font-sans" onClick={() => setMenuId(null)}>
+    <div className="max-w-7xl mx-auto p-4 text-slate-800 space-y-4 font-sans">
       {level === 'grid' ? (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <div><h2 className="text-xl font-black">Danh sách lớp</h2><p className="text-xs text-slate-500">{classes.length} lớp học</p></div>
-            <button onClick={() => setIsExcel(true)} className="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow cursor-pointer"><Plus className="w-4 h-4" /> Thêm lớp</button>
+            <button onClick={() => setIsExcel(true)} className="px-4 py-2 bg-blue-900 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow cursor-pointer"><Plus className="w-4 h-4" /> Thêm lớp bằng Excel</button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {classes.filter(c => c.name.toLowerCase().includes(search.toLowerCase())).map(cls => (
-              <div key={cls.id} onClick={() => { setSelectedId(cls.id); setLevel('detail'); }} className="bg-white p-5 rounded-2xl border shadow-sm hover:border-blue-400 cursor-pointer space-y-2 relative">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-black">{cls.name}</h3>
-                  <button onClick={e => { e.stopPropagation(); setMenuId(menuId === cls.id ? null : cls.id); }} className="p-1 text-slate-400 hover:text-slate-700"><MoreHorizontal className="w-5 h-5" /></button>
-                  {menuId === cls.id && (
-                    <div className="absolute right-3 top-10 w-36 bg-white rounded-xl shadow-xl border p-1 z-30 text-xs font-bold text-slate-700 space-y-1">
-                      <div onClick={e => { e.stopPropagation(); const n = prompt('Đổi tên lớp:', cls.name); if (n) setClasses(classes.map(c => c.id === cls.id ? { ...c, name: n.toUpperCase() } : c)); setMenuId(null); }} className="p-1.5 hover:bg-slate-50 rounded flex items-center gap-2"><Edit3 className="w-3.5 h-3.5" /> Sửa tên</div>
-                      <div onClick={e => { e.stopPropagation(); setClasses([...classes, { ...cls, id: `c_${Date.now()}`, name: `${cls.name} (Bản sao)` }]); setMenuId(null); }} className="p-1.5 hover:bg-slate-50 rounded flex items-center gap-2"><Copy className="w-3.5 h-3.5" /> Nhân bản</div>
-                      <div onClick={e => { e.stopPropagation(); if (confirm(`Xóa lớp ${cls.name}?`)) setClasses(classes.filter(c => c.id !== cls.id)); setMenuId(null); }} className="p-1.5 hover:bg-rose-50 text-rose-600 rounded flex items-center gap-2"><Trash2 className="w-3.5 h-3.5" /> Xóa</div>
-                    </div>
-                  )}
-                </div>
+              <div key={cls.id} onClick={() => { setSelId(cls.id); setLevel('detail'); }} className="bg-white p-5 rounded-2xl border shadow-sm hover:border-blue-400 cursor-pointer space-y-2">
+                <div className="flex justify-between items-center"><h3 className="text-lg font-black">{cls.name}</h3><span className="text-xs text-blue-600 font-bold">Xem lớp →</span></div>
                 <div className="flex justify-between text-xs text-slate-500"><span>Sĩ số: <strong>{cls.students?.length || 0} HS</strong></span><span>Năm: <strong>2026 - 2027</strong></span></div>
               </div>
             ))}
@@ -158,4 +136,18 @@ export const ClassManager: React.FC = () => {
             <div className="text-center"><button type="button" onClick={handleDownloadSample} className="text-xs text-blue-600 hover:underline font-bold inline-flex items-center gap-1 cursor-pointer"><CloudDownload className="w-4 h-4" /> ☁ Tải file biểu mẫu chuẩn (7 cột)</button></div>
             <div className="flex gap-2 text-xs">
               <input type="text" value={targetName} onChange={e => setTargetName(e.target.value)} placeholder="Tên lớp áp dụng..." className="flex-1 p-2 border rounded-xl font-bold uppercase" />
-              <input type="text" readOnly value="2026 - 2027" className="w-28 p-2 bg-slate-100 border rounded-xl font-bold text-
+              <input type="text" readOnly value="2026 - 2027" className="w-28 p-2 bg-slate-100 border rounded-xl font-bold text-slate-500 text-center" />
+            </div>
+            <textarea rows={3} value={excelText} onChange={e => setExcelText(e.target.value)} placeholder="Hoặc dán trực tiếp dữ liệu từ Excel..." className="w-full p-2 border rounded-xl text-xs font-mono outline-none" />
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <button onClick={() => setIsExcel(false)} className="px-4 py-1.5 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">Hủy</button>
+              <button onClick={handleConfirmExcel} className="px-5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-black shadow">Xác nhận nạp học sinh</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ClassManager;
