@@ -6,7 +6,7 @@ export interface Lesson {
 
 export interface Topic {
   id: string;
-  grade: '10' | '11' | '12';
+  grade: '10';
   category: 'Đại Số' | 'Giải Tích' | 'Hình Học' | 'Thống Kê & Xác Suất' | 'Chuyên Đề Học Tập';
   name: string;
   lessons: Lesson[];
@@ -190,7 +190,7 @@ export const MATH_10_SYLLABUS: Topic[] = [
   },
 ];
 
-// 2. CHƯƠNG TRÌNH TOÁN 11 (GDPT 2018)
+{/. // 2. CHƯƠNG TRÌNH TOÁN 11 (GDPT 2018)
 export const MATH_11_SYLLABUS: Topic[] = [
   {
     id: 'topic_11_luong_giac',
@@ -510,7 +510,7 @@ export const MATH_12_SYLLABUS: Topic[] = [
     ],
   },
 ];
-
+./}
 // Hàm trích xuất ngân hàng chương trình theo khối lớp
 export function getSyllabusByGrade(grade: string): Topic[] {
   if (grade === '10') return MATH_10_SYLLABUS;
