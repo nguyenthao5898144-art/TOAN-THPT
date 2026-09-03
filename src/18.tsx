@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import JSZip from 'jszip';
 import { ClassRoom, Student, getStoredClasses, saveClasses } from './classStorage';
-import { Plus, Trash2, FileSpreadsheet, X, Search, ChevronLeft, QrCode, KeyRound, CloudDownload, Download, Settings, User, Calendar, Newspaper, BarChart2, BookOpen, Share2 } from 'lucide-react';
+import { Plus, Trash2, FileSpreadsheet, X, Search, ChevronLeft, QrCode, KeyRound, CloudDownload, Download, Settings, User, Calendar, Newspaper, BarChart2, BookOpen, Share2, MoreHorizontal, Edit3, Copy, Archive, ChevronDown } from 'lucide-react';
 
 export const ClassManager: React.FC = () => {
   const [classes, setClasses] = useState<ClassRoom[]>(() => getStoredClasses() || [
     {
-      id: '1', name: '10A2', students: [
-        { id: '1', name: 'Nguyễn Văn A', username: 'ngvanA2193', phone: '0123456789', parentPhone: '0987654321', email: 'nguyenvana@gmail.com', dob: '23/02/2001', gender: 'Nam', code: '00000001', className: 'Lớp 1A2' },
-        { id: '2', name: 'Phạm Thị B', username: 'phthiB1202', phone: '0123456790', parentPhone: '0987654322', email: 'phamthib@gmail.com', dob: '25/06/2001', gender: 'Nữ', code: '00000002', className: 'Lớp 10A3' },
-        { id: '3', name: 'Hồ Văn E1', username: 'hovanE1', phone: '0123456793', parentPhone: '', email: '', dob: '', gender: 'Nữ', code: '', className: 'Lớp 10A4' },
-        { id: '4', name: 'Phạm Thị BC', username: 'phamlai', phone: '0123456732', parentPhone: '', email: '', dob: '', gender: '', code: '', className: '' },
-        { id: '5', name: 'Hồ Văn ED', username: 'hophi', phone: '0123456777', parentPhone: '', email: '', dob: '', gender: '', code: '', className: '' },
+      id: '1', name: '12A6', students: [
+        { id: '1', name: 'Nguyễn Văn A', username: 'ngvanA2193', phone: '0123456789', parentPhone: '0987654321', email: 'nguyenvana@gmail.com', dob: '23/02/2001', gender: 'Nam', code: '00000001', className: 'Lớp 12A6' },
+        { id: '2', name: 'Phạm Thị B', username: 'phthiB1202', phone: '0123456790', parentPhone: '0987654322', email: 'phamthib@gmail.com', dob: '25/06/2001', gender: 'Nữ', code: '00000002', className: 'Lớp 12A6' },
       ]
     },
-    { id: '2', name: '10A10', students: [] }
+    { id: '2', name: '12A7', students: [] }
   ]);
 
-  const [level, setLevel] = useState<'grid' | 'detail'>('detail');
+  const [level, setLevel] = useState<'grid' | 'detail'>('grid');
   const [selId, setSelId] = useState<string>('1');
   const [search, setSearch] = useState<string>('');
+  const [menuId, setMenuId] = useState<string | null>(null);
+
   const [isExcel, setIsExcel] = useState<boolean>(false);
   const [excelText, setExcelText] = useState<string>('');
   const [fileName, setFileName] = useState<string>('');
@@ -28,7 +27,7 @@ export const ClassManager: React.FC = () => {
   const curClass = classes.find(c => c.id === selId) || classes[0];
 
   const handleDownloadSample = () => {
-    const csv = '\uFEFFSTT,Họ và tên,Username,Số điện thoại,Số điện thoại phụ huynh,Email,Ngày sinh,Giới tính,Số báo danh,Mật khẩu,Lớp\n1,Nguyễn Văn A,ngvanA2193,0123456789,0987654321,nguyenvana@gmail.com,23/02/2001,Nam,00000001,,Lớp 1A2\n2,Phạm Thị B,phthiB1202,0123456790,0987654322,phamthib@gmail.com,25/06/2001,Nữ,00000002,,Lớp 10A3\n3,Hồ Văn E1,hovanE1,0123456793,,,,Nữ,,,Lớp 10A4\n4,Phạm Thị BC,phamlai,0123456732,,,,,,,\n5,Hồ Văn ED,hophi,0123456777,,,,,,,';
+    const csv = '\uFEFFSTT,Họ và tên,Username,Số điện thoại,Số điện thoại phụ huynh,Email,Ngày sinh,Giới tính,Số báo danh,Mật khẩu,Lớp\n1,Nguyễn Văn A,ngvanA2193,0123456789,0987654321,nguyenvana@gmail.com,23/02/2001,Nam,00000001,,Lớp 12A6\n2,Phạm Thị B,phthiB1202,0123456790,0987654322,phamthib@gmail.com,25/06/2001,Nữ,00000002,,Lớp 12A6';
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     a.download = `list-student_${curClass.name}.csv`;
@@ -103,20 +102,59 @@ export const ClassManager: React.FC = () => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto p-4 text-slate-800 space-y-4 font-sans">
+    <div className="max-w-7xl mx-auto p-4 text-slate-800 space-y-4 font-sans" onClick={() => setMenuId(null)}>
       {level === 'grid' ? (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <div><h2 className="text-xl font-black">Danh sách lớp</h2><p className="text-xs text-slate-500">{classes.length} lớp học</p></div>
-            <button onClick={() => { const n = prompt('Tên lớp mới:'); if (n) setClasses([...classes, { id: `c_${Date.now()}`, name: n.toUpperCase(), students: [] }]); }} className="px-4 py-2 bg-blue-900 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow cursor-pointer"><Plus className="w-4 h-4" /> Thêm lớp</button>
+            <div>
+              <h2 className="text-xl font-black">Danh sách lớp</h2>
+              <p className="text-xs text-slate-500">{classes.length} lớp học</p>
+            </div>
+            <button onClick={() => { const n = prompt('Tên lớp mới (VD: 12A6):'); if (n) setClasses([...classes, { id: `c_${Date.now()}`, name: n.toUpperCase(), students: [] }]); }} className="px-4 py-2 bg-blue-900 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow cursor-pointer">
+              <Plus className="w-4 h-4" /> Thêm lớp
+            </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {classes.map(cls => (
-              <div key={cls.id} onClick={() => { setSelId(cls.id); setLevel('detail'); }} className="bg-white p-5 rounded-2xl border shadow-sm hover:border-blue-400 cursor-pointer space-y-2">
-                <div className="flex justify-between items-center"><h3 className="text-lg font-black">{cls.name}</h3><span className="text-xs text-blue-600 font-bold">Vào lớp →</span></div>
-                <div className="flex justify-between text-xs text-slate-500"><span>Sĩ số: <strong>{cls.students?.length || 0} HS</strong></span><span>Năm: <strong>2026 - 2027</strong></span></div>
-              </div>
-            ))}
+
+          <div className="pt-1">
+            <div className="flex items-center gap-1.5 font-bold text-slate-800 text-sm mb-3 select-none">
+              <ChevronDown className="w-4 h-4 text-slate-600" />
+              <span>Khác ({classes.length} lớp)</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {classes.map(cls => (
+                <div key={cls.id} onClick={() => { setSelId(cls.id); setLevel('detail'); }} className="bg-white p-5 rounded-2xl border shadow-sm hover:border-blue-400 cursor-pointer space-y-3 relative">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-base font-black text-slate-900">{cls.name}</h3>
+                    <div className="relative" onClick={e => e.stopPropagation()}>
+                      <button onClick={() => setMenuId(menuId === cls.id ? null : cls.id)} className="p-1 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100">
+                        <MoreHorizontal className="w-5 h-5" />
+                      </button>
+                      {menuId === cls.id && (
+                        <div className="absolute right-0 top-7 w-44 bg-white rounded-2xl shadow-2xl border p-1.5 z-40 text-xs font-bold text-slate-700 space-y-1 text-left">
+                          <div onClick={() => { const nn = prompt('Sửa tên lớp:', cls.name); if (nn && nn.trim()) setClasses(classes.map(c => c.id === cls.id ? { ...c, name: nn.trim().toUpperCase() } : c)); setMenuId(null); }} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2 cursor-pointer">
+                            <Edit3 className="w-4 h-4 text-slate-500" /> Sửa lớp
+                          </div>
+                          <div onClick={() => { setClasses([...classes, { ...cls, id: `c_${Date.now()}`, name: `${cls.name} - Copy` }]); setMenuId(null); }} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2 cursor-pointer">
+                            <Copy className="w-4 h-4 text-slate-500" /> Nhân bản lớp
+                          </div>
+                          <div onClick={() => { alert(`Đã đưa lớp "${cls.name}" vào lưu trữ!`); setMenuId(null); }} className="p-2 hover:bg-slate-50 rounded-xl flex items-center gap-2 cursor-pointer">
+                            <Archive className="w-4 h-4 text-slate-500" /> Đưa vào lưu trữ
+                          </div>
+                          <div onClick={() => { if (confirm(`Thầy có chắc chắn muốn xóa lớp "${cls.name}"?`)) setClasses(classes.filter(c => c.id !== cls.id)); setMenuId(null); }} className="p-2 hover:bg-rose-50 text-rose-600 rounded-xl flex items-center gap-2 cursor-pointer border-t">
+                            <Trash2 className="w-4 h-4 text-rose-600" /> Xóa lớp
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-slate-500 font-medium">
+                    <span>Sĩ số: <strong className="text-slate-700">{cls.students?.length || 0}</strong></span>
+                    <span>Năm học: <strong className="text-slate-700">2026 - 2027</strong></span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       ) : (
