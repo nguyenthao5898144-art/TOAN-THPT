@@ -1,238 +1,161 @@
 import React, { useState, useEffect } from 'react';
 import JSZip from 'jszip';
-import { ClassRoom, Student } from './classStorage';
-import { getStoredClasses, saveClasses } from './classStorage';
-import {
-  Users, Plus, Trash2, FileSpreadsheet, X, Search,
-  ChevronLeft, ArrowUpDown, QrCode, Share2, KeyRound,
-  CloudDownload, MoreHorizontal, Edit3, Copy, Archive
-} from 'lucide-react';
+import { ClassRoom, Student, getStoredClasses, saveClasses } from './classStorage';
+import { Users, Plus, Trash2, FileSpreadsheet, X, Search, ChevronLeft, QrCode, KeyRound, CloudDownload, MoreHorizontal, Edit3, Copy } from 'lucide-react';
 
 export const ClassManager: React.FC = () => {
-  const [classes, setClasses] = useState<ClassRoom[]>(() => {
-    const s = getStoredClasses();
-    return s?.length ? s : [
-      { id: '1', name: '10A10', students: Array(32).fill(null).map((_, i) => ({ id: `10a10_${i}`, name: `Học sinh ${i + 1}`, code: `SBD${i + 1 < 10 ? '0' : ''}${i + 1}` })) },
-      { id: '2', name: '10A6', students: Array(41).fill(null).map((_, i) => ({ id: `10a6_${i}`, name: `Học sinh ${i + 1}`, code: `SBD${i + 1 < 10 ? '0' : ''}${i + 1}` })) },
-      { id: '3', name: '12A6', students: [
-        { id: 'hs_1', name: 'Châu Ngô Nhật Ái', gender: 'Nữ', username: '67339301', code: 'SBD01', phone: '0901234567' },
-        { id: 'hs_2', name: 'Lê Yến Duy', gender: 'Nam', username: '67339302', code: 'SBD02', phone: '0901234568' },
-      ]}
-    ];
-  });
+  const [classes, setClasses] = useState<ClassRoom[]>(() => getStoredClasses() || [
+    { id: '1', name: '12A6', students: [
+      { id: '1', name: 'Châu Ngô Nhật Ái', gender: 'Nữ', username: '67339301', code: 'SBD01', phone: '0901234567' },
+      { id: '2', name: 'Lê Yến Duy', gender: 'Nam', username: '67339302', code: 'SBD02', phone: '0901234568' }
+    ]}
+  ]);
 
-  const [viewLevel, setViewLevel] = useState<'grid' | 'detail'>('grid');
-  const [selectedClassId, setSelectedClassId] = useState<string>('3');
+  const [level, setLevel] = useState<'grid' | 'detail'>('grid');
+  const [selectedId, setSelectedId] = useState<string>('1');
   const [search, setSearch] = useState<string>('');
+  const [menuId, setMenuId] = useState<string | null>(null);
 
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  const [isRenameOpen, setIsRenameOpen] = useState<boolean>(false);
-  const [renameVal, setRenameVal] = useState<string>('');
-
-  const [isExcelOpen, setIsExcelOpen] = useState<boolean>(false);
-  const [excelTargetName, setExcelTargetName] = useState<string>('12A6');
+  const [isExcel, setIsExcel] = useState<boolean>(false);
+  const [targetName, setTargetName] = useState<string>('12A6');
   const [excelText, setExcelText] = useState<string>('');
-  const [fileNameUploaded, setFileNameUploaded] = useState<string>('');
+  const [fileName, setFileName] = useState<string>('');
 
   useEffect(() => { if (classes.length) saveClasses(classes); }, [classes]);
+  const curClass = classes.find((c) => c.id === selectedId) || classes[0];
 
-  const curClass = classes.find((c) => c.id === selectedClassId) || classes[0];
-
-  // 1. TẢI FILE BIỂU MẪU ĐÚNG 7 CỘT CHUẨN EXCEL NHƯ TRONG ẢNH
   const handleDownloadSample = () => {
-    const csv = '\uFEFF' +
-      'STT,Họ và tên,Giới tính,Tên đăng nhập,Số báo danh,Số điện thoại,Ghi chú\n' +
-      '1,Châu Ngô Nhật Ái,Nữ,67339301,SBD01,0901234567,\n' +
-      '2,Lê Yến Duy,Nam,67339302,SBD02,0901234568,';
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const csv = '\uFEFFSTT,Họ và tên,Giới tính,Tên đăng nhập,Số báo danh,Số điện thoại,Ghi chú\n1,Châu Ngô Nhật Ái,Nữ,67339301,SBD01,0901234567,\n2,Lê Yến Duy,Nam,67339302,SBD02,0901234568,';
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     a.download = 'Mau_danh_sach_hoc_sinh.csv';
     a.click();
   };
 
-  // 2. BỘ GIẢI MÃ FILE EXCEL (.XLSX) TRỰC TIẾP BẰNG JSZIP VÀ DOMPARSER
-  const parseXlsxFile = async (file: File): Promise<string> => {
+  const parseXlsx = async (file: File) => {
     try {
       const zip = await JSZip.loadAsync(file);
-      const sstFile = zip.file('xl/sharedStrings.xml');
-      const sharedStrings: string[] = [];
-      if (sstFile) {
-        const sstXml = await sstFile.async('text');
-        const doc = new DOMParser().parseFromString(sstXml, 'text/xml');
-        const siTags = doc.getElementsByTagName('si');
-        for (let i = 0; i < siTags.length; i++) {
-          sharedStrings.push(siTags[i].textContent || '');
-        }
-      }
-
-      const sheetFile = zip.file('xl/worksheets/sheet1.xml');
-      if (!sheetFile) return '';
-      const sheetXml = await sheetFile.async('text');
-      const doc = new DOMParser().parseFromString(sheetXml, 'text/xml');
-      const rows = doc.getElementsByTagName('row');
-
-      const lines: string[] = [];
-      for (let r = 0; r < rows.length; r++) {
-        const cells = rows[r].getElementsByTagName('c');
-        const rowVals: Record<string, string> = {};
-        for (let c = 0; c < cells.length; c++) {
-          const ref = cells[c].getAttribute('r') || '';
-          const col = ref.replace(/[0-9]/g, '');
-          const type = cells[c].getAttribute('t');
-          let val = '';
-          if (type === 's') {
-            const idx = parseInt(cells[c].textContent || '0', 10);
-            val = sharedStrings[idx] || '';
-          } else {
-            val = cells[c].textContent || '';
-          }
-          rowVals[col] = val.trim();
-        }
-        const line = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((k) => rowVals[k] || '').join('\t');
-        if (line.trim()) lines.push(line);
-      }
-      return lines.join('\n');
-    } catch (err) {
-      console.error('Lỗi đọc xlsx:', err);
-      return '';
-    }
+      const sst = (await zip.file('xl/sharedStrings.xml')?.async('text')) || '';
+      const docSst = new DOMParser().parseFromString(sst, 'text/xml');
+      const strings = Array.from(docSst.getElementsByTagName('si')).map(s => s.textContent || '');
+      const sheet = (await zip.file('xl/worksheets/sheet1.xml')?.async('text')) || '';
+      const docSheet = new DOMParser().parseFromString(sheet, 'text/xml');
+      const rows = Array.from(docSheet.getElementsByTagName('row'));
+      return rows.map(r => Array.from(r.getElementsByTagName('c')).map(c => {
+        const t = c.getAttribute('t');
+        return t === 's' ? strings[parseInt(c.textContent || '0', 10)] : (c.textContent || '');
+      }).join('\t')).join('\n');
+    } catch { return ''; }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setFileNameUploaded(file.name);
-
-    if (file.name.toLowerCase().endsWith('.xlsx')) {
-      const extracted = await parseXlsxFile(file);
-      setExcelText(extracted);
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFileName(f.name);
+    if (f.name.endsWith('.xlsx')) {
+      setExcelText(await parseXlsx(f));
     } else {
-      const reader = new FileReader();
-      reader.onload = (event) => setExcelText(event.target?.result as string);
-      reader.readAsText(file);
+      const r = new FileReader();
+      r.onload = ev => setExcelText(ev.target?.result as string);
+      r.readAsText(f);
     }
-  };
-
-  // 3. TẠO DANH SÁCH HỌC SINH TỪ DỮ LIỆU ĐÃ ĐỌC
-  const parseStudentData = (text: string): Student[] => {
-    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-    const result: Student[] = [];
-
-    lines.forEach((line, index) => {
-      if (line.includes('STT') || line.includes('Họ và tên') || line.includes('Tên đăng nhập')) return;
-      const p = line.split(/[\t,;]/).map((s) => s.replace(/^"|"$/g, '').trim());
-      if (p.length >= 2) {
-        let name = p;
-        let gender = p || '';
-        let username = p || '';
-        let code = p || '';
-        let phone = p || '';
-
-        if (isNaN(Number(p[0])) && p[0].length > 2) {
-          name = p[0];
-          gender = p || '';
-          username = p || '';
-          code = p || '';
-          phone = p || '';
-        }
-
-        result.push({
-          id: `std_${Date.now()}_${index}`,
-          name: name || `Học sinh ${index + 1}`,
-          gender: gender.toLowerCase().includes('nữ') ? 'Nữ' : 'Nam',
-          username: username || code || `${curClass.name.toLowerCase()}_${index + 1}`,
-          code: code || `SBD${index + 1 < 10 ? '0' : ''}${index + 1}`,
-          phone: phone || '',
-        });
-      }
-    });
-    return result;
   };
 
   const handleConfirmExcel = () => {
-    const tName = excelTargetName.trim().toUpperCase() || curClass.name;
-    const newSts = excelText.trim() ? parseStudentData(excelText) : [];
+    const lines = excelText.split(/\r?\n/).filter(l => l.trim() && !l.includes('STT') && !l.includes('Họ và tên'));
+    const newSts: Student[] = lines.map((l, i) => {
+      const p = l.split(/[\t,;]/).map(s => s.replace(/^"|"$/g, '').trim());
+      const name = isNaN(Number(p[0])) ? p[0] : p;
+      const g = (isNaN(Number(p[0])) ? p : p) || '';
+      const u = (isNaN(Number(p[0])) ? p : p) || '';
+      const c = (isNaN(Number(p[0])) ? p : p) || '';
+      const ph = (isNaN(Number(p[0])) ? p : p) || '';
+      return { id: `std_${Date.now()}_${i}`, name: name || `Học sinh ${i+1}`, gender: g.toLowerCase().includes('nữ') ? 'Nữ' : 'Nam', username: u || c || `hs_${i+1}`, code: c || `SBD${i+1}`, phone: ph };
+    });
 
-    if (!newSts.length) {
-      alert('Chưa có dữ liệu học sinh! Vui lòng chọn file .xlsx hoặc dán danh sách.');
-      return;
-    }
-
-    const idx = classes.findIndex((c) => c.name === tName);
+    const idx = classes.findIndex(c => c.name.toUpperCase() === targetName.trim().toUpperCase());
     if (idx >= 0) {
       setClasses(classes.map((c, i) => i === idx ? { ...c, students: [...(c.students || []), ...newSts] } : c));
-      setSelectedClassId(classes[idx].id);
+      setSelectedId(classes[idx].id);
     } else {
-      const newC: ClassRoom = { id: `cls_${Date.now()}`, name: tName, students: newSts };
-      setClasses([...classes, newC]);
-      setSelectedClassId(newC.id);
+      const nc = { id: `cls_${Date.now()}`, name: targetName.trim().toUpperCase(), students: newSts };
+      setClasses([...classes, nc]);
+      setSelectedId(nc.id);
     }
-
-    setIsExcelOpen(false);
-    setFileNameUploaded('');
+    setIsExcel(false);
+    setFileName('');
     setExcelText('');
-    alert(`Đã nạp thành công ${newSts.length} học sinh vào lớp ${tName}!`);
+    alert(`Đã nạp ${newSts.length} học sinh thành công!`);
   };
 
-  const filteredClasses = classes.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
-  const filteredStudents = (curClass?.students || []).filter((s) =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    (s.code && s.code.includes(search)) ||
-    (s.username && s.username.includes(search))
-  );
-
   return (
-    <div className="font-sans space-y-4 max-w-7xl mx-auto p-4 sm:p-6 text-slate-800" onClick={() => setActiveMenuId(null)}>
-      {/* CẤP 1: LƯỚI THẺ LỚP HỌC */}
-      {viewLevel === 'grid' ? (
+    <div className="max-w-7xl mx-auto p-4 text-slate-800 space-y-4 font-sans" onClick={() => setMenuId(null)}>
+      {level === 'grid' ? (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-black text-slate-900">Danh sách lớp</h2>
-              <p className="text-xs text-slate-500 font-bold">{classes.length} lớp học</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => { setExcelTargetName('12A6'); setIsExcelOpen(true); }}
-              className="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow cursor-pointer"
-            >
-              <Plus className="w-4 h-4" /> Thêm lớp mới
-            </button>
+            <div><h2 className="text-xl font-black">Danh sách lớp</h2><p className="text-xs text-slate-500">{classes.length} lớp học</p></div>
+            <button onClick={() => setIsExcel(true)} className="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow cursor-pointer"><Plus className="w-4 h-4" /> Thêm lớp</button>
           </div>
-
-          <div className="flex gap-3">
-            <div className="flex-1 relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm kiếm theo tên lớp..."
-                className="w-full pl-9 pr-3 py-2 bg-white border rounded-xl text-xs outline-none shadow-sm"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
-            {filteredClasses.map((cls) => (
-              <div
-                key={cls.id}
-                onClick={() => { setSelectedClassId(cls.id); setViewLevel('detail'); }}
-                className="bg-white p-5 rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer space-y-2 transition-all relative"
-              >
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {classes.filter(c => c.name.toLowerCase().includes(search.toLowerCase())).map(cls => (
+              <div key={cls.id} onClick={() => { setSelectedId(cls.id); setLevel('detail'); }} className="bg-white p-5 rounded-2xl border shadow-sm hover:border-blue-400 cursor-pointer space-y-2 relative">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-black text-slate-900">{cls.name}</h3>
-                  <div className="relative" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={() => setActiveMenuId(activeMenuId === cls.id ? null : cls.id)}
-                      className="p-1 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
-                    >
-                      <MoreHorizontal className="w-5 h-5" />
-                    </button>
-                    {activeMenuId === cls.id && (
-                      <div className="absolute right-0 top-7 w-40 bg-white rounded-xl shadow-xl border p-1 z-30 text-xs font-bold text-slate-700 space-y-0.5 text-left">
-                        <div onClick={() => { setSelectedClassId(cls.id); setRenameVal(cls.name); setIsRenameOpen(true); setActiveMenuId(null); }} className="p-2 hover:bg-slate-50 rounded-lg flex items-center gap-2 cursor-pointer"><Edit3 className="w-3.5 h-3.5" /> Sửa tên</div>
-                        <div onClick={() => { setClasses([...classes, { id: `cls_${Date.now()}`, name: `${cls.name} (Sao chép)`, students: [...(cls.students || [])] }]); setActiveMenuId(null); }} className="p-2 hover:bg-slate-50 rounded-lg flex items-center gap-2 cursor-pointer"><Copy className="w-3.5 h-3.5" /> Nhân bản</div>
-                        <div onClick={() => { if (confirm(`Xóa lớp ${cls.name}?`)) set
+                  <h3 className="text-lg font-black">{cls.name}</h3>
+                  <button onClick={e => { e.stopPropagation(); setMenuId(menuId === cls.id ? null : cls.id); }} className="p-1 text-slate-400 hover:text-slate-700"><MoreHorizontal className="w-5 h-5" /></button>
+                  {menuId === cls.id && (
+                    <div className="absolute right-3 top-10 w-36 bg-white rounded-xl shadow-xl border p-1 z-30 text-xs font-bold text-slate-700 space-y-1">
+                      <div onClick={e => { e.stopPropagation(); const n = prompt('Đổi tên lớp:', cls.name); if (n) setClasses(classes.map(c => c.id === cls.id ? { ...c, name: n.toUpperCase() } : c)); setMenuId(null); }} className="p-1.5 hover:bg-slate-50 rounded flex items-center gap-2"><Edit3 className="w-3.5 h-3.5" /> Sửa tên</div>
+                      <div onClick={e => { e.stopPropagation(); setClasses([...classes, { ...cls, id: `c_${Date.now()}`, name: `${cls.name} (Bản sao)` }]); setMenuId(null); }} className="p-1.5 hover:bg-slate-50 rounded flex items-center gap-2"><Copy className="w-3.5 h-3.5" /> Nhân bản</div>
+                      <div onClick={e => { e.stopPropagation(); if (confirm(`Xóa lớp ${cls.name}?`)) setClasses(classes.filter(c => c.id !== cls.id)); setMenuId(null); }} className="p-1.5 hover:bg-rose-50 text-rose-600 rounded flex items-center gap-2"><Trash2 className="w-3.5 h-3.5" /> Xóa</div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-between text-xs text-slate-500"><span>Sĩ số: <strong>{cls.students?.length || 0} HS</strong></span><span>Năm: <strong>2026 - 2027</strong></span></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <button onClick={() => setLevel('grid')} className="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm"><ChevronLeft className="w-4 h-4" /> Quay lại danh sách lớp</button>
+          <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <div className="flex items-center gap-2"><h1 className="text-2xl font-black">{curClass.name}</h1><span className="px-2.5 py-0.5 bg-slate-100 rounded-full text-xs font-bold">2026 - 2027</span></div>
+              <button onClick={() => { setTargetName(curClass.name); setIsExcel(true); }} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow cursor-pointer"><FileSpreadsheet className="w-4 h-4" /> Nhập từ Excel (.xlsx)</button>
+            </div>
+            <div className="border rounded-2xl overflow-hidden">
+              <div className="grid grid-cols-12 bg-slate-50 p-3 text-[11px] font-bold text-slate-600 uppercase border-b"><div className="col-span-1 text-center">STT</div><div className="col-span-5">HỌ VÀ TÊN • SĨ SỐ {curClass.students?.length || 0}</div><div className="col-span-3 text-center">TÊN ĐĂNG NHẬP / SBD</div><div className="col-span-3 text-center">THAO TÁC</div></div>
+              <div className="divide-y divide-slate-100">
+                {(curClass.students || []).map((st, i) => (
+                  <div key={st.id} className="grid grid-cols-12 p-3 items-center text-xs hover:bg-slate-50">
+                    <div className="col-span-1 text-center font-bold text-slate-500">{i + 1}</div>
+                    <div className="col-span-5 flex items-center gap-2.5">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${st.gender === 'Nữ' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'}`}>{st.name.slice(0, 2).toUpperCase()}</div>
+                      <div><h4 className="font-bold text-slate-900 flex items-center gap-1">{st.name} <span className={st.gender === 'Nữ' ? 'text-pink-600 font-bold' : 'text-blue-600 font-bold'}>{st.gender === 'Nữ' ? '♀' : '♂'}</span></h4><p className="text-[10px] text-slate-400">SĐT: <strong>{st.phone || 'Chưa có'}</strong></p></div>
+                    </div>
+                    <div className="col-span-3 text-center font-mono font-bold text-slate-700">{st.username || st.code}</div>
+                    <div className="col-span-3 flex justify-center gap-2">
+                      <button onClick={() => { if (confirm(`Xóa "${st.name}"?`)) setClasses(classes.map(c => c.id === curClass.id ? { ...c, students: (c.students || []).filter(s => s.id !== st.id) } : c)); }} className="p-1 text-slate-400 hover:text-rose-600"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => alert(`Đặt lại mật khẩu cho "${st.name}" về 123`)} className="p-1 text-amber-500 hover:text-amber-700"><KeyRound className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isExcel && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border">
+            <div className="flex justify-between items-center border-b pb-2"><h3 className="font-black text-sm">Tạo danh sách lớp bằng Excel (.xlsx)</h3><button onClick={() => setIsExcel(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button></div>
+            <label className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-5 text-center bg-slate-50 space-y-1 block cursor-pointer">
+              <FileSpreadsheet className="w-8 h-8 text-emerald-600 mx-auto" />
+              <p className="font-bold text-blue-600 text-xs">{fileName ? `Đã chọn: ${fileName}` : 'Kéo thả file Excel (.xlsx) hoặc Click để chọn file'}</p>
+              <input type="file" accept=".xlsx,.xls,.csv,.txt" onChange={handleFile} className="hidden" />
+            </label>
+            <div className="text-center"><button type="button" onClick={handleDownloadSample} className="text-xs text-blue-600 hover:underline font-bold inline-flex items-center gap-1 cursor-pointer"><CloudDownload className="w-4 h-4" /> ☁ Tải file biểu mẫu chuẩn (7 cột)</button></div>
+            <div className="flex gap-2 text-xs">
+              <input type="text" value={targetName} onChange={e => setTargetName(e.target.value)} placeholder="Tên lớp áp dụng..." className="flex-1 p-2 border rounded-xl font-bold uppercase" />
+              <input type="text" readOnly value="2026 - 2027" className="w-28 p-2 bg-slate-100 border rounded-xl font-bold text-
