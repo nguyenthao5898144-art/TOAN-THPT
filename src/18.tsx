@@ -3,47 +3,51 @@ import JSZip from 'jszip';
 import { ClassRoom, Student, getStoredClasses, saveClasses } from './classStorage';
 import {
   Plus, Trash2, FileSpreadsheet, X, Search, ChevronLeft,
-  QrCode, KeyRound, CloudDownload, MoreHorizontal, Edit3, Copy, Download
+  QrCode, KeyRound, CloudDownload, Download
 } from 'lucide-react';
 
 export const ClassManager: React.FC = () => {
-  const [classes, setClasses] = useState<ClassRoom[]>(() => getStoredClasses() || [
-    {
-      id: '1',
-      name: '12A6',
-      students: [
-        { id: 'hs_1', name: 'Châu Ngô Nhật Ái', gender: 'Nữ', username: '67339301', code: 'SBD01', phone: '0901234567' },
-        { id: 'hs_2', name: 'Lê Yến Duy', gender: 'Nam', username: '67339302', code: 'SBD02', phone: '0901234568' },
-        { id: 'hs_3', name: 'Nguyễn Quốc Thuận', gender: 'Nam', username: '1@3456', code: 'SBD03', phone: '0908765432' },
-      ],
-    },
-    { id: '2', name: '10A10', students: [] },
-    { id: '3', name: '10A6', students: [] },
-  ]);
+  const [classes, setClasses] = useState<ClassRoom[]>(() => {
+    const s = getStoredClasses();
+    return s?.length ? s : [
+      {
+        id: '1',
+        name: '12A6',
+        students: [
+          { id: 'hs_1', name: 'Châu Ngô Nhật Ái', gender: 'Nữ', username: '67339301', code: 'SBD01', phone: '0901234567' },
+          { id: 'hs_2', name: 'Lê Yến Duy', gender: 'Nam', username: '67339302', code: 'SBD02', phone: '0901234568' },
+          { id: 'hs_3', name: 'NGUYỄN QUỐC THUẬN', gender: 'Nam', username: '1@3456', code: 'SBD03', phone: '' },
+        ],
+      },
+      { id: '2', name: '10A10', students: [] },
+      { id: '3', name: '10A6', students: [] },
+    ];
+  });
 
   const [level, setLevel] = useState<'grid' | 'detail'>('detail');
   const [selId, setSelId] = useState<string>('1');
   const [search, setSearch] = useState<string>('');
-  const [menuId, setMenuId] = useState<string | null>(null);
 
   const [isExcel, setIsExcel] = useState<boolean>(false);
-  const [targetName, setTargetName] = useState<string>('12A6');
   const [excelText, setExcelText] = useState<string>('');
-  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [fileName, setFileName] = useState<string>('');
 
   useEffect(() => { if (classes.length) saveClasses(classes); }, [classes]);
   const curClass = classes.find((c) => c.id === selId) || classes[0];
 
   // 1. TẢI FILE BIỂU MẪU ĐÚNG 7 CỘT CHUẨN
   const handleDownloadSample = () => {
-    const csv = '\uFEFFSTT,Họ và tên,Giới tính,Tên đăng nhập,Số báo danh,Số điện thoại,Ghi chú\n1,Châu Ngô Nhật Ái,Nữ,67339301,SBD01,0901234567,\n2,Lê Yến Duy,Nam,67339302,SBD02,0901234568,\n3,Nguyễn Quốc Thuận,Nam,1@3456,SBD03,0908765432,';
+    const csv = '\uFEFFSTT,Họ và tên,Giới tính,Tên đăng nhập,Số báo danh,Số điện thoại,Ghi chú\n' +
+      '1,Châu Ngô Nhật Ái,Nữ,67339301,SBD01,0901234567,\n' +
+      '2,Lê Yến Duy,Nam,67339302,SBD02,0901234568,\n' +
+      '3,NGUYỄN QUỐC THUẬN,Nam,1@3456,SBD03,0908765432,';
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     a.download = 'Mau_danh_sach_hoc_sinh.csv';
     a.click();
   };
 
-  // 2. XUẤT DANH SÁCH HỌC SINH RA FILE
+  // 2. XUẤT DANH SÁCH HỌC SINH CỦA LỚP
   const handleExportClassList = () => {
     const sts = curClass.students || [];
     if (!sts.length) {
@@ -60,7 +64,7 @@ export const ClassManager: React.FC = () => {
     a.click();
   };
 
-  // 3. GIẢI MÃ FILE EXCEL (.XLSX) TRỰC TIẾP
+  // 3. GIẢI MÃ FILE .XLSX BẰNG JSZIP VÀ DOMPARSER
   const parseXlsxFile = async (file: File): Promise<string> => {
     try {
       const zip = await JSZip.loadAsync(file);
@@ -95,7 +99,7 @@ export const ClassManager: React.FC = () => {
             const idx = parseInt(cells[c].textContent || '0', 10);
             val = sharedStrings[idx] || '';
           } else {
-            val = cells[c].textContent || '';
+            val = cell.textContent || '';
           }
           rowVals[col] = val.trim();
         }
@@ -108,34 +112,27 @@ export const ClassManager: React.FC = () => {
     }
   };
 
-  // 4. BÓC TÁCH DỮ LIỆU TỪNG CỘT
+  // 4. BÓC TÁCH CHUẨN XÁC TỪNG CỘT DỮ LIỆU
   const parseStudentData = (text: string): Student[] => {
     const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
     const result: Student[] = [];
 
     lines.forEach((line, index) => {
       if (line.includes('STT') || line.includes('Họ và tên') || line.includes('Tên đăng nhập')) return;
-      const p = line.split(/[\t,;]/).map((s) => s.replace(/^"|"$/g, '').trim());
-      if (p.length >= 2) {
-        let name = p;
-        let gender = p || '';
-        let username = p || '';
-        let code = p || '';
-        let phone = p || '';
-
-        if (isNaN(Number(p[0])) && p[0].length > 2) {
-          name = p[0];
-          gender = p || '';
-          username = p || '';
-          code = p || '';
-          phone = p || '';
-        }
+      const parts = line.split(/[\t,;]/).map((s) => s.replace(/^"|"$/g, '').trim());
+      if (parts.length >= 2) {
+        const hasStt = !isNaN(Number(parts[0])) && parts.length >= 3;
+        const name = hasStt ? parts : parts[0];
+        const gender = hasStt ? parts : parts;
+        const username = hasStt ? parts : parts;
+        const code = hasStt ? parts : parts;
+        const phone = hasStt ? parts : parts;
 
         result.push({
           id: `std_${Date.now()}_${index}`,
           name: name || `Học sinh ${index + 1}`,
-          gender: gender.toLowerCase().includes('nữ') ? 'Nữ' : 'Nam',
-          username: username || code || `${curClass.name.toLowerCase()}_${index + 1}`,
+          gender: (gender || '').toLowerCase().includes('nữ') ? 'Nữ' : 'Nam',
+          username: username || code || `hs_${index + 1}`,
           code: code || `SBD${index + 1 < 10 ? '0' : ''}${index + 1}`,
           phone: phone || '',
         });
@@ -144,60 +141,53 @@ export const ClassManager: React.FC = () => {
     return result;
   };
 
-  // 5. HÀM TỰ ĐỘNG LƯU NGAY LẬP TỨC VÀO DANH SÁCH LỚP
-  const autoSaveStudents = (rawText: string, detectedClass?: string) => {
+  // 5. TỰ ĐỘNG LƯU TRỰC TIẾP VÀO LỚP ĐANG MỞ
+  const autoSaveToCurrentClass = (rawText: string) => {
     const newSts = parseStudentData(rawText);
     if (!newSts.length) {
       alert('Không tìm thấy danh sách học sinh hợp lệ trong file!');
-      setIsUploading(false);
       return;
     }
 
-    const tName = detectedClass || targetName.trim().toUpperCase() || curClass.name;
-    let updatedClasses: ClassRoom[] = [];
-    const idx = classes.findIndex((c) => c.name.toUpperCase() === tName.toUpperCase());
+    // Luôn luôn lưu thẳng vào lớp đang mở
+    const updated = classes.map((c) => {
+      if (c.id === curClass.id) {
+        const existingCodes = new Set((c.students || []).map((s) => s.code));
+        const filteredNew = newSts.filter((s) => !existingCodes.has(s.code));
+        return {
+          ...c,
+          students: [...(c.students || []), ...(filteredNew.length ? filteredNew : newSts)],
+        };
+      }
+      return c;
+    });
 
-    if (idx >= 0) {
-      updatedClasses = classes.map((c, i) =>
-        i === idx ? { ...c, students: [...(c.students || []), ...newSts] } : c
-      );
-      setClasses(updatedClasses);
-      setSelId(classes[idx].id);
-    } else {
-      const nc: ClassRoom = { id: `cls_${Date.now()}`, name: tName, students: newSts };
-      updatedClasses = [...classes, nc];
-      setClasses(updatedClasses);
-      setSelId(nc.id);
-    }
-
-    saveClasses(updatedClasses);
+    setClasses(updated);
+    saveClasses(updated);
     setIsExcel(false);
-    setIsUploading(false);
+    setFileName('');
     setExcelText('');
-    alert(`ĐÃ TỰ ĐỘNG LƯU THÀNH CÔNG ${newSts.length} HỌC SINH VÀO LỚP ${tName}!`);
+    alert(`Đã tự động lưu thành công ${newSts.length} học sinh vào lớp ${curClass.name}!`);
   };
 
-  // KHI CHỌN FILE -> TỰ ĐỘNG LƯU LUÔN
+  // XỬ LÝ CHỌN FILE -> TỰ ĐỘNG LƯU LUÔN
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    setIsUploading(true);
-
-    // Tự động nhận diện lớp từ tên file (nếu có)
-    const matchClass = f.name.match(/\b(10|11|12)[A-Za-z0-9]+\b/);
-    const autoClassName = matchClass ? matchClass[0].toUpperCase() : curClass.name;
+    setFileName(f.name);
 
     if (f.name.toLowerCase().endsWith('.xlsx')) {
       const extracted = await parseXlsxFile(f);
-      autoSaveStudents(extracted, autoClassName);
+      if (extracted) autoSaveToCurrentClass(extracted);
     } else {
       const reader = new FileReader();
       reader.onload = (ev) => {
         const text = (ev.target?.result as string) || '';
-        autoSaveStudents(text, autoClassName);
+        if (text) autoSaveToCurrentClass(text);
       };
       reader.readAsText(f);
     }
+    e.target.value = '';
   };
 
   const filteredStudents = (curClass.students || []).filter((s) =>
@@ -207,21 +197,21 @@ export const ClassManager: React.FC = () => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto p-4 text-slate-800 space-y-4 font-sans" onClick={() => setMenuId(null)}>
-      {/* 1. MÀN HÌNH DANH SÁCH CÁC LỚP */}
+    <div className="max-w-7xl mx-auto p-4 text-slate-800 space-y-4 font-sans">
+      {/* CẤP 1: DANH SÁCH LỚP */}
       {level === 'grid' ? (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-xl font-black">Danh sách lớp</h2>
+              <h2 className="text-xl font-black text-slate-900">Danh sách lớp</h2>
               <p className="text-xs text-slate-500 font-bold">{classes.length} lớp học</p>
             </div>
             <button
               type="button"
-              onClick={() => { setTargetName('12A6'); setIsExcel(true); }}
+              onClick={() => setIsExcel(true)}
               className="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> Thêm lớp bằng Excel
+              <Plus className="w-4 h-4" /> Thêm học sinh bằng Excel
             </button>
           </div>
 
@@ -230,52 +220,11 @@ export const ClassManager: React.FC = () => {
               <div
                 key={cls.id}
                 onClick={() => { setSelId(cls.id); setLevel('detail'); }}
-                className="bg-white p-5 rounded-2xl border shadow-sm hover:border-blue-400 cursor-pointer space-y-2 relative"
+                className="bg-white p-5 rounded-2xl border shadow-sm hover:border-blue-400 cursor-pointer space-y-2"
               >
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-black">{cls.name}</h3>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setMenuId(menuId === cls.id ? null : cls.id); }}
-                    className="p-1 text-slate-400 hover:text-slate-700"
-                  >
-                    <MoreHorizontal className="w-5 h-5" />
-                  </button>
-                  {menuId === cls.id && (
-                    <div className="absolute right-3 top-10 w-36 bg-white rounded-xl shadow-xl border p-1 z-30 text-xs font-bold text-slate-700 space-y-1">
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const n = prompt('Đổi tên lớp:', cls.name);
-                          if (n) setClasses(classes.map((c) => c.id === cls.id ? { ...c, name: n.toUpperCase() } : c));
-                          setMenuId(null);
-                        }}
-                        className="p-1.5 hover:bg-slate-50 rounded flex items-center gap-2"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" /> Sửa tên
-                      </div>
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setClasses([...classes, { ...cls, id: `c_${Date.now()}`, name: `${cls.name} (Bản sao)` }]);
-                          setMenuId(null);
-                        }}
-                        className="p-1.5 hover:bg-slate-50 rounded flex items-center gap-2"
-                      >
-                        <Copy className="w-3.5 h-3.5" /> Nhân bản
-                      </div>
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm(`Xóa lớp ${cls.name}?`)) setClasses(classes.filter((c) => c.id !== cls.id));
-                          setMenuId(null);
-                        }}
-                        className="p-1.5 hover:bg-rose-50 text-rose-600 rounded flex items-center gap-2"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" /> Xóa
-                      </div>
-                    </div>
-                  )}
+                  <span className="text-xs text-blue-600 font-bold">Vào lớp →</span>
                 </div>
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>Sĩ số: <strong>{cls.students?.length || 0} HS</strong></span>
@@ -286,7 +235,7 @@ export const ClassManager: React.FC = () => {
           </div>
         </div>
       ) : (
-        /* 2. MÀN HÌNH CHI TIẾT LỚP HỌC */
+        /* CẤP 2: CHI TIẾT LỚP HỌC */
         <div className="space-y-4">
           <button
             type="button"
@@ -315,7 +264,7 @@ export const ClassManager: React.FC = () => {
 
                 <button
                   type="button"
-                  onClick={() => { setTargetName(curClass.name); setIsExcel(true); }}
+                  onClick={() => setIsExcel(true)}
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow cursor-pointer transition-all"
                 >
                   <FileSpreadsheet className="w-4 h-4" /> Nhập từ Excel (.xlsx)
@@ -334,7 +283,7 @@ export const ClassManager: React.FC = () => {
               />
             </div>
 
-            {/* BẢNG HỌC SINH CHUẨN ĐẦY ĐỦ CÁC CỘT */}
+            {/* BẢNG DANH SÁCH HỌC SINH */}
             <div className="border border-slate-200 rounded-2xl overflow-hidden">
               <div className="grid grid-cols-12 bg-slate-50 p-3.5 text-[11px] font-bold text-slate-600 uppercase border-b border-slate-200">
                 <div className="col-span-1 text-center">STT</div>
@@ -387,7 +336,11 @@ export const ClassManager: React.FC = () => {
                           type="button"
                           onClick={() => {
                             if (confirm(`Xóa học sinh "${st.name}"?`)) {
-                              setClasses(classes.map((c) => c.id === curClass.id ? { ...c, students: (c.students || []).filter((s) => s.id !== st.id) } : c));
+                              const updated = classes.map((c) =>
+                                c.id === curClass.id ? { ...c, students: (c.students || []).filter((s) => s.id !== st.id) } : c
+                              );
+                              setClasses(updated);
+                              saveClasses(updated);
                             }
                           }}
                           className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
@@ -397,7 +350,7 @@ export const ClassManager: React.FC = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={() => alert(`Đã đặt lại mật khẩu cho "${st.name}" về mặc định: 123`)}
+                          onClick={() => alert(`Đã đặt lại mật khẩu cho "${st.name}" về: 123`)}
                           className="p-1.5 text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
                           title="Đặt lại mật khẩu 123"
                         >
@@ -413,23 +366,24 @@ export const ClassManager: React.FC = () => {
         </div>
       )}
 
-      {/* 3. MODAL NẠP FILE TỰ ĐỘNG LƯU NGAY */}
+      {/* MODAL TẢI LÊN EXCEL -> TỰ ĐỘNG LƯU VÀO LỚP ĐANG MỞ */}
       {isExcel && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border font-sans animate-in fade-in">
             <div className="flex justify-between items-center border-b pb-2">
-              <h3 className="font-black text-sm text-slate-900">Tải lên file Excel (.xlsx) - Tự động lưu</h3>
+              <h3 className="font-black text-sm text-slate-900">
+                Nạp danh sách học sinh vào lớp {curClass.name} (.xlsx)
+              </h3>
               <button onClick={() => setIsExcel(false)} className="text-slate-400 hover:text-slate-700 p-1"><X className="w-5 h-5" /></button>
             </div>
 
-            {/* KHUNG KÉO THẢ / CHỌN FILE -> TỰ ĐỘNG LƯU NGAY */}
             <label className="border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl p-6 text-center bg-slate-50 space-y-2 block cursor-pointer transition-colors">
               <FileSpreadsheet className="w-10 h-10 text-emerald-600 mx-auto" />
               <p className="font-bold text-emerald-700 text-xs">
-                {isUploading ? 'Đang đọc và tự động lưu học sinh...' : 'Chọn file Excel (.xlsx) hoặc Kéo thả vào đây'}
+                {fileName ? `Đã chọn: ${fileName}` : 'Chọn file Excel (.xlsx) hoặc Kéo thả vào đây'}
               </p>
               <p className="text-[11px] text-slate-400">
-                ⚡ Hệ thống sẽ <strong>TỰ ĐỘNG LƯU NGAY</strong> vào lớp học sau khi chọn file!
+                ⚡ Tự động nạp và lưu ngay vào lớp <strong>{curClass.name}</strong>!
               </p>
               <input type="file" accept=".xlsx,.xls,.csv,.txt" onChange={handleFile} className="hidden" />
             </label>
@@ -444,29 +398,11 @@ export const ClassManager: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-3 bg-slate-50 border rounded-xl space-y-2 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-600 font-bold mb-1">Lớp áp dụng:</label>
-                  <input
-                    type="text"
-                    value={targetName}
-                    onChange={(e) => setTargetName(e.target.value)}
-                    className="w-full p-1.5 bg-white border rounded-lg font-bold uppercase outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-600 font-bold mb-1">Năm học:</label>
-                  <input type="text" readOnly value="2026 - 2027" className="w-full p-1.5 bg-slate-100 border rounded-lg font-bold text-slate-500 text-center" />
-                </div>
-              </div>
-            </div>
-
             <textarea
               rows={3}
               value={excelText}
               onChange={(e) => setExcelText(e.target.value)}
-              placeholder="Hoặc dán trực tiếp dữ liệu từ Excel vào đây..."
+              placeholder="Hoặc copy dữ liệu từ Excel rồi dán vào đây: STT [Tab] Họ tên [Tab] Giới tính [Tab] Tên đăng nhập [Tab] SBD..."
               className="w-full p-2 border rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-blue-500"
             />
 
@@ -479,11 +415,11 @@ export const ClassManager: React.FC = () => {
                     alert('Vui lòng chọn file Excel hoặc dán dữ liệu vào ô!');
                     return;
                   }
-                  autoSaveStudents(excelText);
+                  autoSaveToCurrentClass(excelText);
                 }}
                 className="px-5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black shadow cursor-pointer"
               >
-                Lưu dữ liệu dán
+                Lưu vào lớp {curClass.name}
               </button>
             </div>
           </div>
