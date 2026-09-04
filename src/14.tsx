@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { TestConfig, GeneratedTest, StudentAccount, StudentSubmission } from './types';
-import { generateTest } from './testGenerator';
+import React, { useState } from 'react';
+import { GeneratedTest } from './types';
 import { MathText } from './MathText';
-import { DiagramRenderer } from './DiagramRenderer';
-import { Sparkles, BookOpen, Clock, Table, CheckSquare, Square } from 'lucide-react';
 
 interface ViewProps {
   test: GeneratedTest;
@@ -110,4 +107,5 @@ export const StudentView: React.FC<ViewProps> = ({ test, onBack }) => {
   );
 };
 
+export const StudentPortal = StudentView;
 export default StudentView;
