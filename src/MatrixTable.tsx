@@ -1,295 +1,349 @@
 import React, { useState } from 'react';
-import { GeneratedTest, Question } from './types';
-import { Table, FileText, CheckCircle2, Award, BookOpen, Download, Printer } from 'lucide-react';
+import { GeneratedTest } from './types';
+import { buildStandardMatrixData } from './matrixStandardGenerator';
+import { 
+  exportBothMatricesWord, 
+  exportStandardMatrixOnlyWord, 
+  exportSpecMatrixOnlyWord, 
+  exportQuestionAndOutcomeMatricesWord 
+} from './wordExporter';
+import { extractTestMetadata, saveTestToBank } from './testBankStorage';
+import { FileText, Download, Save, CheckCircle2, X } from 'lucide-react';
 
 interface MatrixTableProps {
   test: GeneratedTest;
+  onBack?: () => void;
 }
 
-export const MatrixTable: React.FC<MatrixTableProps> = ({ test }) => {
-  const [viewMode, setViewMode] = useState<'matrix' | 'spec'>('matrix');
+export const MatrixTable: React.FC<MatrixTableProps> = ({ test, onBack }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const meta = extractTestMetadata(test);
+  
+  const [fileNameInput, setFileNameInput] = useState(`MaTran_${meta.cleanFileName}`);
+  const [displayNameInput, setDisplayNameInput] = useState(`Ma Trận & Đặc Tả - ${meta.displayName}`);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const grade = test.config?.grade || (test as any).grade || '12';
-  const questions = test.questions || [];
+  const matrixData = buildStandardMatrixData(test);
+  const { summary, rows } = matrixData;
 
-  // 1. TÍNH TOÁN CƠ CẤU THEO THỰC TẾ 22 CÂU HỎI ĐANG CÓ TRONG ĐỀ
-  const part1Questions = questions.filter((q) => q.type === 'multiple_choice');
-  const part2Questions = questions.filter((q) => q.type === 'true_false');
-  const part3Questions = questions.filter((q) => q.type === 'short_answer');
+  const handleOpenSaveModal = () => {
+    setFileNameInput(`MaTran_${meta.cleanFileName}`);
+    setDisplayNameInput(`Ma Trận & Đặc Tả - ${meta.displayName}`);
+    setSaveSuccess(false);
+    setIsModalOpen(true);
+  };
 
-  // Đếm số câu từng mức độ
-  const countLevel = (list: Question[], lvl: string) =>
-    list.filter((q) => q.level === lvl || (lvl === 'NhanBiet' && !q.level)).length;
+  const handleConfirmSaveToBank = () => {
+    try {
+      saveTestToBank(test, {
+        grade: meta.grade,
+        className: meta.className,
+        topicName: meta.topicName,
+        lessonName: meta.lessonName,
+        fileName: fileNameInput.trim() || `MaTran_${meta.cleanFileName}`,
+        displayName: displayNameInput.trim() || `Ma Trận & Đặc Tả - ${meta.displayName}`,
+        tags: [meta.grade, 'Ma Trận', 'Bảng Đặc Tả'],
+        allowDuplicateSequence: true,
+      });
 
-  const p1_nb = countLevel(part1Questions, 'NhanBiet');
-  const p1_th = countLevel(part1Questions, 'ThongHieu');
-  const p1_vd = countLevel(part1Questions, 'VanDung');
-
-  const p2_nb = countLevel(part2Questions, 'NhanBiet');
-  const p2_th = countLevel(part2Questions, 'ThongHieu');
-  const p2_vd = countLevel(part2Questions, 'VanDung');
-
-  const p3_nb = countLevel(part3Questions, 'NhanBiet');
-  const p3_th = countLevel(part3Questions, 'ThongHieu');
-  const p3_vd = countLevel(part3Questions, 'VanDung');
-
-  const totalNB = p1_nb + p2_nb + p3_nb;
-  const totalTH = p1_th + p2_th + p3_th;
-  const totalVD = p1_vd + p2_vd + p3_vd;
-  const totalQ = questions.length || 22;
-
-  // Điểm số
-  const scoreNB = (p1_nb * 0.25 + p2_nb * 1.0 + p3_nb * 0.5).toFixed(1);
-  const scoreTH = (p1_th * 0.25 + p2_th * 1.0 + p3_th * 0.5).toFixed(1);
-  const scoreVD = (p1_vd * 0.25 + p2_vd * 1.0 + p3_vd * 0.5).toFixed(1);
-  const totalScore = (Number(scoreNB) + Number(scoreTH) + Number(scoreVD)).toFixed(1);
-
-  // Gom nhóm câu hỏi theo chủ đề thực tế
-  const topicsMap: Record<string, Question[]> = {};
-  questions.forEach((q) => {
-    const key = (q as any).topicName || (q as any).lessonName || `Chuyên đề Toán ${grade}`;
-    if (!topicsMap[key]) topicsMap[key] = [];
-    topicsMap[key].push(q);
-  });
+      setSaveSuccess(true);
+      setTimeout(() => {
+        setIsModalOpen(false);
+        setSaveSuccess(false);
+      }, 1500);
+    } catch (error) {
+      console.error('Lỗi lưu ma trận vào ngân hàng đề:', error);
+      alert('Có lỗi xảy ra khi lưu ma trận vào ngân hàng đề.');
+    }
+  };
 
   return (
-    <div className="font-sans space-y-6 max-w-7xl mx-auto p-4 sm:p-6 text-slate-800">
-      {/* HEADER BẢNG MA TRẬN */}
-      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+    <div className="max-w-7xl mx-auto px-4 py-8 bg-slate-50 min-h-screen">
+      {/* Top Action Toolbar */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider block">
-            BỘ GIÁO DỤC VÀ ĐÀO TẠO • CHƯƠNG TRÌNH GDPT 2018
-          </span>
-          <h2 className="text-lg sm:text-xl font-black text-slate-900 mt-0.5">
-            MA TRẬN & BẢN ĐẶC TẢ ĐỀ THI TOÁN {grade}
-          </h2>
-          <p className="text-xs text-slate-500 font-medium mt-1">
-            Đề bài: <strong>{test.title}</strong> • Đang đồng bộ chuẩn <strong>100% với {totalQ} câu hỏi</strong> trong đề
+          <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <FileText className="w-6 h-6 text-blue-600" />
+            Hệ Thống Ma Trận Đề Kiểm Tra & Bảng Đặc Tả
+          </h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Môn: {meta.grade} | Chủ đề: {meta.topicName} - {meta.lessonName}
           </p>
         </div>
 
-        <div className="flex bg-slate-100 p-1 rounded-2xl text-xs font-bold border border-slate-200">
+        <div className="flex flex-wrap items-center gap-3">
           <button
-            type="button"
-            onClick={() => setViewMode('matrix')}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
-              viewMode === 'matrix' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
-            }`}
+            onClick={handleOpenSaveModal}
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition-all"
           >
-            Ma trận đề kiểm tra
+            <Save className="w-4 h-4" />
+            Lưu Ma Trận vào Ngân Hàng Đề
           </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('spec')}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
-              viewMode === 'spec' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            Bản đặc tả chi tiết
-          </button>
+
+          <div className="relative group">
+            <button className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-all">
+              <Download className="w-4 h-4" />
+              Xuất File Word (.docx)
+            </button>
+            <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 py-2 hidden group-hover:block z-50">
+              <button
+                onClick={() => exportBothMatricesWord(test)}
+                className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 font-medium"
+              >
+                📄 Xuất toàn bộ Bộ Ma Trận & Đặc Tả
+              </button>
+              <button
+                onClick={() => exportQuestionAndOutcomeMatricesWord(test)}
+                className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 font-medium"
+              >
+                📊 Xuất Ma Trận dạng câu hỏi & YCCĐ
+              </button>
+              <button
+                onClick={() => exportStandardMatrixOnlyWord(test)}
+                className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 font-medium"
+              >
+                📋 Xuất Ma Trận chuẩn 19 cột
+              </button>
+              <button
+                onClick={() => exportSpecMatrixOnlyWord(test)}
+                className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 font-medium"
+              >
+                📑 Xuất Bảng Đặc Tả Kỹ Thuật
+              </button>
+            </div>
+          </div>
+
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg transition-all"
+            >
+              Quay lại
+            </button>
+          )}
         </div>
       </div>
 
-      {/* TỔNG QUAN TỈ LỆ 40% - 30% - 30% CHUẨN BỘ */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs font-bold">
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-center justify-between">
-          <div>
-            <span className="text-blue-600 block">Nhận biết (40%)</span>
-            <span className="text-xl font-black text-blue-950">{totalNB} câu ({scoreNB}đ)</span>
-          </div>
-          <span className="p-2 bg-blue-600 text-white rounded-xl text-xs">NB</span>
+      {/* Preview Section: Standard 19-Column Matrix Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+        <div className="p-5 border-b border-slate-200 bg-slate-100/60 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-800">1. Ma Trận Đề Kiểm Tra Định Kỳ (Cấu trúc GDPT 2018)</h2>
+          <span className="text-xs font-semibold px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full">
+            Thời gian: {matrixData.durationMinutes} phút
+          </span>
         </div>
+        
+        <div className="overflow-x-auto p-4">
+          <table className="w-full border-collapse border border-slate-300 text-xs text-slate-800">
+            <thead>
+              <tr className="bg-slate-100 text-center font-bold">
+                <th className="border border-slate-300 p-2" rowSpan={4}>TT</th>
+                <th className="border border-slate-300 p-2" rowSpan={4}>Chủ đề / Chương</th>
+                <th className="border border-slate-300 p-2" rowSpan={4}>Nội dung / Đơn vị kiến thức</th>
+                <th className="border border-slate-300 p-2" rowSpan={4}>Yêu cầu cần đạt</th>
+                <th className="border border-slate-300 p-2" colSpan={12}>Mức độ đánh giá</th>
+                <th className="border border-slate-300 p-2" colSpan={3} rowSpan={3}>Tổng</th>
+                <th className="border border-slate-300 p-2" rowSpan={4}>Tỉ lệ % điểm</th>
+              </tr>
+              <tr className="bg-slate-100 text-center font-bold">
+                <th className="border border-slate-300 p-2" colSpan={9}>TNKQ</th>
+                <th className="border border-slate-300 p-2" colSpan={3} rowSpan={2}>Tự luận</th>
+              </tr>
+              <tr className="bg-slate-100 text-center font-bold">
+                <th className="border border-slate-300 p-2" colSpan={3}>Nhiều lựa chọn</th>
+                <th className="border border-slate-300 p-2" colSpan={3}>Đúng - Sai</th>
+                <th className="border border-slate-300 p-2" colSpan={3}>Trả lời ngắn</th>
+              </tr>
+              <tr className="bg-slate-100 text-center font-bold">
+                <th className="border border-slate-300 p-1">Biết</th>
+                <th className="border border-slate-300 p-1">Hiểu</th>
+                <th className="border border-slate-300 p-1">Vận dụng</th>
+                <th className="border border-slate-300 p-1">Biết</th>
+                <th className="border border-slate-300 p-1">Hiểu</th>
+                <th className="border border-slate-300 p-1">Vận dụng</th>
+                <th className="border border-slate-300 p-1">Biết</th>
+                <th className="border border-slate-300 p-1">Hiểu</th>
+                <th className="border border-slate-300 p-1">Vận dụng</th>
+                <th className="border border-slate-300 p-1">Biết</th>
+                <th className="border border-slate-300 p-1">Hiểu</th>
+                <th className="border border-slate-300 p-1">Vận dụng</th>
+                <th className="border border-slate-300 p-1">Biết</th>
+                <th className="border border-slate-300 p-1">Hiểu</th>
+                <th className="border border-slate-300 p-1">Vận dụng</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, idx) => (
+                <tr key={idx} className="hover:bg-slate-50">
+                  {row.isFirstInTopic && (
+                    <td className="border border-slate-300 p-2 text-center font-bold bg-white" rowSpan={row.topicRowSpan}>
+                      {row.index}
+                    </td>
+                  )}
+                  {row.isFirstInTopic && (
+                    <td className="border border-slate-300 p-2 font-bold bg-white" rowSpan={row.topicRowSpan}>
+                      {row.topicName}
+                    </td>
+                  )}
+                  {row.isFirstInLesson && (
+                    <td className="border border-slate-300 p-2 font-medium bg-white" rowSpan={row.lessonRowSpan}>
+                      {row.lessonName}
+                    </td>
+                  )}
+                  <td className="border border-slate-300 p-2">{row.requirementText}</td>
+                  <td className="border border-slate-300 p-1 text-center">{row.mcq.nhanBiet.tags.join(', ')}</td>
+                  <td className="border border-slate-300 p-1 text-center">{row.mcq.thongHieu.tags.join(', ')}</td>
+                  <td className="border border-slate-300 p-1 text-center">{row.mcq.vanDung.tags.join(', ')}</td>
+                  <td className="border border-slate-300 p-1 text-center">{row.trueFalse.nhanBiet.tags.join(', ')}</td>
+                  <td className="border border-slate-300 p-1 text-center">{row.trueFalse.thongHieu.tags.join(', ')}</td>
+                  <td className="border border-slate-300 p-1 text-center">{row.trueFalse.vanDung.tags.join(', ')}</td>
+                  <td className="border border-slate-300 p-1 text-center">{row.shortAnswer.nhanBiet.tags.join(', ')}</td>
+                  <td className="border border-slate-300 p-1 text-center">{row.shortAnswer.thongHieu.tags.join(', ')}</td>
+                  <td className="border border-slate-300 p-1 text-center">{row.shortAnswer.vanDung.tags.join(', ')}</td>
+                  <td className="border border-slate-300 p-1 text-center"></td>
+                  <td className="border border-slate-300 p-1 text-center"></td>
+                  <td className="border border-slate-300 p-1 text-center"></td>
+                  <td className="border border-slate-300 p-1 text-center font-bold">{row.rowKnown || ''}</td>
+                  <td className="border border-slate-300 p-1 text-center font-bold">{row.rowUnderstand || ''}</td>
+                  <td className="border border-slate-300 p-1 text-center font-bold">{row.rowApply || ''}</td>
+                  {row.isFirstInLesson && (
+                    <td className="border border-slate-300 p-2 text-center font-bold bg-slate-50" rowSpan={row.lessonRowSpan}>
+                      {row.percentage}%
+                    </td>
+                  )}
+                </tr>
+              ))}
 
-        <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl flex items-center justify-between">
-          <div>
-            <span className="text-indigo-600 block">Thông hiểu (30%)</span>
-            <span className="text-xl font-black text-indigo-950">{totalTH} câu ({scoreTH}đ)</span>
-          </div>
-          <span className="p-2 bg-indigo-600 text-white rounded-xl text-xs">TH</span>
-        </div>
-
-        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-center justify-between">
-          <div>
-            <span className="text-emerald-600 block">Vận dụng (30%)</span>
-            <span className="text-xl font-black text-emerald-950">{totalVD} câu ({scoreVD}đ)</span>
-          </div>
-          <span className="p-2 bg-emerald-600 text-white rounded-xl text-xs">VD</span>
-        </div>
-
-        <div className="bg-slate-900 text-white p-4 rounded-2xl flex items-center justify-between shadow">
-          <div>
-            <span className="text-slate-400 block">Tổng cộng</span>
-            <span className="text-xl font-black text-white">{totalQ} câu ({totalScore}đ)</span>
-          </div>
-          <Award className="w-6 h-6 text-amber-300" />
+              {/* Summary Rows */}
+              <tr className="bg-slate-100 font-bold text-center">
+                <td className="border border-slate-300 p-2" colSpan={4}>Tổng số câu/ý</td>
+                <td className="border border-slate-300 p-1">{summary.totalCount.mcq.nhanBiet}</td>
+                <td className="border border-slate-300 p-1">{summary.totalCount.mcq.thongHieu}</td>
+                <td className="border border-slate-300 p-1">{summary.totalCount.mcq.vanDung}</td>
+                <td className="border border-slate-300 p-1">{summary.totalCount.trueFalse.nhanBiet}</td>
+                <td className="border border-slate-300 p-1">{summary.totalCount.trueFalse.thongHieu}</td>
+                <td className="border border-slate-300 p-1">{summary.totalCount.trueFalse.vanDung}</td>
+                <td className="border border-slate-300 p-1">{summary.totalCount.shortAnswer.nhanBiet}</td>
+                <td className="border border-slate-300 p-1">{summary.totalCount.shortAnswer.thongHieu}</td>
+                <td className="border border-slate-300 p-1">{summary.totalCount.shortAnswer.vanDung}</td>
+                <td className="border border-slate-300 p-1">0</td>
+                <td className="border border-slate-300 p-1">0</td>
+                <td className="border border-slate-300 p-1">0</td>
+                <td className="border border-slate-300 p-1">{summary.totalCount.byLevel.nhanBiet}</td>
+                <td className="border border-slate-300 p-1">{summary.totalCount.byLevel.thongHieu}</td>
+                <td className="border border-slate-300 p-1">{summary.totalCount.byLevel.vanDung}</td>
+                <td className="border border-slate-300 p-1">-</td>
+              </tr>
+              <tr className="bg-slate-100 font-bold text-center">
+                <td className="border border-slate-300 p-2" colSpan={4}>Tổng số điểm</td>
+                <td className="border border-slate-300 p-2" colSpan={3}>{summary.score.mcq.toFixed(1)} đ</td>
+                <td className="border border-slate-300 p-2" colSpan={3}>{summary.score.trueFalse.toFixed(1)} đ</td>
+                <td className="border border-slate-300 p-2" colSpan={3}>{summary.score.shortAnswer.toFixed(1)} đ</td>
+                <td className="border border-slate-300 p-2" colSpan={3}>0.0 đ</td>
+                <td className="border border-slate-300 p-1">{summary.score.byLevel.nhanBiet.toFixed(1)}</td>
+                <td className="border border-slate-300 p-1">{summary.score.byLevel.thongHieu.toFixed(1)}</td>
+                <td className="border border-slate-300 p-1">{summary.score.byLevel.vanDung.toFixed(1)}</td>
+                <td className="border border-slate-300 p-1">{summary.score.total.toFixed(1)}</td>
+              </tr>
+              <tr className="bg-slate-200 font-bold text-center">
+                <td className="border border-slate-300 p-2" colSpan={4}>Tỉ lệ %</td>
+                <td className="border border-slate-300 p-2" colSpan={3}>{summary.percentage.mcq}%</td>
+                <td className="border border-slate-300 p-2" colSpan={3}>{summary.percentage.trueFalse}%</td>
+                <td className="border border-slate-300 p-2" colSpan={3}>{summary.percentage.shortAnswer}%</td>
+                <td className="border border-slate-300 p-2" colSpan={3}>0%</td>
+                <td className="border border-slate-300 p-1">{summary.percentage.byLevel.nhanBiet}%</td>
+                <td className="border border-slate-300 p-1">{summary.percentage.byLevel.thongHieu}%</td>
+                <td className="border border-slate-300 p-1">{summary.percentage.byLevel.vanDung}%</td>
+                <td className="border border-slate-300 p-1">100%</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* CHẾ ĐỘ 1: BẢNG MA TRẬN ĐỀ THI THEO CÔNG VĂN 7991 */}
-      {viewMode === 'matrix' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-0">
-          <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-            <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase">
-              KHUNG MA TRẬN ĐỀ KIỂM TRA ĐỊNH KỲ MÔN TOÁN LỚP {grade} (CÔNG VĂN 7991/BGDĐT-GDTrH)
-            </h3>
-            <span className="text-xs text-emerald-700 font-bold flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Khớp 100% với đề thi
-            </span>
-          </div>
+      {/* Save Matrix Modal with Filename Input */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in duration-200">
+            <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <Save className="w-5 h-5 text-emerald-400" />
+                Lưu Ma Trận & Đặc Tả vào Ngân Hàng Đề
+              </h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-center border-collapse border border-slate-300">
-              <thead className="bg-slate-100 font-bold text-slate-800 text-[11px]">
-                <tr>
-                  <th rowSpan={2} className="border border-slate-300 p-2 w-10">STT</th>
-                  <th rowSpan={2} className="border border-slate-300 p-2 text-left min-w-[200px]">Chủ đề / Đơn vị kiến thức</th>
-                  <th colSpan={3} className="border border-slate-300 p-2 bg-blue-50 text-blue-900">Phần I (Nhiều lựa chọn - 0.25đ)</th>
-                  <th colSpan={3} className="border border-slate-300 p-2 bg-indigo-50 text-indigo-900">Phần II (Đúng / Sai - 1.0đ)</th>
-                  <th colSpan={3} className="border border-slate-300 p-2 bg-emerald-50 text-emerald-900">Phần III (Trả lời ngắn - 0.5đ)</th>
-                  <th rowSpan={2} className="border border-slate-300 p-2 bg-amber-50 text-amber-950 font-black w-24">Tổng câu</th>
-                  <th rowSpan={2} className="border border-slate-300 p-2 bg-slate-200 text-slate-900 font-black w-24">Tổng điểm</th>
-                </tr>
-                <tr>
-                  <th className="border border-slate-300 p-1.5 w-12 bg-blue-50/70">NB</th>
-                  <th className="border border-slate-300 p-1.5 w-12 bg-blue-50/70">TH</th>
-                  <th className="border border-slate-300 p-1.5 w-12 bg-blue-50/70">VD</th>
+            <div className="p-6 space-y-4">
+              {saveSuccess ? (
+                <div className="py-8 flex flex-col items-center justify-center text-center space-y-3">
+                  <CheckCircle2 className="w-16 h-16 text-emerald-500 animate-bounce" />
+                  <h4 className="text-xl font-bold text-slate-800">Lưu thành công!</h4>
+                  <p className="text-sm text-slate-500">Bộ ma trận và đặc tả đã được lưu vào Ngân hàng Đề.</p>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">
+                      Tên file chuẩn hóa (Mã định danh):
+                    </label>
+                    <input
+                      type="text"
+                      value={fileNameInput}
+                      onChange={(e) => setFileNameInput(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm font-mono text-slate-800 bg-slate-50"
+                      placeholder="Ví dụ: MaTran_Toan12_UngDungDaoHam"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">Dùng để quản lý file hệ thống (không dấu, viết liền).</p>
+                  </div>
 
-                  <th className="border border-slate-300 p-1.5 w-12 bg-indigo-50/70">NB</th>
-                  <th className="border border-slate-300 p-1.5 w-12 bg-indigo-50/70">TH</th>
-                  <th className="border border-slate-300 p-1.5 w-12 bg-indigo-50/70">VD</th>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">
+                      Tên hiển thị (Tiêu đề):
+                    </label>
+                    <input
+                      type="text"
+                      value={displayNameInput}
+                      onChange={(e) => setDisplayNameInput(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm text-slate-800"
+                      placeholder="Ví dụ: Toán 12 - Ứng dụng đạo hàm - Ma trận đề kiểm tra"
+                    />
+                  </div>
 
-                  <th className="border border-slate-300 p-1.5 w-12 bg-emerald-50/70">NB</th>
-                  <th className="border border-slate-300 p-1.5 w-12 bg-emerald-50/70">TH</th>
-                  <th className="border border-slate-300 p-1.5 w-12 bg-emerald-50/70">VD</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(topicsMap).map(([topicName, qList], idx) => {
-                  const t_p1 = qList.filter((q) => q.type === 'multiple_choice');
-                  const t_p2 = qList.filter((q) => q.type === 'true_false');
-                  const t_p3 = qList.filter((q) => q.type === 'short_answer');
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-xs text-emerald-800 space-y-1">
+                    <p className="font-semibold">💡 Thông tin lưu trữ:</p>
+                    <p>• Khối lớp: {meta.grade}</p>
+                    <p>• Chủ đề: {meta.topicName}</p>
+                    <p>• Tổng số câu: {test.questions.length} câu</p>
+                  </div>
 
-                  const nb1 = countLevel(t_p1, 'NhanBiet');
-                  const th1 = countLevel(t_p1, 'ThongHieu');
-                  const vd1 = countLevel(t_p1, 'VanDung');
-
-                  const nb2 = countLevel(t_p2, 'NhanBiet');
-                  const th2 = countLevel(t_p2, 'ThongHieu');
-                  const vd2 = countLevel(t_p2, 'VanDung');
-
-                  const nb3 = countLevel(t_p3, 'NhanBiet');
-                  const th3 = countLevel(t_p3, 'ThongHieu');
-                  const vd3 = countLevel(t_p3, 'VanDung');
-
-                  const topicTotalQ = qList.length;
-                  const topicScore = (
-                    (nb1 + th1 + vd1) * 0.25 +
-                    (nb2 + th2 + vd2) * 1.0 +
-                    (nb3 + th3 + vd3) * 0.5
-                  ).toFixed(2);
-
-                  return (
-                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                      <td className="border border-slate-300 p-2 font-bold text-slate-500">{idx + 1}</td>
-                      <td className="border border-slate-300 p-2 text-left font-bold text-slate-900">{topicName}</td>
-                      <td className="border border-slate-300 p-2 bg-blue-50/20 font-semibold">{nb1 || '-'}</td>
-                      <td className="border border-slate-300 p-2 bg-blue-50/20 font-semibold">{th1 || '-'}</td>
-                      <td className="border border-slate-300 p-2 bg-blue-50/20 font-semibold">{vd1 || '-'}</td>
-
-                      <td className="border border-slate-300 p-2 bg-indigo-50/20 font-semibold">{nb2 || '-'}</td>
-                      <td className="border border-slate-300 p-2 bg-indigo-50/20 font-semibold">{th2 || '-'}</td>
-                      <td className="border border-slate-300 p-2 bg-indigo-50/20 font-semibold">{vd2 || '-'}</td>
-
-                      <td className="border border-slate-300 p-2 bg-emerald-50/20 font-semibold">{nb3 || '-'}</td>
-                      <td className="border border-slate-300 p-2 bg-emerald-50/20 font-semibold">{th3 || '-'}</td>
-                      <td className="border border-slate-300 p-2 bg-emerald-50/20 font-semibold">{vd3 || '-'}</td>
-
-                      <td className="border border-slate-300 p-2 font-black text-slate-900 bg-amber-50/40">{topicTotalQ} câu</td>
-                      <td className="border border-slate-300 p-2 font-bold text-slate-700 bg-slate-50">{topicScore} đ</td>
-                    </tr>
-                  );
-                })}
-
-                {/* DÒNG TỔNG CỘNG TOÀN ĐỀ */}
-                <tr className="bg-slate-100 font-black text-slate-900 text-xs">
-                  <td colSpan={2} className="border border-slate-300 p-3 text-right uppercase tracking-wider">
-                    TỔNG SỐ CÂU THEO MỨC ĐỘ:
-                  </td>
-                  <td className="border border-slate-300 p-2 bg-blue-100 text-blue-900">{p1_nb}</td>
-                  <td className="border border-slate-300 p-2 bg-blue-100 text-blue-900">{p1_th}</td>
-                  <td className="border border-slate-300 p-2 bg-blue-100 text-blue-900">{p1_vd}</td>
-
-                  <td className="border border-slate-300 p-2 bg-indigo-100 text-indigo-900">{p2_nb}</td>
-                  <td className="border border-slate-300 p-2 bg-indigo-100 text-indigo-900">{p2_th}</td>
-                  <td className="border border-slate-300 p-2 bg-indigo-100 text-indigo-900">{p2_vd}</td>
-
-                  <td className="border border-slate-300 p-2 bg-emerald-100 text-emerald-900">{p3_nb}</td>
-                  <td className="border border-slate-300 p-2 bg-emerald-100 text-emerald-900">{p3_th}</td>
-                  <td className="border border-slate-300 p-2 bg-emerald-100 text-emerald-900">{p3_vd}</td>
-
-                  <td className="border border-slate-300 p-2 bg-amber-200 text-amber-950 font-black text-sm">{totalQ} CÂU</td>
-                  <td className="border border-slate-300 p-2 bg-slate-300 text-slate-950 font-black text-sm">{totalScore} Đ</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* CHẾ ĐỘ 2: BẢN ĐẶC TẢ CHI TIẾT TỪNG CÂU HỎI TRONG ĐỀ */}
-      {viewMode === 'spec' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-0">
-          <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-            <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase">
-              BẢN ĐẶC TẢ KỸ THUẬT ĐỀ THI TOÁN {grade} (CHI TIẾT TỪNG CÂU TỪ CÂU 1 ĐẾN CÂU {totalQ})
-            </h3>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left border-collapse border border-slate-300">
-              <thead className="bg-slate-100 font-bold text-slate-800 text-[11px]">
-                <tr>
-                  <th className="border border-slate-300 p-2.5 text-center w-14">Thứ tự</th>
-                  <th className="border border-slate-300 p-2.5 w-32">Dạng câu hỏi</th>
-                  <th className="border border-slate-300 p-2.5 w-48">Chuyên đề / Bài học</th>
-                  <th className="border border-slate-300 p-2.5 min-w-[250px]">Yêu cầu cần đạt (YCCĐ) bám sát</th>
-                  <th className="border border-slate-300 p-2.5 text-center w-28">Mức độ nhận thức</th>
-                  <th className="border border-slate-300 p-2.5 text-center w-24">Điểm số</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {questions.map((q, idx) => {
-                  const partName = q.type === 'multiple_choice' ? 'Phần I' : q.type === 'true_false' ? 'Phần II' : 'Phần III';
-                  const point = q.type === 'multiple_choice' ? '0.25 đ' : q.type === 'true_false' ? '1.00 đ' : '0.50 đ';
-
-                  return (
-                    <tr key={q.id || idx} className="hover:bg-slate-50">
-                      <td className="border border-slate-300 p-2.5 text-center font-bold text-blue-700">Câu {idx + 1}</td>
-                      <td className="border border-slate-300 p-2.5 font-semibold text-slate-800">{partName}</td>
-                      <td className="border border-slate-300 p-2.5 font-bold text-slate-900">
-                        {(q as any).topicName || `Toán ${grade}`}
-                      </td>
-                      <td className="border border-slate-300 p-2.5 text-slate-700">
-                        {(q as any).outcome || 'Nhận biết và vận dụng kiến thức chuẩn GDPT 2018 theo ma trận của giáo viên.'}
-                      </td>
-                      <td className="border border-slate-300 p-2.5 text-center">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                          q.level === 'NhanBiet' ? 'bg-blue-100 text-blue-800' : q.level === 'ThongHieu' ? 'bg-indigo-100 text-indigo-800' : 'bg-emerald-100 text-emerald-800'
-                        }`}>
-                          {q.level === 'NhanBiet' ? 'Nhận biết' : q.level === 'ThongHieu' ? 'Thông hiểu' : 'Vận dụng'}
-                        </span>
-                      </td>
-                      <td className="border border-slate-300 p-2.5 text-center font-mono font-bold text-slate-800">{point}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                    >
+                      Hủy bỏ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleConfirmSaveToBank}
+                      className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2"
+                    >
+                      <Save className="w-4 h-4" />
+                      Xác Nhận Lưu
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 };
-
-export default MatrixTable;
