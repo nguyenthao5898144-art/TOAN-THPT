@@ -4,7 +4,7 @@ import { generateTest } from './testGenerator';
 import { MatrixTable } from './MatrixTable';
 import { QuestionBankManager } from './QuestionBankManager';
 import { AssistantChat } from './AssistantChat';
-import { BookOpen, FileText, Database, Sparkles, Sliders } from 'lucide-react';
+import { FileText, Database, Sparkles, Table as TableIcon } from 'lucide-react';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'generator' | 'matrix' | 'bank' | 'assistant'>('generator');
@@ -52,7 +52,7 @@ export function App() {
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
               }`}
             >
-              <Table className="w-4 h-4" />
+              <TableIcon className="w-4 h-4" />
               Ma trận & Bản đặc tả
             </button>
 
