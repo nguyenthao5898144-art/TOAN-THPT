@@ -5,6 +5,11 @@ export function getSyllabusForGrade(grade: string) {
   return MATH_11_SYLLABUS;
 }
 
+export function sanitizeQuestionMath(text: string): string {
+  if (!text) return '';
+  return text;
+}
+
 export const MATH_10_QUESTIONS: Question[] = [];
 
 export const MATH_11_QUESTIONS: Question[] = [
