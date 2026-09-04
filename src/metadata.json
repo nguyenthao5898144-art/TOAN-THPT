@@ -1,0 +1,6 @@
+{
+  "name": "Toán 12",
+  "description": "Ngân hàng câu hỏi & Đề thi môn Toán 12 theo Chương trình GDPT 2018. Tác giả: NGUYỄN QUỐC TÂM - Trường THPT Mai Thanh Thế.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
