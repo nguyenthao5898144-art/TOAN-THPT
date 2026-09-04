@@ -159,3 +159,7 @@ export const MATH_12_SYLLABUS: Topic[] = [
     ]
   }
 ];
+
+export function getSyllabusByGrade(grade: string): Topic[] {
+  return MATH_12_SYLLABUS;
+}
