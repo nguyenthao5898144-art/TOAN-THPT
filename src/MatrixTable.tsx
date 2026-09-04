@@ -67,7 +67,7 @@ export const MatrixTable: React.FC<MatrixTableProps> = ({ test, onBack }) => {
             Hệ Thống Ma Trận Đề Kiểm Tra & Bảng Đặc Tả
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Môn: {meta.grade} | Chủ đề: {meta.topicName} - {meta.lessonName}
+            Môn: Toán Khối {meta.grade} | Chủ đề: {meta.topicName} - {meta.lessonName}
           </p>
         </div>
 
