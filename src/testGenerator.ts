@@ -10,6 +10,11 @@ export function sanitizeQuestionMath(text: string): string {
   return text;
 }
 
+export function generateUniqueTextForStudent(text: string, studentName: string): string {
+  if (!text) return '';
+  return `${text} (Đề dành cho học sinh: ${studentName})`;
+}
+
 export const MATH_10_QUESTIONS: Question[] = [];
 
 export const MATH_11_QUESTIONS: Question[] = [
