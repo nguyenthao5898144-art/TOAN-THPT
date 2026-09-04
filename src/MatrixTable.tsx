@@ -347,3 +347,5 @@ export const MatrixTable: React.FC<MatrixTableProps> = ({ test, onBack }) => {
     </div>
   );
 };
+
+export default MatrixTable;
