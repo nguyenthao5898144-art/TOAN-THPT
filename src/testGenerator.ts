@@ -15,8 +15,8 @@ export function generateTest(config: TestConfig): GeneratedTest {
     syllabus = [...math10Syllabus, ...math11Syllabus, ...math12Syllabus];
   }
 
-  // Đảm bảo thời gian làm bài (duration) nhận giá trị tùy ý theo cấu hình từ người dùng, mặc định 45 phút nếu không truyền vào
-  const durationValue = config.duration ? Number(config.duration) : 45;
+  // Đảm bảo thời gian làm bài (duration) nhận giá trị tùy ý theo cấu hình từ người dùng, mặc định 90 phút nếu không truyền vào
+  const durationValue = config.duration ? Number(config.duration) : 90;
 
   return {
     id: 'test_' + Date.now(),
@@ -28,4 +28,4 @@ export function generateTest(config: TestConfig): GeneratedTest {
 }
 ```[cite: 1]
 
-Thầy mở file `src/textGenerator.ts` trên GitHub, chọn **Edit file**, xóa hết nội dung cũ, dán đoạn code chuẩn xác này vào và bấm **Commit changes**. Lỗi `Unterminated string literal` sẽ được giải quyết hoàn toàn và Render sẽ build thành công[cite: 1]!
+
