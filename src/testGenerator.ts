@@ -6,7 +6,6 @@ import * as Math12Module from './math12Syllabus';
 export const ensureUniqueDiagramsInText = (text: any): any => text || '';
 export const sanitizeQuestionMath = (q: any): any => q || {};
 
-// Lấy đúng dữ liệu syllabus theo từng khối lớp từ các file nguồn
 export const getSyllabusForGrade = (grade: string | number): Question[] => {
   try {
     const gStr = String(grade);
@@ -20,7 +19,6 @@ export const getSyllabusForGrade = (grade: string | number): Question[] => {
       moduleData = Math12Module;
     }
 
-    // Tự động quét các dạng tên biến xuất khẩu phổ biến trong file syllabus
     const questions = 
       moduleData.MATH_10_SYLLABUS || moduleData.math10Syllabus ||
       moduleData.MATH_11_SYLLABUS || moduleData.math11Syllabus ||
@@ -37,7 +35,6 @@ export function generateTest(config: TestConfig): GeneratedTest {
   const gradeStr = String(config.grade || '10');
   let questionsPool = getSyllabusForGrade(gradeStr);
 
-  // Nếu file syllabus chưa có dữ liệu, dùng mảng dự phòng an toàn để không crash hệ thống
   if (!questionsPool || questionsPool.length === 0) {
     questionsPool = [
       {
