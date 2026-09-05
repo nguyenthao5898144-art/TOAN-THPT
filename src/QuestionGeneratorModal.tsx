@@ -24,8 +24,6 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
   const [grade, setGrade] = useState<'10' | '11' | '12'>((config?.grade as any) || '10');
   const [title, setTitle] = useState<string>(config?.title || 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN 10 - GDPT 2018');
   const [durationMinutes, setDurationMinutes] = useState<number>(config?.durationMinutes || 45);
-  const [activePreset, setActivePreset] = useState<'standard' | '15min' | 'advanced'>('standard');
-
   const currentSyllabus = useMemo(() => {
     try {
       const s = getSyllabusByGrade(grade);
@@ -34,8 +32,6 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
       return getSyllabusByGrade('10');
     }
   }, [grade]);
-  }, [grade]);
-
   // 2. Cơ cấu Ma trận theo 3 dạng thức
   const [mcNB, setMcNB] = useState<number>(6);
   const [mcTH, setMcTH] = useState<number>(4);
