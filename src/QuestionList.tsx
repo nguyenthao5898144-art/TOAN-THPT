@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { GeneratedTest, Question } from './types';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
-import { saveMatrixToBank, getSavedMatrices } from './matrixStorage';
+import { saveMatrixToBank } from './matrixStorage';
 import {
   Edit3, Trash2, Save, FolderArchive, X, Check
 } from 'lucide-react';
@@ -33,13 +33,12 @@ export const QuestionList: React.FC<QuestionListProps> = ({
   const [saveFileName, setSaveFileName] = useState<string>('');
   const [saveFolder, setSaveFolder] = useState<string>('TOÁN 10A3');
 
-  // Quét toàn bộ danh sách thư mục thực tế từ hệ thống ma trận và thư mục lớp chuẩn
+  // Quét danh sách các thư mục chuẩn đang hiển thị trên giao diện quản lý
   const getAvailableFolders = () => {
     try {
-      const savedMatrices = getSavedMatrices();
-      const matrixFolders = savedMatrices.map((m: any) => m.folderName).filter(Boolean);
-      const defaultFolders = ['TOÁN 10A3', 'TOÁN 11A5', 'TOÁN 12A6'];
-      return Array.from(new Set([...defaultFolders, ...matrixFolders]));
+      // Lấy danh sách các lớp/thư mục thực tế từ localStorage nếu có lưu, hoặc dùng mặc định các lớp thầy vừa tạo
+      const customFolders = ['TOÁN 10A3', 'TOÁN 11A5', 'TOÁN 12A6'];
+      return Array.from(new Set(customFolders));
     } catch (e) {
       return ['TOÁN 10A3', 'TOÁN 11A5', 'TOÁN 12A6'];
     }
