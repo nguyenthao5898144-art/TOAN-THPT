@@ -31,15 +31,14 @@ export const QuestionList: React.FC<QuestionListProps> = ({
 
   const [isSaveModalOpen, setIsSaveModalOpen] = useState<boolean>(false);
   const [saveFileName, setSaveFileName] = useState<string>('');
-  const [saveFolder, setSaveFolder] = useState<string>(`TOÁN ${grade}`);
+  const [saveFolder, setSaveFolder] = useState<string>(`TOÁN ${grade}A3`);
 
-  // Hàm quét và lấy danh sách các thư mục thực tế hiện có trong Ngân hàng ma trận
+  // Quét danh sách các thư mục thực tế đang có trong Ngân hàng ma trận và các thư mục lớp chuẩn
   const getAvailableFolders = () => {
     const defaultFolders = [
-      `TOÁN ${grade}`,
-      'TOÁN 10',
-      'TOÁN 11',
-      'TOÁN 12'
+      'TOÁN 10A3',
+      'TOÁN 11A5',
+      'TOÁN 12A6'
     ];
     try {
       const saved = getSavedMatrices();
@@ -54,7 +53,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
     const rawTitle = test.title || `Ma_Tran_Toan_${grade}`;
     const cleanTitle = rawTitle.replace(/[\\/:*?"<>|\s]+/g, '_');
     setSaveFileName(`${cleanTitle}.json`);
-    setSaveFolder(`TOÁN ${grade}`);
+    setSaveFolder(`TOÁN ${grade}A3`);
     setIsSaveModalOpen(true);
   };
 
@@ -338,7 +337,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
         </div>
       )}
 
-      {/* MODAL LƯU FILE VÀO NGÂN HÀNG MA TRẬN (CHỌN THƯ MỤC THỰC TẾ) */}
+      {/* MODAL LƯU FILE VÀO NGÂN HÀNG MA TRẬN */}
       {isSaveModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-200 font-sans">
@@ -372,7 +371,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1.5">
-                  Chọn thư mục lưu trong Ngân hàng ma trận (*):
+                  Chọn thư mục trong Ngân hàng ma trận (*):
                 </label>
                 <select
                   value={saveFolder}
@@ -381,12 +380,12 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                 >
                   {getAvailableFolders().map((folder) => (
                     <option key={folder} value={folder}>
-                      Thư mục: {folder}
+                      {folder}
                     </option>
                   ))}
                 </select>
                 <p className="text-[11px] text-slate-500 mt-1.5 italic">
-                  * Hệ thống sẽ lưu vào thư mục bạn chọn và tự động mở Ngân hàng ma trận sau khi lưu thành công.
+                  * Sau khi lưu, hệ thống sẽ tự động đưa thầy về trang chủ Ngân hàng ma trận.
                 </p>
               </div>
             </div>
