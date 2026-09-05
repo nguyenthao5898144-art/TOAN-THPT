@@ -4,6 +4,7 @@ export interface SavedMatrix {
   grade: string;
   durationMinutes: number;
   createdAt: string;
+  folderName: string; // Thêm trường lưu tên thư mục chuẩn xác
   config: any;
   yccdCounts: Record<string, { nb: number; th: number; vd: number }>;
 }
@@ -26,6 +27,7 @@ export const saveMatrixToBank = (matrix: Omit<SavedMatrix, 'id' | 'createdAt'>) 
     ...matrix,
     id: 'matrix_' + Date.now(),
     createdAt: new Date().toISOString(),
+    folderName: (matrix.folderName || 'CHƯA PHÂN LOẠI').trim().toUpperCase(),
   };
   list.unshift(newMatrix);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
