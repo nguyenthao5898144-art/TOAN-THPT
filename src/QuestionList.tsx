@@ -31,21 +31,16 @@ export const QuestionList: React.FC<QuestionListProps> = ({
 
   const [isSaveModalOpen, setIsSaveModalOpen] = useState<boolean>(false);
   const [saveFileName, setSaveFileName] = useState<string>('');
-  const [saveFolder, setSaveFolder] = useState<string>(`TOÁN ${grade}A3`);
+  const [saveFolder, setSaveFolder] = useState<string>('');
 
-  // Quét danh sách các thư mục thực tế đang có trong Ngân hàng ma trận và các thư mục lớp chuẩn
+  // Quét danh sách các thư mục thực tế từ kho lưu trữ
   const getAvailableFolders = () => {
-    const defaultFolders = [
-      'TOÁN 10A3',
-      'TOÁN 11A5',
-      'TOÁN 12A6'
-    ];
     try {
       const saved = getSavedMatrices();
       const customFolders = saved.map((m: any) => m.folderName).filter(Boolean);
-      return Array.from(new Set([...defaultFolders, ...customFolders]));
+      return Array.from(new Set(customFolders));
     } catch (e) {
-      return defaultFolders;
+      return [];
     }
   };
 
@@ -53,7 +48,13 @@ export const QuestionList: React.FC<QuestionListProps> = ({
     const rawTitle = test.title || `Ma_Tran_Toan_${grade}`;
     const cleanTitle = rawTitle.replace(/[\\/:*?"<>|\s]+/g, '_');
     setSaveFileName(`${cleanTitle}.json`);
-    setSaveFolder(`TOÁN ${grade}A3`);
+    
+    const folders = getAvailableFolders();
+    if (folders.length > 0) {
+      setSaveFolder(folders[0]);
+    } else {
+      setSaveFolder('NGÂN HÀNG MA TRẬN');
+    }
     setIsSaveModalOpen(true);
   };
 
@@ -63,16 +64,17 @@ export const QuestionList: React.FC<QuestionListProps> = ({
       return;
     }
     try {
+      const targetFolder = saveFolder || 'NGÂN HÀNG MA TRẬN';
       saveMatrixToBank({
         title: saveFileName.trim(),
         grade: String(grade),
         durationMinutes: Number(test.config?.durationMinutes || test.durationMinutes || 45),
         config: test.config || {},
         yccdCounts: (test as any).yccdCounts || {},
-        folderName: saveFolder,
+        folderName: targetFolder,
       } as any);
       setIsSaveModalOpen(false);
-      alert(`Đã lưu thành công vào thư mục [${saveFolder}] trong Ngân hàng ma trận!`);
+      alert(`Đã lưu thành công vào [${targetFolder}] trong Ngân hàng ma trận!`);
       
       // Tự động điều hướng về trang chủ Ngân hàng ma trận
       if (onOpenBank) {
@@ -90,6 +92,8 @@ export const QuestionList: React.FC<QuestionListProps> = ({
     const letter = (id && typeof id === 'string' && id.trim()) ? id.toLowerCase().replace(/[^a-d]/g, '') : letters[index % 4];
     return `${letter || letters[index % 4]})`;
   };
+
+  const availableFolders = getAvailableFolders();
 
   return (
     <div className="font-sans space-y-6 max-w-5xl mx-auto pb-12 text-slate-800">
@@ -369,25 +373,29 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                 />
               </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 mb-1.5">
-                  Chọn thư mục trong Ngân hàng ma trận (*):
-                </label>
-                <select
-                  value={saveFolder}
-                  onChange={(e) => setSaveFolder(e.target.value)}
-                  className="w-full p-2.5 border border-slate-300 rounded-xl font-bold text-xs bg-white outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  {getAvailableFolders().map((folder) => (
-                    <option key={folder} value={folder}>
-                      {folder}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-[11px] text-slate-500 mt-1.5 italic">
-                  * Sau khi lưu, hệ thống sẽ tự động đưa thầy về trang chủ Ngân hàng ma trận.
-                </p>
-              </div>
+              {/* Chỉ hiển thị mục chọn thư mục nếu đã có thư mục tùy chỉnh, nếu chưa có thì lưu thẳng */}
+              {availableFolders.length > 0 ? (
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1.5">
+                    Chọn thư mục trong Ngân hàng ma trận (*):
+                  </label>
+                  <select
+                    value={saveFolder}
+                    onChange={(e) => setSaveFolder(e.target.value)}
+                    className="w-full p-2.5 border border-slate-300 rounded-xl font-bold text-xs bg-white outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    {availableFolders.map((folder) => (
+                      <option key={folder} value={folder}>
+                        {folder}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 font-medium italic">
+                  * Chưa có thư mục nào được tạo. File sẽ được lưu thẳng vào <strong>Ngân hàng ma trận</strong>.
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-2.5 pt-3 border-t">
