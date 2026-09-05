@@ -314,13 +314,13 @@ export const QuestionList: React.FC<QuestionListProps> = ({
         </div>
       )}
 
-      {/* MODAL LƯU ĐỀ THI */}
+      {/* MODAL LƯU MA TRẬN */}
       {isSaveModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-200 font-sans">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
-                <Save className="w-5 h-5 text-emerald-600" /> Lưu đề thi vào Kho lưu trữ
+                <Save className="w-5 h-5 text-emerald-600" /> Lưu file vào Ngân hàng ma trận
               </h3>
               <button
                 type="button"
@@ -348,7 +348,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1.5">
-                  Nơi lưu (Thư mục trong Kho đề):
+                  Nơi lưu (Ngân hàng ma trận):
                 </label>
                 <select
                   value={saveFolder}
