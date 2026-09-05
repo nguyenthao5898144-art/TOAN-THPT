@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { TestConfig } from './types';
-import { getSyllabusByGrade, MATH_12_SYLLABUS, Topic, Lesson } from './math12Syllabus';
+import { getSyllabusByGrade, Topic, Lesson } from './math12Syllabus';
 import {
-  Sparkles, BookOpen, Clock, Table, CheckSquare, Square,
-  CheckCircle2, ChevronDown, ChevronUp, RefreshCw, Layers
+  Sparkles, BookOpen, CheckSquare, Square,
+  CheckCircle2, ChevronDown, ChevronUp, RefreshCw
 } from 'lucide-react';
 
 export interface QuestionGeneratorModalProps {
@@ -20,11 +20,12 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
   onGenerate,
   isGenerating = false,
 }) => {
- // 1. Khối lớp (10, 11, 12)
+  // 1. Khối lớp (10, 11, 12)
   const [grade, setGrade] = useState<'10' | '11' | '12'>((config?.grade as any) || '10');
   const [title, setTitle] = useState<string>(config?.title || 'ĐỀ KHẢO SÁT & ĐÁNH GIÁ TOÁN 10 - GDPT 2018');
   const [durationMinutes, setDurationMinutes] = useState<number>(config?.durationMinutes || 45);
   const [activePreset, setActivePreset] = useState<'standard' | '15min' | 'advanced'>('standard');
+  
   const currentSyllabus = useMemo(() => {
     try {
       const s = getSyllabusByGrade(grade);
@@ -33,6 +34,7 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
       return getSyllabusByGrade('10');
     }
   }, [grade]);
+
   // 2. Cơ cấu Ma trận theo 3 dạng thức
   const [mcNB, setMcNB] = useState<number>(6);
   const [mcTH, setMcTH] = useState<number>(4);
@@ -47,7 +49,7 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
   const [saVD, setSaVD] = useState<number>(3);
 
   // 3. Quản lý chọn Chủ đề, Bài học, YCCĐ
-  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>(() => [currentSyllabus[0]?.id || 'topic_dao_ham']);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>(() => [currentSyllabus[0]?.id || '']);
   const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>(() => currentSyllabus[0]?.lessons.map((l) => l.id) || []);
   const [selectedOutcomes, setSelectedOutcomes] = useState<string[]>(() => currentSyllabus[0]?.lessons.flatMap((l) => l.outcomes) || []);
 
@@ -197,25 +199,22 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
     const allOutcomes = selectedTopics.flatMap((t) => t.lessons.flatMap((l) => l.outcomes));
     setSelectedOutcomes(allOutcomes);
   };
-const applyPreset = (preset: 'standard' | '15min' | 'advanced') => {
+
+  const handleDeselectAllYccd = () => {
+    setSelectedOutcomes([]);
+  };
+
+  const applyPreset = (preset: 'standard' | '15min' | 'advanced') => {
     setActivePreset(preset);
     if (preset === 'standard') {
-      setDurationMinutes(45); // <--- Xóa dòng này
       setMcNB(6); setMcTH(4); setMcVD(2);
       setTfNB(1); setTfTH(2); setTfVD(1);
       setSaNB(1); setSaTH(2); setSaVD(3);
     } else if (preset === '15min') {
-      setDurationMinutes(15); // <--- Xóa dòng này
       setMcNB(3); setMcTH(2); setMcVD(1);
       setTfNB(0); setTfTH(1); setTfVD(1);
       setSaNB(0); setSaTH(1); setSaVD(1);
     } else if (preset === 'advanced') {
-      setDurationMinutes(90); // <--- Xóa dòng này
-      setMcNB(4); setMcTH(4); setMcVD(4);
-      setTfNB(0); setTfTH(2); setTfVD(2);
-      setSaNB(0); setSaTH(1); setSaVD(1);
-    }
-  };
       setMcNB(4); setMcTH(4); setMcVD(4);
       setTfNB(0); setTfTH(2); setTfVD(2);
       setSaNB(0); setSaTH(1); setSaVD(1);
@@ -266,7 +265,7 @@ const applyPreset = (preset: 'standard' | '15min' | 'advanced') => {
         </span>
       </div>
 
-      {/* 2. CHỌN CHỦ ĐỀ (5 THẺ CHỦ ĐỀ LỚN NHƯ TRONG ẢNH) */}
+      {/* 2. CHỌN CHỦ ĐỀ */}
       <div className="space-y-2">
         <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
           1. Tích chọn các Chủ đề cần khảo sát & kiểm tra:
@@ -300,7 +299,7 @@ const applyPreset = (preset: 'standard' | '15min' | 'advanced') => {
         </div>
       </div>
 
-      {/* 3. DANH SÁCH BÀI HỌC VÀ YÊU CẦU CẦN ĐẠT (YCCĐ) CHI TIẾT */}
+      {/* 3. DANH SÁCH BÀI HỌC VÀ YCCĐ */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
           <div className="flex items-center gap-2">
@@ -327,11 +326,9 @@ const applyPreset = (preset: 'standard' | '15min' | 'advanced') => {
           </div>
         </div>
 
-        {/* Danh sách từng chủ đề -> từng bài học -> từng YCCĐ */}
         <div className="space-y-4 max-h-96 overflow-y-auto pr-1.5">
           {selectedTopics.map((topic) => (
             <div key={topic.id} className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/60 shadow-sm">
-              {/* Header Chủ đề */}
               <div className="p-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-black rounded uppercase">
@@ -361,7 +358,6 @@ const applyPreset = (preset: 'standard' | '15min' | 'advanced') => {
 
                     return (
                       <div key={lesson.id} className="border border-slate-200 rounded-xl p-3 space-y-2.5 bg-slate-50/30">
-                        {/* Header Bài học */}
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
                           <div
                             onClick={() => toggleLesson(lesson)}
@@ -403,7 +399,6 @@ const applyPreset = (preset: 'standard' | '15min' | 'advanced') => {
                           </div>
                         </div>
 
-                        {/* Danh sách từng thẻ YCCĐ con */}
                         {!isLessonCollapsed && (
                           <div className="space-y-1.5 pl-4">
                             {lesson.outcomes.map((outcome, oIdx) => {
@@ -440,45 +435,59 @@ const applyPreset = (preset: 'standard' | '15min' | 'advanced') => {
         </div>
       </div>
 
-      {/* BƯỚC 2: TẠO & CẤU HÌNH MA TRẬN CHI TIẾT (PHÂN BỔ SỐ CÂU THEO MỖI YCCĐ) */}
+      {/* BƯỚC 2: TẠO & CẤU HÌNH MA TRẬN CHI TIẾT */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5">
           <div className="flex items-center gap-2">
             <span className="px-2 py-0.5 bg-emerald-600 text-white text-[11px] font-black rounded">BƯỚC 2</span>
             <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-              TẠO & CẤU HÌNH MA TRẬN CHI TIẾT (PHÂN BỐ SỐ CÂU THEO MỖI YCCĐ)
+              TẠO & CẤU HÌNH MA TRẬN CHI TIẾT & THỜI GIAN LÀM BÀI
             </h3>
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-slate-500 text-[11px] font-semibold">Mẫu ma trận nhanh:</span>
-            <button
-              type="button"
-              onClick={() => applyPreset('standard')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
-                activePreset === 'standard' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700'
-              }`}
-            >
-              Chuẩn GDPT 2018 (22 câu - 10đ)
-            </button>
-            <button
-              type="button"
-              onClick={() => applyPreset('15min')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
-                activePreset === '15min' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700'
-              }`}
-            >
-              Kiểm tra 15 Phút (10 câu)
-            </button>
-            <button
-              type="button"
-              onClick={() => applyPreset('advanced')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
-                activePreset === 'advanced' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700'
-              }`}
-            >
-              Phân hóa / Nâng cao (18 câu)
-            </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs bg-slate-100 p-1.5 rounded-xl border">
+              <span className="text-slate-700 font-bold px-1">Thời gian (phút):</span>
+              <input
+                type="number"
+                min={5}
+                max={180}
+                value={durationMinutes}
+                onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                className="w-16 p-1 text-center font-black bg-white border rounded text-blue-600"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className="text-slate-500 text-[11px] font-semibold">Mẫu ma trận:</span>
+              <button
+                type="button"
+                onClick={() => applyPreset('standard')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                  activePreset === 'standard' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700'
+                }`}
+              >
+                Chuẩn (22 câu)
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPreset('15min')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                  activePreset === '15min' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700'
+                }`}
+              >
+                15 Phút (10 câu)
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPreset('advanced')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                  activePreset === 'advanced' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700'
+                }`}
+              >
+                Nâng cao (18 câu)
+              </button>
+            </div>
           </div>
         </div>
 
@@ -639,7 +648,7 @@ const applyPreset = (preset: 'standard' | '15min' | 'advanced') => {
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
         <div className="flex justify-between items-center border-b pb-2 text-xs font-bold text-slate-700">
           <span>BƯỚC 3: XÁC NHẬN CẤU HÌNH & KHỞI TẠO ĐỀ THI</span>
-          <span className="text-blue-700 font-bold">{totalQuestions} câu hỏi | {totalScore} điểm</span>
+          <span className="text-blue-700 font-bold">{totalQuestions} câu hỏi ({durationMinutes} phút) | {totalScore} điểm</span>
         </div>
 
         <button
