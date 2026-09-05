@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { GeneratedTest, Question } from './types';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
-import { saveMatrixToBank } from './matrixStorage';
 import {
   Edit3, Trash2, Save, FolderArchive, X, Check
 } from 'lucide-react';
@@ -33,7 +32,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
   const [saveFileName, setSaveFileName] = useState<string>('');
   const [saveFolder, setSaveFolder] = useState<string>('TOÁN 10A3');
 
-  // Lấy danh sách thư mục thực tế từ localStorage chung
+  // Quét danh sách thư mục thực tế từ localStorage (được đồng bộ với QuestionBankManager)
   const getAvailableFolders = () => {
     try {
       const stored = localStorage.getItem('matrix_custom_folders');
@@ -66,20 +65,29 @@ export const QuestionList: React.FC<QuestionListProps> = ({
     try {
       const targetFolder = (saveFolder || 'TOÁN 10A3').trim().toUpperCase();
       
-      // GỌI TRỰC TIẾP HÀM LƯU CHUẨN CỦA HỆ THỐNG (đảm bảo đồng bộ tuyệt đối với QuestionBankManager)
-      saveMatrixToBank({
+      // Ghi trực tiếp vào kho lưu trữ chung của Ngân hàng ma trận (khớp chính xác với QuestionBankManager)
+      const STORAGE_KEY = 'saved_matrix_bank_items';
+      const existingData = localStorage.getItem(STORAGE_KEY);
+      const matrices = existingData ? JSON.parse(existingData) : [];
+
+      const newMatrix = {
+        id: 'matrix_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
         title: saveFileName.trim(),
         grade: String(grade),
         durationMinutes: Number(test.config?.durationMinutes || test.durationMinutes || 45),
         config: test.config || {},
         yccdCounts: (test as any).yccdCounts || {},
         folderName: targetFolder,
-      } as any);
+        createdAt: new Date().toISOString(),
+      };
+
+      matrices.unshift(newMatrix);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(matrices));
 
       setIsSaveModalOpen(false);
       alert(`Đã lưu thành công vào thư mục [${targetFolder}] trong Ngân hàng ma trận!`);
       
-      // Tự động điều hướng về trang chủ Ngân hàng ma trận
+      // TỰ ĐỘNG ĐIỀU HƯỚNG VỀ ĐÚNG GIAO DIỆN NGÂN HÀNG MA TRẬN
       if (onOpenBank) {
         onOpenBank();
       }
@@ -392,7 +400,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                   ))}
                 </select>
                 <p className="text-[11px] text-slate-500 mt-1.5 italic">
-                  * Sử dụng chung hàm lưu trữ `saveMatrixToBank`. Lưu xong sẽ tự động về trang chủ Ngân hàng ma trận.
+                  * Sau khi lưu sẽ ghi trực tiếp vào Ngân hàng ma trận và tự động chuyển hướng về đó.
                 </p>
               </div>
             </div>
