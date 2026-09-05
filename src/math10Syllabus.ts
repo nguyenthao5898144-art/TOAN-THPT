@@ -517,3 +517,6 @@ export function getSyllabusByGrade(grade: string): Topic[] {
   if (grade === '11') return MATH_11_SYLLABUS;
   return MATH_12_SYLLABUS;
 }
+export const MATH_10_SYLLABUS = [
+  // ... danh sách chủ đề lớp 10 hiện tại của thầy
+];
