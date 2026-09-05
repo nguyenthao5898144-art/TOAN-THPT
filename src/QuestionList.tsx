@@ -83,7 +83,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
           <h2 className="text-lg sm:text-xl font-black text-slate-900 mt-0.5">
             {test.title}
           </h2>
-          <p className="text-xs text-slate-500 font-medium mt-1">
+         Khối lớp: <strong>Toán {grade}</strong> • Thời gian: <strong>{test.config?.durationMinutes || test.durationMinutes || 45} phút</strong>
             Khối lớp: <strong>Toán {grade}</strong> • Thời gian: <strong>{test.config?.durationMinutes || 45} phút</strong>
           </p>
         </div>
