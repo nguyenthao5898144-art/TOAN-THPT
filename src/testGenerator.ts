@@ -60,7 +60,7 @@ export function generateTest(config: TestConfig): GeneratedTest {
     ];
   }
 
-  const durationValue = config.duration ? Number(config.duration) : 45;
+  const durationValue = config.duration ? Number(config.duration) : 90;
 
   return {
     id: 'test_' + Date.now(),
@@ -74,7 +74,7 @@ export function createDefaultTest(config?: Partial<TestConfig>): GeneratedTest {
   return generateTest({
     grade: 10,
     title: 'ĐỀ KIỂM TRA MÔN TOÁN (THPT)',
-    duration: 45,
+    duration: 90,
     ...config
   });
 }
