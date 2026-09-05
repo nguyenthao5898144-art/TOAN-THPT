@@ -74,15 +74,7 @@ export function createDefaultTest(config?: Partial<TestConfig>): GeneratedTest {
   return generateTest({
     grade: 10,
     title: 'ĐỀ KIỂM TRA MÔN TOÁN (THPT)',
-    duration: 90,
-    ...config
-  });
-}
-export function createDefaultTest(config?: Partial<TestConfig>): GeneratedTest {
-  return generateTest({
-    grade: 10,
-    title: 'ĐỀ KIỂM TRA MÔN TOÁN (THPT)',
-    duration: 45,
+    duration: config?.duration ? Number(config.duration) : 45,
     ...config
   });
 }
