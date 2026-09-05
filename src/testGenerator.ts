@@ -70,3 +70,11 @@ export function generateTest(config: TestConfig): GeneratedTest {
     createdAt: new Date().toISOString()
   };
 }
+export function createDefaultTest(config?: Partial<TestConfig>): GeneratedTest {
+  return generateTest({
+    grade: 10,
+    title: 'ĐỀ KIỂM TRA MÔN TOÁN (THPT)',
+    duration: 45,
+    ...config
+  });
+}
