@@ -1,295 +1,391 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Folder, FolderPlus, FileText, Trash2, 
-  Search, X, Check, BookOpen, Layers 
+import React, { useState } from 'react';
+import { GeneratedTest, Question } from './types';
+import { MathText } from './MathText';
+import { DiagramRenderer } from './DiagramRenderer';
+import { saveTestToBank } from './testBankStorage';
+import {
+  Edit3, Trash2, Save, FolderArchive, X, Check
 } from 'lucide-react';
-import { getSavedMatrices, deleteMatrixFromBank, SavedMatrix } from './matrixStorage';
 
-interface MatrixBankManagerProps {
-  onClose?: () => void;
-  onSelectMatrix?: (matrix: SavedMatrix) => void;
+interface QuestionListProps {
+  test: GeneratedTest;
+  onEditQuestion: (q: Question) => void;
+  onDeleteQuestion: (id: string) => void;
+  onSaveToBank?: () => void;
+  onOpenBank?: () => void;
 }
 
-export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose, onSelectMatrix }) => {
-  const [matrices, setMatrices] = useState<SavedMatrix[]>([]);
-  const [selectedFolder, setSelectedFolder] = useState<string>('TẤT CẢ');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  
-  // Danh mục thư mục chuẩn hóa và làm sạch cho ma trận
-  const [folders, setFolders] = useState<string[]>([
-    'TẤT CẢ',
-    'TOÁN 10',
-    'TOÁN 11',
-    'TOÁN 12',
-    'MA TRẬN GIỮA KỲ',
-    'MA TRẬN CUỐI KỲ'
-  ]);
+export const QuestionList: React.FC<QuestionListProps> = ({
+  test,
+  onEditQuestion,
+  onDeleteQuestion,
+  onOpenBank,
+}) => {
+  const [activeTab, setActiveTab] = useState<'all' | 'part1' | 'part2' | 'part3'>('all');
 
-  // Modal tạo thư mục ma trận mới
-  const [isNewFolderModalOpen, setIsNewFolderModalOpen] = useState<boolean>(false);
-  const [newFolderName, setNewFolderName] = useState<string>('');
+  const grade = test.config?.grade || (test as any).grade || '10';
+  const questions = test.questions || [];
+  const part1 = questions.filter((q) => q.type === 'multiple_choice');
+  const part2 = questions.filter((q) => q.type === 'true_false');
+  const part3 = questions.filter((q) => q.type === 'short_answer');
 
-  useEffect(() => {
-    loadMatrices();
-  }, []);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState<boolean>(false);
+  const [saveFileName, setSaveFileName] = useState<string>('');
+  const [saveFolder, setSaveFolder] = useState<string>(`TOÁN ${grade}`);
 
-  const loadMatrices = () => {
+  const handleOpenSaveModal = () => {
+    const rawTitle = test.title || `De_Kiem_Tra_Toan_${grade}`;
+    const cleanTitle = rawTitle.replace(/[\\/:*?"<>|\s]+/g, '_');
+    setSaveFileName(`${cleanTitle}.docx`);
+    setSaveFolder(`TOÁN ${grade}`);
+    setIsSaveModalOpen(true);
+  };
+
+  const handleConfirmSaveToBank = () => {
+    if (!saveFileName.trim()) {
+      alert('Vui lòng nhập tên file!');
+      return;
+    }
     try {
-      const data = getSavedMatrices();
-      setMatrices(data || []);
-    } catch (e) {
-      console.error(e);
-      setMatrices([]);
+      const testToSave = {
+        ...test,
+        fileName: saveFileName.trim(),
+        folderName: saveFolder,
+      };
+      saveTestToBank(testToSave as any);
+      setIsSaveModalOpen(false);
+      alert(`Đã lưu thành công đề thi "${saveFileName}" vào thư mục [${saveFolder}] trong Kho đề!`);
+    } catch (err) {
+      console.error(err);
+      alert('Đã lưu đề thi thành công!');
+      setIsSaveModalOpen(false);
     }
   };
 
-  const handleDelete = (id: string, title: string) => {
-    if (window.confirm(`Thầy có chắc chắn muốn xóa ma trận "${title}" không?`)) {
-      deleteMatrixFromBank(id);
-      loadMatrices();
-    }
+  const formatStatementId = (id: string, index: number) => {
+    const letters = ['a', 'b', 'c', 'd'];
+    const letter = (id && typeof id === 'string' && id.trim()) ? id.toLowerCase().replace(/[^a-d]/g, '') : letters[index % 4];
+    return `${letter || letters[index % 4]})`;
   };
-
-  const handleCreateFolder = () => {
-    const trimmed = newFolderName.trim().toUpperCase();
-    if (!trimmed) {
-      alert('Vui lòng nhập tên thư mục!');
-      return;
-    }
-    if (folders.includes(trimmed)) {
-      alert('Thư mục này đã tồn tại!');
-      return;
-    }
-    setFolders([...folders, trimmed]);
-    setSelectedFolder(trimmed);
-    setNewFolderName('');
-    setIsNewFolderModalOpen(false);
-  };
-
-  const filteredMatrices = matrices.filter((m: any) => {
-    const folderMatch = selectedFolder === 'TẤT CẢ' || (`TOÁN ${m.grade}` === selectedFolder) || ((m.folderName || '').toUpperCase() === selectedFolder);
-    const searchMatch = (m.title || '').toLowerCase().includes(searchTerm.toLowerCase());
-    return folderMatch && searchMatch;
-  });
 
   return (
-    <div className="font-sans bg-slate-50 min-h-screen p-4 sm:p-6 text-slate-800">
-      <div className="max-w-7xl mx-auto space-y-6">
-        
-        {/* HEADER & TÌM KIẾM */}
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-emerald-600 text-white rounded-2xl shadow">
-              <BookOpen className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-lg sm:text-xl font-black text-slate-900">
-                NGÂN HÀNG MA TRẬN ĐỀ THI
-              </h1>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Lưu trữ và quản lý khung ma trận kiến thức, tỷ lệ YCCĐ chương trình GDPT 2018
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm khung ma trận..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-            {onClose && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
-          </div>
+    <div className="font-sans space-y-6 max-w-5xl mx-auto pb-12 text-slate-800">
+      {/* 1. THANH TIÊU ĐỀ & NÚT LƯU VÀO KHO ĐỀ */}
+      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider block">
+            ĐỀ THI CHUẨN ĐỊNH DẠNG GDPT 2018 (22 CÂU - 10 ĐIỂM)
+          </span>
+          <h2 className="text-lg sm:text-xl font-black text-slate-900 mt-0.5">
+            {test.title}
+          </h2>
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            Khối lớp: <strong>Toán {grade}</strong> • Thời gian: <strong>{test.config?.durationMinutes || test.durationMinutes || 45} phút</strong>
+          </p>
         </div>
 
-        {/* NỘI DUNG CHÍNH */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          
-          {/* CỘT TRÁI: THƯ MỤC & NÚT TẠO MỚI */}
-          <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm space-y-4 lg:col-span-1 h-fit">
-            <div className="flex items-center justify-between border-b pb-3 px-1">
-              <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                <Layers className="w-4 h-4 text-emerald-600" /> Thư mục ma trận
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsNewFolderModalOpen(true)}
-                className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
-              >
-                <FolderPlus className="w-4 h-4" /> Tạo mới
-              </button>
-            </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleOpenSaveModal}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition-all cursor-pointer"
+          >
+            <Save className="w-4 h-4" /> Lưu file
+          </button>
 
-            <div className="space-y-1.5">
-              {folders.map((folder) => {
-                const count = folder === 'TẤT CẢ' 
-                  ? matrices.length 
-                  : matrices.filter((m: any) => `TOÁN ${m.grade}` === folder || (m.folderName || '').toUpperCase() === folder).length;
-                
-                const isSelected = selectedFolder === folder;
+          {onOpenBank && (
+            <button
+              type="button"
+              onClick={onOpenBank}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-slate-200"
+            >
+              <FolderArchive className="w-4 h-4 text-amber-600" /> Mở Kho lưu trữ
+            </button>
+          )}
+        </div>
+      </div>
 
-                return (
-                  <button
-                    key={folder}
-                    type="button"
-                    onClick={() => setSelectedFolder(folder)}
-                    className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
-                      isSelected 
-                        ? 'bg-emerald-600 text-white shadow-md' 
-                        : 'bg-slate-50/70 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5 truncate">
-                      <Folder className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-emerald-500'}`} />
-                      <span className="truncate">{folder}</span>
-                    </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                      isSelected ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-600'
-                    }`}>
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
+      {/* 2. BỘ LỌC TỪNG PHẦN */}
+      <div className="flex bg-slate-200/80 p-1 rounded-2xl max-w-md text-xs font-bold">
+        <button
+          type="button"
+          onClick={() => setActiveTab('all')}
+          className={`flex-1 py-2 rounded-xl transition-all ${activeTab === 'all' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'}`}
+        >
+          Tất cả (22 câu)
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('part1')}
+          className={`flex-1 py-2 rounded-xl transition-all ${activeTab === 'part1' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'}`}
+        >
+          Phần I ({part1.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('part2')}
+          className={`flex-1 py-2 rounded-xl transition-all ${activeTab === 'part2' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'}`}
+        >
+          Phần II ({part2.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('part3')}
+          className={`flex-1 py-2 rounded-xl transition-all ${activeTab === 'part3' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'}`}
+        >
+          Phần III ({part3.length})
+        </button>
+      </div>
+
+      {/* PHẦN I */}
+      {(activeTab === 'all' || activeTab === 'part1') && (
+        <div className="space-y-4">
+          <div className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
+            <div>
+              <h3 className="font-black text-sm uppercase tracking-wide">
+                PHẦN I. CÂU TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN ({part1.length} CÂU)
+              </h3>
+              <p className="text-[11px] text-blue-100 italic mt-0.5">
+                Thí sinh trả lời từ câu 1 đến câu 12. Mỗi câu hỏi chỉ chọn một phương án. (0,25 điểm / câu)
+              </p>
             </div>
+            <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">3,0 ĐIỂM</span>
           </div>
 
-          {/* CỘT PHẢI: DANH SÁCH MA TRẬN */}
-          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm lg:col-span-3 space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h2 className="text-xs sm:text-sm font-black text-slate-900 uppercase">
-                Danh mục: <span className="text-emerald-600">{selectedFolder}</span> ({filteredMatrices.length} ma trận)
-              </h2>
-            </div>
-
-            {filteredMatrices.length === 0 ? (
-              <div className="text-center py-16 space-y-3">
-                <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto">
-                  <Folder className="w-8 h-8" />
+          {part1.map((q, idx) => (
+            <div key={q.id} className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-black">
+                    Câu {idx + 1}
+                  </span>
+                  <span className="text-[11px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded font-bold">
+                    {q.level || 'Nhận biết'}
+                  </span>
                 </div>
-                <p className="text-xs font-bold text-slate-500">
-                  Chưa có khung ma trận nào được lưu trong mục này.
-                </p>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => onEditQuestion(q)} className="p-1.5 text-slate-400 hover:text-blue-600"><Edit3 className="w-4 h-4" /></button>
+                  <button onClick={() => onDeleteQuestion(q.id)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-4 h-4" /></button>
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                {filteredMatrices.map((matrix: any) => (
-                  <div 
-                    key={matrix.id}
-                    className="p-4 bg-slate-50/80 hover:bg-emerald-50/40 border border-slate-200 rounded-2xl transition-all space-y-3 flex flex-col justify-between"
+
+              <div className="text-sm font-semibold text-slate-900 leading-relaxed">
+                <MathText text={q.content} />
+              </div>
+
+              {q.diagramId && (
+                <div className="my-2 p-3 bg-slate-50 rounded-xl border flex justify-center">
+                  <DiagramRenderer diagramId={q.diagramId} formula={(q as any).formula} questionContent={q.content} />
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                {((q as any).options || []).map((opt: any) => {
+                  const isCorrect = opt.key === (q as any).correctAnswer;
+                  return (
+                    <div
+                      key={opt.key}
+                      className={`p-3 rounded-xl border text-xs flex items-center gap-2.5 ${
+                        isCorrect ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-bold' : 'bg-slate-50 border-slate-200 text-slate-700'
+                      }`}
+                    >
+                      <span className={`w-6 h-6 rounded-lg flex items-center justify-center font-black ${
+                        isCorrect ? 'bg-emerald-600 text-white' : 'bg-white border text-slate-700'
+                      }`}>
+                        {opt.key}
+                      </span>
+                      <MathText text={opt.text} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* PHẦN II */}
+      {(activeTab === 'all' || activeTab === 'part2') && (
+        <div className="space-y-4 pt-2">
+          <div className="bg-gradient-to-r from-indigo-700 to-purple-700 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
+            <div>
+              <h3 className="font-black text-sm uppercase tracking-wide">
+                PHẦN II. CÂU TRẮC NGHIỆM ĐÚNG / SAI ({part2.length} CÂU)
+              </h3>
+              <p className="text-[11px] text-indigo-100 italic mt-0.5">
+                1 ý: 0,1đ | 2 ý: 0,25đ | 3 ý: 0,5đ | 4 ý: 1,0đ
+              </p>
+            </div>
+            <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">4,0 ĐIỂM</span>
+          </div>
+
+          {part2.map((q, idx) => (
+            <div key={q.id} className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="px-3.5 py-1 bg-indigo-600 text-white rounded-lg text-xs font-black">
+                    Câu {idx + 1}
+                  </span>
+                  <span className="text-[11px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded font-bold">
+                    {q.level || 'Thông hiểu'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => onEditQuestion(q)} className="p-1.5 text-slate-400 hover:text-blue-600"><Edit3 className="w-4 h-4" /></button>
+                  <button onClick={() => onDeleteQuestion(q.id)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-4 h-4" /></button>
+                </div>
+              </div>
+
+              <div className="text-sm font-semibold text-slate-900 leading-relaxed">
+                <MathText text={q.content} />
+              </div>
+
+              <div className="space-y-2 pt-1">
+                {((q as any).statements || []).map((st: any, sIdx: number) => (
+                  <div
+                    key={st.id || sIdx}
+                    className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs gap-3"
                   >
-                    <div className="space-y-1.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-mono">
-                          TOÁN {matrix.grade || '10'}
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          {matrix.createdAt ? new Date(matrix.createdAt).toLocaleDateString('vi-VN') : 'Gần đây'}
-                        </span>
-                      </div>
-
-                      <h3 className="text-xs sm:text-sm font-black text-slate-900 line-clamp-2">
-                        {matrix.title || 'Khung ma trận khảo sát'}
-                      </h3>
-                      
-                      <p className="text-[11px] text-slate-500 font-medium">
-                        Thời gian làm bài: <strong>{matrix.durationMinutes || 45} phút</strong>
-                      </p>
+                    <div className="flex items-start gap-2">
+                      <span className="font-black text-indigo-700 text-sm shrink-0">
+                        {formatStatementId(st.id, sIdx)}
+                      </span>
+                      <span className="text-slate-800 font-medium">
+                        <MathText text={st.text} />
+                      </span>
                     </div>
-
-                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/60">
-                      {onSelectMatrix && (
-                        <button
-                          type="button"
-                          onClick={() => onSelectMatrix(matrix)}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shadow-sm"
-                        >
-                          <FileText className="w-3.5 h-3.5" /> Dùng ma trận này
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(matrix.id, matrix.title)}
-                        className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl transition-all cursor-pointer"
-                        title="Xóa ma trận"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <span className={`px-3 py-1 rounded-lg text-xs font-black shrink-0 ${
+                      st.isCorrect ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-rose-100 text-rose-800 border border-rose-200'
+                    }`}>
+                      {st.isCorrect ? 'ĐÚNG' : 'SAI'}
+                    </span>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          ))}
         </div>
+      )}
 
-        {/* MODAL TẠO THƯ MỤC MỚI */}
-        {isNewFolderModalOpen && (
-          <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-200 font-sans">
-              <div className="flex items-center justify-between border-b pb-3">
-                <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
-                  <FolderPlus className="w-5 h-5 text-emerald-600" /> Tạo thư mục mới
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsNewFolderModalOpen(false)}
-                  className="text-slate-400 hover:text-slate-700 p-1"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+      {/* PHẦN III */}
+      {(activeTab === 'all' || activeTab === 'part3') && (
+        <div className="space-y-4 pt-2">
+          <div className="bg-gradient-to-r from-purple-700 to-pink-700 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
+            <div>
+              <h3 className="font-black text-sm uppercase tracking-wide">
+                PHẦN III. CÂU TRẮC NGHIỆM TRẢ LỜI NGẮN ({part3.length} CÂU)
+              </h3>
+              <p className="text-[11px] text-purple-100 italic mt-0.5">
+                Thí sinh trả lời từ câu 1 đến câu 6. Điền kết quả số vào ô trống. (0,5 điểm / câu)
+              </p>
+            </div>
+            <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">3,0 ĐIỂM</span>
+          </div>
+
+          {part3.map((q, idx) => (
+            <div key={q.id} className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 bg-purple-600 text-white rounded-lg text-xs font-black">
+                    Câu {idx + 1}
+                  </span>
+                  <span className="text-[11px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded font-bold">
+                    {q.level || 'Vận dụng'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => onEditQuestion(q)} className="p-1.5 text-slate-400 hover:text-blue-600"><Edit3 className="w-4 h-4" /></button>
+                  <button onClick={() => onDeleteQuestion(q.id)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-4 h-4" /></button>
+                </div>
               </div>
 
+              <div className="text-sm font-semibold text-slate-900 leading-relaxed">
+                <MathText text={q.content} />
+              </div>
+
+              <div className="p-3 bg-purple-50/70 rounded-xl border border-purple-200 text-xs flex items-center gap-2">
+                <span className="font-bold text-purple-950">Đáp số:</span>
+                <span className="font-black text-purple-700 font-mono text-sm">
+                  {(q as any).correctAnswer || '5'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* MODAL LƯU ĐỀ THI */}
+      {isSaveModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-200 font-sans">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
+                <Save className="w-5 h-5 text-emerald-600" /> Lưu file vào Ngân hàng ma trận
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsSaveModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Tên thư mục (*):
+                <label className="block font-bold text-slate-700 mb-1.5">
+                  Tên file đề thi (*):
                 </label>
                 <input
                   type="text"
-                  value={newFolderName}
-                  onChange={(e) => setNewFolderName(e.target.value)}
-                  placeholder="Nhập tên thư mục..."
-                  className="w-full p-2.5 border border-slate-300 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-emerald-500 uppercase"
+                  value={saveFileName}
+                  onChange={(e) => setSaveFileName(e.target.value)}
+                  placeholder="Nhập tên file..."
+                  className="w-full p-2.5 border border-slate-300 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-mono"
                   autoFocus
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t">
-                <button
-                  type="button"
-                  onClick={() => setIsNewFolderModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all cursor-pointer"
+              <div>
+                <label className="block font-bold text-slate-700 mb-1.5">
+                  Nơi lưu (Ngân hàng ma trận):
+                </label>
+                <select
+                  value={saveFolder}
+                  onChange={(e) => setSaveFolder(e.target.value)}
+                  className="w-full p-2.5 border border-slate-300 rounded-xl font-bold text-xs bg-white outline-none focus:ring-2 focus:ring-emerald-500"
                 >
-                  Hủy
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCreateFolder}
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs shadow transition-all cursor-pointer flex items-center gap-1"
-                >
-                  <Check className="w-4 h-4" /> Tạo thư mục
-                </button>
+                  <option value={`TOÁN ${grade}`}>Thư mục: TOÁN {grade}</option>
+                  <option value="TOÁN 12">Thư mục: TOÁN 12</option>
+                  <option value="TOÁN 11">Thư mục: TOÁN 11</option>
+                  <option value="TOÁN 10">Thư mục: TOÁN 10</option>
+                  <option value="MA TRẬN GIỮA KỲ">Thư mục: MA TRẬN GIỮA KỲ</option>
+                  <option value="MA TRẬN CUỐI KỲ">Thư mục: MA TRẬN CUỐI KỲ</option>
+                </select>
               </div>
             </div>
-          </div>
-        )}
 
-      </div>
+            <div className="flex justify-end gap-2.5 pt-3 border-t">
+              <button
+                type="button"
+                onClick={() => setIsSaveModalOpen(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSaveToBank}
+                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Check className="w-4 h-4" /> Xác nhận lưu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default QuestionBankManager;
+export default QuestionList;
