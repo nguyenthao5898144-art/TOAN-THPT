@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { GeneratedTest, Question } from './types';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
-import { saveTestToBank } from './testBankStorage';
+import { saveMatrixToBank } from './matrixStorage';
 import {
   Edit3, Trash2, Save, FolderArchive, X, Check
 } from 'lucide-react';
@@ -34,9 +34,9 @@ export const QuestionList: React.FC<QuestionListProps> = ({
   const [saveFolder, setSaveFolder] = useState<string>(`TOÁN ${grade}`);
 
   const handleOpenSaveModal = () => {
-    const rawTitle = test.title || `De_Kiem_Tra_Toan_${grade}`;
+    const rawTitle = test.title || `Ma_Tran_Toan_${grade}`;
     const cleanTitle = rawTitle.replace(/[\\/:*?"<>|\s]+/g, '_');
-    setSaveFileName(`${cleanTitle}.docx`);
+    setSaveFileName(`${cleanTitle}.json`);
     setSaveFolder(`TOÁN ${grade}`);
     setIsSaveModalOpen(true);
   };
@@ -47,17 +47,19 @@ export const QuestionList: React.FC<QuestionListProps> = ({
       return;
     }
     try {
-      const testToSave = {
-        ...test,
-        fileName: saveFileName.trim(),
+      saveMatrixToBank({
+        title: saveFileName.trim(),
+        grade: String(grade),
+        durationMinutes: Number(test.config?.durationMinutes || test.durationMinutes || 45),
+        config: test.config || {},
+        yccdCounts: (test as any).yccdCounts || {},
         folderName: saveFolder,
-      };
-      saveTestToBank(testToSave as any);
+      } as any);
       setIsSaveModalOpen(false);
-      alert(`Đã lưu thành công đề thi "${saveFileName}" vào thư mục [${saveFolder}] trong Kho đề!`);
+      alert(`Đã lưu thành công vào thư mục [${saveFolder}] trong Ngân hàng ma trận!`);
     } catch (err) {
       console.error(err);
-      alert('Đã lưu đề thi thành công!');
+      alert('Lưu ma trận thất bại!');
       setIsSaveModalOpen(false);
     }
   };
@@ -70,7 +72,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
 
   return (
     <div className="font-sans space-y-6 max-w-5xl mx-auto pb-12 text-slate-800">
-      {/* 1. THANH TIÊU ĐỀ & NÚT LƯU VÀO KHO ĐỀ */}
+      {/* 1. THANH TIÊU ĐỀ & NÚT LƯU FILE */}
       <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider block">
@@ -314,7 +316,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
         </div>
       )}
 
-      {/* MODAL LƯU MA TRẬN */}
+      {/* MODAL LƯU FILE VÀO NGÂN HÀNG MA TRẬN */}
       {isSaveModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-200 font-sans">
@@ -334,13 +336,13 @@ export const QuestionList: React.FC<QuestionListProps> = ({
             <div className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-slate-700 mb-1.5">
-                  Tên file đề thi (*):
+                  Tên file (*):
                 </label>
                 <input
                   type="text"
                   value={saveFileName}
                   onChange={(e) => setSaveFileName(e.target.value)}
-                  placeholder="Nhập tên file..."
+                  placeholder="Nhập tên file ma trận..."
                   className="w-full p-2.5 border border-slate-300 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-mono"
                   autoFocus
                 />
@@ -359,9 +361,8 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                   <option value="TOÁN 12">Thư mục: TOÁN 12</option>
                   <option value="TOÁN 11">Thư mục: TOÁN 11</option>
                   <option value="TOÁN 10">Thư mục: TOÁN 10</option>
-                  <option value="KIỂM TRA 2026-2027">Thư mục: KIỂM TRA 2026-2027</option>
-                  <option value="ÔN TẬP RÈN LUYỆN">Thư mục: ÔN TẬP RÈN LUYỆN</option>
-                  <option value="Kho đề Azota">Thư mục: Kho đề Azota</option>
+                  <option value="MA TRẬN GIỮA KỲ">Thư mục: MA TRẬN GIỮA KỲ</option>
+                  <option value="MA TRẬN CUỐI KỲ">Thư mục: MA TRẬN CUỐI KỲ</option>
                 </select>
               </div>
             </div>
