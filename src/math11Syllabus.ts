@@ -11,7 +11,7 @@ export interface Topic {
   name: string;
   lessons: Lesson[];
 }
-{/.
+/*
 // 1. CHƯƠNG TRÌNH TOÁN 10 (GDPT 2018)
 export const MATH_10_SYLLABUS: Topic[] = [
   {
@@ -189,7 +189,7 @@ export const MATH_10_SYLLABUS: Topic[] = [
     ],
   },
 ];
-./}
+*/
 // 2. CHƯƠNG TRÌNH TOÁN 11 (GDPT 2018)
 export const MATH_11_SYLLABUS: Topic[] = [
   {
@@ -370,7 +370,7 @@ export const MATH_11_SYLLABUS: Topic[] = [
     ],
   },
 ];
- {/.
+ /*
 // 3. CHƯƠNG TRÌNH TOÁN 12 (GDPT 2018)
 export const MATH_12_SYLLABUS: Topic[] = [
   {
@@ -510,7 +510,7 @@ export const MATH_12_SYLLABUS: Topic[] = [
     ],
   },
 ];
-./}
+*/
 // Hàm trích xuất ngân hàng chương trình theo khối lớp
 export function getSyllabusByGrade(grade: string): Topic[] {
   if (grade === '10') return MATH_10_SYLLABUS;
