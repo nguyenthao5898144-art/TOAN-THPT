@@ -84,8 +84,8 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
       };
     }
 
-    // Kiểm tra mật khẩu (mặc định là 123)
-    if (pass !== '123' && foundStudent.password && pass !== foundStudent.password) {
+    // Kiểm tra mật khẩu (mặc định là 12345)
+    if (pass !== '12345' && foundStudent.password && pass !== foundStudent.password) {
       setLoginError('Mật khẩu không chính xác! (Mật khẩu mặc định là 123)');
       return;
     }
@@ -117,7 +117,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
     const defaultCfg = testConfig || {
       title: assignmentTitle || 'BÀI KIỂM TRA TOÁN THPT - GDPT 2018',
       grade: '11',
-      durationMinutes: 45,
+      durationMinutes: 90,
       selectedTopicIds: [],
       selectedOutcomes: [],
     };
@@ -272,7 +272,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
                 type="text"
                 value={usernameInput}
                 onChange={(e) => setUsernameInput(e.target.value)}
-                placeholder="Nhập tên đăng nhập / mã học sinh / số báo danh..."
+                placeholder="Nhập tên đăng nhập"
                 className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white outline-none focus:border-blue-500"
                 autoFocus
               />
@@ -287,7 +287,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ testConfig, assign
                   type={showPassword ? 'text' : 'password'}
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
-                  placeholder="Nhập mật khẩu (Mặc định: 123)..."
+                  placeholder="Nhập mật khẩu (Mặc định: 12345)..."
                   className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white outline-none focus:border-blue-500 pr-10"
                 />
                 <button
