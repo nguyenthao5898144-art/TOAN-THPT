@@ -15,14 +15,9 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
   const [selectedFolder, setSelectedFolder] = useState<string>('TẤT CẢ');
   const [searchTerm, setSearchTerm] = useState<string>('');
   
-  // Danh mục thư mục chuẩn hóa và làm sạch cho ma trận
+  // Chỉ giữ lại "TẤT CẢ", các thư mục sẽ tự động cập nhật theo dữ liệu thực tế hoặc do thầy tự tạo
   const [folders, setFolders] = useState<string[]>([
-    'TẤT CẢ',
-    'TOÁN 10',
-    'TOÁN 11',
-    'TOÁN 12',
-    'MA TRẬN GIỮA KỲ',
-    'MA TRẬN CUỐI KỲ'
+    'TẤT CẢ'
   ]);
 
   // Modal tạo thư mục ma trận mới
@@ -37,6 +32,12 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
     try {
       const data = getSavedMatrices();
       setMatrices(data || []);
+      
+      // Tự động quét các thư mục từ danh sách ma trận đã lưu để hiển thị nếu có
+      if (data && data.length > 0) {
+        const existingFolders = Array.from(new Set(data.map((m: any) => m.folderName).filter(Boolean)));
+        setFolders(prev => Array.from(new Set([...prev, ...existingFolders])));
+      }
     } catch (e) {
       console.error(e);
       setMatrices([]);
@@ -67,7 +68,7 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
   };
 
   const filteredMatrices = matrices.filter((m: any) => {
-    const folderMatch = selectedFolder === 'TẤT CẢ' || (`TOÁN ${m.grade}` === selectedFolder) || ((m.folderName || '').toUpperCase() === selectedFolder);
+    const folderMatch = selectedFolder === 'TẤT CẢ' || (m.folderName || '').toUpperCase() === selectedFolder;
     const searchMatch = (m.title || '').toLowerCase().includes(searchTerm.toLowerCase());
     return folderMatch && searchMatch;
   });
@@ -137,7 +138,7 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
               {folders.map((folder) => {
                 const count = folder === 'TẤT CẢ' 
                   ? matrices.length 
-                  : matrices.filter((m: any) => `TOÁN ${m.grade}` === folder || (m.folderName || '').toUpperCase() === folder).length;
+                  : matrices.filter((m: any) => (m.folderName || '').toUpperCase() === folder).length;
                 
                 const isSelected = selectedFolder === folder;
 
@@ -194,7 +195,7 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
                     <div className="space-y-1.5">
                       <div className="flex items-start justify-between gap-2">
                         <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-mono">
-                          TOÁN {matrix.grade || '10'}
+                          {matrix.folderName || `TOÁN ${matrix.grade || '10'}`}
                         </span>
                         <span className="text-[10px] text-slate-400 font-medium">
                           {matrix.createdAt ? new Date(matrix.createdAt).toLocaleDateString('vi-VN') : 'Gần đây'}
