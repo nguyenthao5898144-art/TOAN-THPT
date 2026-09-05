@@ -197,25 +197,25 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
     const allOutcomes = selectedTopics.flatMap((t) => t.lessons.flatMap((l) => l.outcomes));
     setSelectedOutcomes(allOutcomes);
   };
-
-  const handleDeselectAllYccd = () => {
-    setSelectedOutcomes([]);
-  };
-
-  const applyPreset = (preset: 'standard' | '15min' | 'advanced') => {
+const applyPreset = (preset: 'standard' | '15min' | 'advanced') => {
     setActivePreset(preset);
     if (preset === 'standard') {
-      setDurationMinutes(45);
+      setDurationMinutes(45); // <--- Xóa dòng này
       setMcNB(6); setMcTH(4); setMcVD(2);
       setTfNB(1); setTfTH(2); setTfVD(1);
       setSaNB(1); setSaTH(2); setSaVD(3);
     } else if (preset === '15min') {
-      setDurationMinutes(15);
+      setDurationMinutes(15); // <--- Xóa dòng này
       setMcNB(3); setMcTH(2); setMcVD(1);
       setTfNB(0); setTfTH(1); setTfVD(1);
       setSaNB(0); setSaTH(1); setSaVD(1);
     } else if (preset === 'advanced') {
-      setDurationMinutes(90);
+      setDurationMinutes(90); // <--- Xóa dòng này
+      setMcNB(4); setMcTH(4); setMcVD(4);
+      setTfNB(0); setTfTH(2); setTfVD(2);
+      setSaNB(0); setSaTH(1); setSaVD(1);
+    }
+  };
       setMcNB(4); setMcTH(4); setMcVD(4);
       setTfNB(0); setTfTH(2); setTfVD(2);
       setSaNB(0); setSaTH(1); setSaVD(1);
