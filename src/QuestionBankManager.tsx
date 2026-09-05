@@ -10,7 +10,7 @@ interface MatrixBankManagerProps {
   onSelectMatrix?: (matrix: SavedMatrix) => void;
 }
 
-export const MatrixBankManager: React.FC<MatrixBankManagerProps> = ({ onClose, onSelectMatrix }) => {
+export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose, onSelectMatrix }) => {
   const [matrices, setMatrices] = useState<SavedMatrix[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<string>('TẤT CẢ');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -292,4 +292,4 @@ export const MatrixBankManager: React.FC<MatrixBankManagerProps> = ({ onClose, o
   );
 };
 
-export default MatrixBankManager;
+export default QuestionBankManager;
