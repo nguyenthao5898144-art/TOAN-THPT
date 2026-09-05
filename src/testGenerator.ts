@@ -78,7 +78,6 @@ export function createDefaultTest(config?: Partial<TestConfig>): GeneratedTest {
     ...config
   });
 }
-
-export const generateUniqueDiagramsInText = (text: any, student?: any): -> // Sai tên và thừa ký tự
+export const generateUniqueTextForStudent = (text: any, student?: any): any => {
   return text || '';
 };
