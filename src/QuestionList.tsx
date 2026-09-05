@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { GeneratedTest, Question } from './types';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
+import { saveMatrixToBank } from './matrixStorage';
 import {
   Edit3, Trash2, Save, FolderArchive, X, Check
 } from 'lucide-react';
@@ -32,7 +33,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
   const [saveFileName, setSaveFileName] = useState<string>('');
   const [saveFolder, setSaveFolder] = useState<string>('TOÁN 10A3');
 
-  // Lấy danh sách thư mục do thầy đã tạo từ localStorage
+  // Lấy danh sách thư mục thực tế từ localStorage chung
   const getAvailableFolders = () => {
     try {
       const stored = localStorage.getItem('matrix_custom_folders');
@@ -65,24 +66,15 @@ export const QuestionList: React.FC<QuestionListProps> = ({
     try {
       const targetFolder = (saveFolder || 'TOÁN 10A3').trim().toUpperCase();
       
-      // Lưu trực tiếp vào localStorage với key chung của hệ thống ma trận
-      const STORAGE_KEY = 'saved_matrix_bank_items';
-      const existingData = localStorage.getItem(STORAGE_KEY);
-      const matrices = existingData ? JSON.parse(existingData) : [];
-
-      const newMatrix = {
-        id: 'matrix_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+      // GỌI TRỰC TIẾP HÀM LƯU CHUẨN CỦA HỆ THỐNG (đảm bảo đồng bộ tuyệt đối với QuestionBankManager)
+      saveMatrixToBank({
         title: saveFileName.trim(),
         grade: String(grade),
         durationMinutes: Number(test.config?.durationMinutes || test.durationMinutes || 45),
         config: test.config || {},
         yccdCounts: (test as any).yccdCounts || {},
         folderName: targetFolder,
-        createdAt: new Date().toISOString(),
-      };
-
-      matrices.unshift(newMatrix);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(matrices));
+      } as any);
 
       setIsSaveModalOpen(false);
       alert(`Đã lưu thành công vào thư mục [${targetFolder}] trong Ngân hàng ma trận!`);
@@ -400,7 +392,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                   ))}
                 </select>
                 <p className="text-[11px] text-slate-500 mt-1.5 italic">
-                  * Tên thư mục được đồng bộ trực tiếp. Lưu xong sẽ tự động về trang chủ Ngân hàng ma trận.
+                  * Sử dụng chung hàm lưu trữ `saveMatrixToBank`. Lưu xong sẽ tự động về trang chủ Ngân hàng ma trận.
                 </p>
               </div>
             </div>
@@ -408,7 +400,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
             <div className="flex justify-end gap-2.5 pt-3 border-t">
               <button
                 type="button"
-                    onClick={() => setIsSaveModalOpen(false)}
+                onClick={() => setIsSaveModalOpen(false)}
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all cursor-pointer"
               >
                 Hủy
