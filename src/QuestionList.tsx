@@ -77,14 +77,15 @@ export const QuestionList: React.FC<QuestionListProps> = ({
       {/* 1. THANH TIÊU ĐỀ & NÚT LƯU VÀO KHO ĐỀ */}
       <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
+          <div>
           <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider block">
             ĐỀ THI CHUẨN ĐỊNH DẠNG GDPT 2018 (22 CÂU - 10 ĐIỂM)
           </span>
           <h2 className="text-lg sm:text-xl font-black text-slate-900 mt-0.5">
             {test.title}
           </h2>
-         Khối lớp: <strong>Toán {grade}</strong> • Thời gian: <strong>{test.config?.durationMinutes || test.durationMinutes || 45} phút</strong>
-            Khối lớp: <strong>Toán {grade}</strong> • Thời gian: <strong>{test.config?.durationMinutes || 45} phút</strong>
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            Khối lớp: <strong>Toán {grade}</strong> • Thời gian: <strong>{test.config?.durationMinutes || test.durationMinutes || 45} phút</strong>
           </p>
         </div>
 
