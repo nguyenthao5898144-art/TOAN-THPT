@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TestConfig, GeneratedTest, StudentAccount, StudentSubmission } from './types';
-import { generateUniqueTestForStudent } from './testGenerator';
+import { generateUniqueTextForStudent } from './textGenerator';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
 import { getStoredClasses, saveStudentSubmission, ClassRoom } from './classStorage';
