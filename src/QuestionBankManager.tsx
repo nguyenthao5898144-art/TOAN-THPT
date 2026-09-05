@@ -15,12 +15,10 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
   const [selectedFolder, setSelectedFolder] = useState<string>('TẤT CẢ');
   const [searchTerm, setSearchTerm] = useState<string>('');
   
-  // Chỉ giữ lại "TẤT CẢ", các thư mục sẽ tự động cập nhật theo dữ liệu thực tế hoặc do thầy tự tạo
   const [folders, setFolders] = useState<string[]>([
     'TẤT CẢ'
   ]);
 
-  // Modal tạo thư mục ma trận mới
   const [isNewFolderModalOpen, setIsNewFolderModalOpen] = useState<boolean>(false);
   const [newFolderName, setNewFolderName] = useState<string>('');
 
@@ -33,21 +31,51 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
       const data = getSavedMatrices();
       setMatrices(data || []);
       
-      // Tự động quét các thư mục từ danh sách ma trận đã lưu để hiển thị nếu có
-      if (data && data.length > 0) {
-        const existingFolders = Array.from(new Set(data.map((m: any) => m.folderName).filter(Boolean)));
-        setFolders(prev => Array.from(new Set([...prev, ...existingFolders])));
-      }
+      const savedMatricesFolders = (data || []).map((m: any) => (m.folderName || '').trim().toUpperCase());
+      const storedCustom = localStorage.getItem('matrix_custom_folders');
+      const parsedCustom = storedCustom ? JSON.parse(storedCustom) : [];
+
+      const combined = Array.from(new Set(['TẤT CẢ', ...parsedCustom, ...savedMatricesFolders].filter(Boolean)));
+      setFolders(combined);
     } catch (e) {
       console.error(e);
       setMatrices([]);
     }
   };
 
-  const handleDelete = (id: string, title: string) => {
+  const handleDeleteMatrix = (id: string, title: string) => {
     if (window.confirm(`Thầy có chắc chắn muốn xóa ma trận "${title}" không?`)) {
       deleteMatrixFromBank(id);
       loadMatrices();
+    }
+  };
+
+  const handleDeleteFolder = (folderNameToDelete: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const upperFolder = folderNameToDelete.toUpperCase();
+    if (upperFolder === 'TẤT CẢ') {
+      alert('Không thể xóa thư mục hệ thống "TẤT CẢ"!');
+      return;
+    }
+
+    if (window.confirm(`Thầy có chắc chắn muốn xóa thư mục "${folderNameToDelete}" không?`)) {
+      try {
+        const updatedFolders = folders.filter(f => f.toUpperCase() !== upperFolder);
+        setFolders(updatedFolders);
+        
+        const customToSave = updatedFolders.filter(f => f.toUpperCase() !== 'TẤT CẢ');
+        localStorage.setItem('matrix_custom_folders', JSON.stringify(customToSave));
+
+        if (selectedFolder.toUpperCase() === upperFolder) {
+          setSelectedFolder('TẤT CẢ');
+        }
+        
+        loadMatrices();
+      } catch (err) {
+        console.error(err);
+        alert('Xóa thư mục thất bại!');
+      }
     }
   };
 
@@ -61,14 +89,22 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
       alert('Thư mục này đã tồn tại!');
       return;
     }
-    setFolders([...folders, trimmed]);
+    const updatedFolders = [...folders, trimmed];
+    setFolders(updatedFolders);
+    
+    const customToSave = updatedFolders.filter(f => f.toUpperCase() !== 'TẤT CẢ');
+    localStorage.setItem('matrix_custom_folders', JSON.stringify(customToSave));
+    
     setSelectedFolder(trimmed);
     setNewFolderName('');
     setIsNewFolderModalOpen(false);
   };
 
   const filteredMatrices = matrices.filter((m: any) => {
-    const folderMatch = selectedFolder === 'TẤT CẢ' || (m.folderName || '').toUpperCase() === selectedFolder;
+    const itemFolder = (m.folderName || '').trim().toUpperCase();
+    const currentFolder = selectedFolder.trim().toUpperCase();
+    
+    const folderMatch = currentFolder === 'TẤT CẢ' || itemFolder === currentFolder;
     const searchMatch = (m.title || '').toLowerCase().includes(searchTerm.toLowerCase());
     return folderMatch && searchMatch;
   });
@@ -138,44 +174,58 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
               {folders.map((folder) => {
                 const count = folder === 'TẤT CẢ' 
                   ? matrices.length 
-                  : matrices.filter((m: any) => (m.folderName || '').toUpperCase() === folder).length;
+                  : matrices.filter((m: any) => (m.folderName || '').trim().toUpperCase() === folder.toUpperCase()).length;
                 
-                const isSelected = selectedFolder === folder;
+                const isSelected = selectedFolder.toUpperCase() === folder.toUpperCase();
+                const isAll = folder.toUpperCase() === 'TẤT CẢ';
 
                 return (
                   <button
                     key={folder}
                     type="button"
                     onClick={() => setSelectedFolder(folder)}
-                    className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
+                    className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer group ${
                       isSelected 
                         ? 'bg-emerald-600 text-white shadow-md' 
                         : 'bg-slate-50/70 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 truncate">
-                      <Folder className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-emerald-500'}`} />
+                    <div className="flex items-center gap-2.5 truncate flex-1 pr-2">
+                      <Folder className={`w-4 h-4 shrink-0 ${isSelected ? 'text-white' : 'text-emerald-500'}`} />
                       <span className="truncate">{folder}</span>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                      isSelected ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-600'
-                    }`}>
-                      {count}
-                    </span>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                        isSelected ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        {count}
+                      </span>
+
+                      {!isAll && (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => handleDeleteFolder(folder, e)}
+                          className={`p-1 rounded-lg transition-all ${
+                            isSelected 
+                              ? 'hover:bg-emerald-700 text-emerald-200 text-emerald-200 hover:text-white' 
+                              : 'hover:bg-rose-100 text-slate-400 hover:text-rose-600'
+                          }`}
+                          title="Xóa thư mục"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </span>
+                      )}
+                    </div>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* CỘT PHẢI: DANH SÁCH MA TRẬN */}
+          {/* CỘT PHẢI: DANH SÁCH MA TRẬN (Đã lược bỏ dòng tiêu đề danh mục) */}
           <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm lg:col-span-3 space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h2 className="text-xs sm:text-sm font-black text-slate-900 uppercase">
-                Danh mục: <span className="text-emerald-600">{selectedFolder}</span> ({filteredMatrices.length} ma trận)
-              </h2>
-            </div>
-
             {filteredMatrices.length === 0 ? (
               <div className="text-center py-16 space-y-3">
                 <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto">
@@ -195,7 +245,7 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
                     <div className="space-y-1.5">
                       <div className="flex items-start justify-between gap-2">
                         <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-mono">
-                          {matrix.folderName || `TOÁN ${matrix.grade || '10'}`}
+                          {matrix.folderName || 'TẤT CẢ'}
                         </span>
                         <span className="text-[10px] text-slate-400 font-medium">
                           {matrix.createdAt ? new Date(matrix.createdAt).toLocaleDateString('vi-VN') : 'Gần đây'}
@@ -223,7 +273,7 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
                       )}
                       <button
                         type="button"
-                        onClick={() => handleDelete(matrix.id, matrix.title)}
+                        onClick={() => handleDeleteMatrix(matrix.id, matrix.title)}
                         className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl transition-all cursor-pointer"
                         title="Xóa ma trận"
                       >
@@ -262,7 +312,7 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
                   type="text"
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
-                  placeholder="Nhập tên thư mục..."
+                  placeholder="VD: TOÁN 11, HÌNH HỌC 12..."
                   className="w-full p-2.5 border border-slate-300 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-emerald-500 uppercase"
                   autoFocus
                 />
