@@ -227,12 +227,10 @@ export default function App() {
                     <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><Sparkles className="w-7 h-7" /></div>
                     <span className="font-bold text-sm text-slate-800">Đề thi</span>
                   </div>
-                  <div onClick={() => handleNavigate('classes')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 min-h-[150px]">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><StackIcon className="w-7 h-7" /></div>
-                    <span className="font-bold text-sm text-slate-800">Quản lý lớp</span>
-                  </div>
-                </div>
-              </div>
+                  <div onClick={() => handleNavigate('bank')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 min-h-[150px]">
+  <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><BookOpen className="w-7 h-7" /></div>
+  <span className="font-bold text-sm text-slate-800">Ngân hàng ma trận</span>
+</div>
 
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-slate-900 px-1">Nội dung & Công cụ</h3>
