@@ -658,7 +658,7 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
           className="w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:bg-slate-300 text-white rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl hover:shadow-2xl transition-all cursor-pointer tracking-wider uppercase"
         >
           <Sparkles className="w-5 h-5 text-amber-300" />
-          KIỂM TRA
+          TẠO MA TRẬN
         </button>
         <p className="text-[11px] text-slate-500 text-center font-medium">
           Hệ thống tự động biên soạn mới và chuẩn hóa trọn bộ {totalQuestions} câu hỏi Toán {grade} đúng ma trận YCCĐ
