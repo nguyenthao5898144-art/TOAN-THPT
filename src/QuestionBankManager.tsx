@@ -15,7 +15,7 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
   const [selectedFolder, setSelectedFolder] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   
-  // Khởi tạo hoàn toàn trống trơn, không còn dính mục "TẤT CẢ" nào nữa
+  // Hoàn toàn trống trơn ban đầu, tự quét động từ dữ liệu lưu trữ
   const [folders, setFolders] = useState<string[]>([]);
 
   const [isNewFolderModalOpen, setIsNewFolderModalOpen] = useState<boolean>(false);
@@ -30,6 +30,7 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
       const data = getSavedMatrices();
       setMatrices(data || []);
       
+      // Quét tất cả các thư mục từ file đã lưu và danh sách tùy chỉnh đã tạo
       const savedMatricesFolders = (data || []).map((m: any) => (m.folderName || '').trim().toUpperCase());
       const storedCustom = localStorage.getItem('matrix_custom_folders');
       const parsedCustom = storedCustom ? JSON.parse(storedCustom) : [];
@@ -37,8 +38,11 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
       const combined = Array.from(new Set([...parsedCustom, ...savedMatricesFolders].filter(Boolean)));
       setFolders(combined);
 
-      if (!selectedFolder && combined.length > 0) {
+      // Tự động chọn thư mục đầu tiên nếu chưa chọn hoặc thư mục hiện tại không còn tồn tại
+      if (!combined.includes(selectedFolder) && combined.length > 0) {
         setSelectedFolder(combined[0]);
+      } else if (combined.length === 0) {
+        setSelectedFolder('');
       }
     } catch (e) {
       console.error(e);
@@ -53,7 +57,7 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
     }
   };
 
-  // XÓA THƯ MỤC: Tạo được là xóa được, bắt buộc hỏi lại
+  // XÓA THƯ MỤC: Cái gì tạo được thì xóa được, bắt buộc hỏi lại
   const handleDeleteFolder = (folderNameToDelete: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
@@ -161,7 +165,7 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
                           {count}
                         </span>
 
-                        {/* NÚT XÓA THƯ MỤC: Xóa bất kỳ thư mục nào kèm hộp thoại xác nhận */}
+                        {/* NÚT XÓA THƯ MỤC: Xóa có hỏi lại */}
                         <span
                           role="button"
                           tabIndex={0}
@@ -280,7 +284,7 @@ export const QuestionBankManager: React.FC<MatrixBankManagerProps> = ({ onClose,
                   type="text"
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
-                  placeholder="VD: TOÁN 11, HÌNH HỌC 12..."
+                  placeholder="VD: TOÁN 10, TOÁN 11..."
                   className="w-full p-2.5 border border-slate-300 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-emerald-500 uppercase"
                   autoFocus
                 />
