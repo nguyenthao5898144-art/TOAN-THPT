@@ -6,40 +6,58 @@ import * as Math12Module from './math12Syllabus';
 export const ensureUniqueDiagramsInText = (text: any): any => text || '';
 export const sanitizeQuestionMath = (q: any): any => q || {};
 
-// ==============================================================
-// 1. LIÊN KẾT ĐÚNG FILE NGUỒN THEO TỪNG KHỐI LỚP (10, 11, 12)
-// ==============================================================
-export const getSyllabusForGrade = (grade: string) => {
+// Lấy đúng dữ liệu syllabus theo từng khối lớp từ các file nguồn
+export const getSyllabusForGrade = (grade: string | number): Question[] => {
   try {
-    if (grade === '10') {
-      return (Math10Module as any).MATH_10_SYLLABUS || (Math10Module as any).math10Syllabus || (Math10Module as any).default || [];
+    const gStr = String(grade);
+    let moduleData: any = null;
+
+    if (gStr === '10') {
+      moduleData = Math10Module;
+    } else if (gStr === '11') {
+      moduleData = Math11Module;
+    } else {
+      moduleData = Math12Module;
     }
-    if (grade === '11') {
-      return (Math11Module as any).MATH_11_SYLLABUS || (Math11Module as any).math11Syllabus || (Math11Module as any).default || [];
-    }
-    return (Math12Module as any).MATH_12_SYLLABUS || (Math12Module as any).math12Syllabus || (Math12Module as any).default || [];
-  } catch {
+
+    // Tự động quét các dạng tên biến xuất khẩu phổ biến trong file syllabus
+    const questions = 
+      moduleData.MATH_10_SYLLABUS || moduleData.math10Syllabus ||
+      moduleData.MATH_11_SYLLABUS || moduleData.math11Syllabus ||
+      moduleData.MATH_12_SYLLABUS || moduleData.math12Syllabus ||
+      moduleData.default || [];
+
+    return Array.isArray(questions) ? questions : [];
+  } catch (err) {
     return [];
   }
 };
 
-// ==============================================================
-// 2. NGÂN HÀNG TRỌN BỘ CÂU HỎI TOÁN 10 CHUẨN GDPT 2018
-// ==============================================================
-export const MATH_10_QUESTIONS: Question[] = [
-  { id: 'q10_1', type: 'multiple_choice', level: 'NhanBiet', topicName: 'Mệnh đề và Tập hợp', lessonName: 'Mệnh đề toán học', outcome: 'YCCĐ 1', content: 'Phủ định của mệnh đề $P$: "$\\forall x \\in \\mathbb{R}, x^2 + 1 > 0$" là mệnh đề:', options: [{ key: 'A', text: '"$\\exists x \\in \\mathbb{R}, x^2 + 1 \\le 0$"' }, { key: 'B', text: '"$\\exists x, x^2 + 1 < 0$"' }, { key: 'C', text: '"$\\forall x, x^2 + 1 \\le 0$"' }, { key: 'D', text: '"$\\exists x, x^2 + 1 > 0$"' }], correctAnswer: 'A', solution: 'Phủ định là $\\exists$ và $\\le$.' },
-  { id: 'q10_2', type: 'multiple_choice', level: 'NhanBiet', topicName: 'Mệnh đề và Tập hợp', lessonName: 'Tập hợp', outcome: 'YCCĐ 1', content: 'Cho hai tập hợp $A = [-2; 3]$ và $B = (1; 5)$. Giao của hai tập hợp $A \\cap B$ là:', options: [{ key: 'A', text: '$(1; 3]$' }, { key: 'B', text: '[-2; 5)' }, { key: 'C', text: '[1; 3]' }, { key: 'D', text: '(-2; 1]' }], correctAnswer: 'A', solution: '$A \\cap B = (1; 3]$.' }
-];
-
-// ==============================================================
-// 3. HÀM SINH ĐỀ CHÍNH THEO CẤU HÌNH
-// ==============================================================
 export function generateTest(config: TestConfig): GeneratedTest {
   const gradeStr = String(config.grade || '10');
   let questionsPool = getSyllabusForGrade(gradeStr);
-  
+
+  // Nếu file syllabus chưa có dữ liệu, dùng mảng dự phòng an toàn để không crash hệ thống
   if (!questionsPool || questionsPool.length === 0) {
-    questionsPool = MATH_10_QUESTIONS;
+    questionsPool = [
+      {
+        id: `q${gradeStr}_fallback`,
+        type: 'multiple_choice',
+        level: 'NhanBiet',
+        topicName: `Chương trình Toán ${gradeStr}`,
+        lessonName: 'Khung ma trận chuẩn GDPT 2018',
+        outcome: 'YCCĐ cơ bản',
+        content: `Đề kiểm tra định kì môn Toán lớp ${gradeStr} theo chuẩn Công văn 7991.`,
+        options: [
+          { key: 'A', text: 'Đáp án A' },
+          { key: 'B', text: 'Đáp án B' },
+          { key: 'C', text: 'Đáp án C' },
+          { key: 'D', text: 'Đáp án D' }
+        ],
+        correctAnswer: 'A',
+        solution: 'Đáp án chuẩn theo ma trận đề.'
+      }
+    ];
   }
 
   const durationValue = config.duration ? Number(config.duration) : 45;
