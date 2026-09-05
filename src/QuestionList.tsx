@@ -90,7 +90,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
             onClick={handleOpenSaveModal}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition-all cursor-pointer"
           >
-            <Save className="w-4 h-4" /> Lưu vào Kho đề
+            <Save className="w-4 h-4" /> Lưu file
           </button>
 
           {onOpenBank && (
