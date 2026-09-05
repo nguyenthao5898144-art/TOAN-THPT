@@ -24,7 +24,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'part1' | 'part2' | 'part3'>('all');
 
-  const grade = test.config?.grade || (test as any).grade || '11';
+  const grade = test.config?.grade || (test as any).grade || '10';
   const questions = test.questions || [];
   const part1 = questions.filter((q) => q.type === 'multiple_choice');
   const part2 = questions.filter((q) => q.type === 'true_false');
