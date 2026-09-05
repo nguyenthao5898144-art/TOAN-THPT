@@ -1,18 +1,5 @@
-export interface Lesson {
-  id: string;
-  name: string;
-  outcomes: string[];
-}
+import { Topic } from './types'; // hoặc định nghĩa lại giao diện Topic/Lesson ở đây
 
-export interface Topic {
-  id: string;
-  grade: '10' | '11' | '12';
-  category: 'Đại Số' | 'Giải Tích' | 'Hình Học' | 'Thống Kê & Xác Suất' | 'Chuyên Đề Học Tập';
-  name: string;
-  lessons: Lesson[];
-}
-
-// 1. CHƯƠNG TRÌNH TOÁN 10 (GDPT 2018)
 export const MATH_10_SYLLABUS: Topic[] = [
   {
     id: 'topic_10_menh_de_tap_hop',
@@ -189,58 +176,3 @@ export const MATH_10_SYLLABUS: Topic[] = [
     ],
   },
 ];
-
-// Giả định khai báo tương thích cho MATH_11_SYLLABUS nếu cần
-export const MATH_11_SYLLABUS: Topic[] = [];
-
-// Khai báo MATH_12_SYLLABUS (hoặc import từ nguồn)
-export const MATH_12_SYLLABUS: Topic[] = [
-  {
-    id: 'topic_dao_ham',
-    grade: '12',
-    category: 'Giải Tích',
-    name: 'Ứng dụng đạo hàm để khảo sát và vẽ đồ thị của hàm số',
-    lessons: [
-      {
-        id: 'lesson_don_dieu',
-        name: 'Tính đơn điệu của hàm số',
-        outcomes: [
-          'Nhận biết được tính đồng biến, nghịch biến của một hàm số trên một khoảng dựa vào dấu của đạo hàm cấp một của nó.',
-          'Thể hiện được tính đồng biến, nghịch biến của hàm số trong bảng biến thiên.',
-          'Nhận biết được tính đơn điệu, điểm cực trị, giá trị cực trị của hàm số thông qua bảng biến thiên hoặc thông qua hình ảnh hình học của đồ thị hàm số.',
-        ],
-      },
-      {
-        id: 'lesson_gtln_gtnn',
-        name: 'Giá trị lớn nhất, giá trị nhỏ nhất của hàm số',
-        outcomes: [
-          'Nhận biết được giá trị lớn nhất, giá trị nhỏ nhất của hàm số trên một tập xác định cho trước.',
-          'Xác định được giá trị lớn nhất, giá trị nhỏ nhất của hàm số bằng đạo hàm trong những trường hợp đơn giản.',
-        ],
-      },
-      {
-        id: 'lesson_khao_sat_do_thi',
-        name: 'Khảo sát và vẽ đồ thị của hàm số',
-        outcomes: [
-          'Nhận biết được hình ảnh hình học của đường tiệm cận ngang, đường tiệm cận đứng, đường tiệm cận xiên của đồ thị hàm số.',
-          'Mô tả được sơ đồ tổng quát để khảo sát hàm số (tìm tập xác định, xét chiều biến thiên, tìm cực trị, tìm tiệm cận, lập bảng biến thiên, vẽ đồ thị).',
-          'Khảo sát được tập xác định, chiều biến thiên, cực trị, tiệm cận, bảng biến thiên và vẽ đồ thị của các hàm số bậc ba, hàm phân thức bậc nhất/bậc nhất và bậc hai/bậc nhất.',
-        ],
-      },
-      {
-        id: 'lesson_ung_dung_thuc_te',
-        name: 'Ứng dụng đạo hàm để giải quyết một số vấn đề liên quan đến thực tiễn',
-        outcomes: [
-          'Vận dụng đạo hàm và khảo sát hàm số để giải quyết một số bài toán tối ưu trong đời sống, kinh tế, vật lí.',
-        ],
-      },
-    ],
-  },
-];
-
-// Hàm trích xuất ngân hàng chương trình theo khối lớp
-export function getSyllabusByGrade(grade: string): Topic[] {
-  if (grade === '10') return MATH_10_SYLLABUS;
-  if (grade === '11') return MATH_11_SYLLABUS;
-  return MATH_12_SYLLABUS;
-}
