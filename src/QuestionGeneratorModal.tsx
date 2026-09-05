@@ -644,10 +644,10 @@ export const QuestionGeneratorModal: React.FC<QuestionGeneratorModalProps> = ({
         </div>
       </div>
 
-      {/* 4. NÚT DUY NHẤT "KIỂM TRA" */}
+      {/* 4. NÚT DUY NHẤT "TẠO MA TRẬN" */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
         <div className="flex justify-between items-center border-b pb-2 text-xs font-bold text-slate-700">
-          <span>BƯỚC 3: XÁC NHẬN CẤU HÌNH & KHỞI TẠO ĐỀ THI</span>
+          <span>BƯỚC 3: XÁC NHẬN CẤU HÌNH & KHỞI TẠO MA TRẬN </span>
           <span className="text-blue-700 font-bold">{totalQuestions} câu hỏi ({durationMinutes} phút) | {totalScore} điểm</span>
         </div>
 
