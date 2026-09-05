@@ -214,20 +214,10 @@ export default function App() {
 
         <main className="flex-1 p-4 sm:p-8 overflow-y-auto">
           {/* TRANG CHỦ */}
-          {isAtHome && (
-            <div className="max-w-6xl mx-auto space-y-8">
-              <div className="space-y-3">
-                <h3 className="text-sm font-bold text-slate-900 px-1">Quản lý học tập</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  <div onClick={() => handleNavigate('assign')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 min-h-[150px]">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><FileText className="w-7 h-7" /></div>
-                    <span className="font-bold text-sm text-slate-800">Bài tập</span>
-                  </div>
-                  <div onClick={() => handleNavigate('create')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 min-h-[150px]">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><Sparkles className="w-7 h-7" /></div>
-                    <span className="font-bold text-sm text-slate-800">Đề thi</span>
-                  </div>
-                  <div onClick={() => handleNavigate('bank')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 min-h-[150px]">
+         <div onClick={() => handleNavigate('create')} className="p-8 bg-white rounded-2xl border shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center text-center space-y-3 min-h-[150px]">
+  <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><Sparkles className="w-7 h-7" /></div>
+  <span className="font-bold text-sm text-slate-800">Tạo ma trận</span>
+</div>
   <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><BookOpen className="w-7 h-7" /></div>
   <span className="font-bold text-sm text-slate-800">Ngân hàng ma trận</span>
 </div>
