@@ -60,7 +60,7 @@ export function generateTest(config: TestConfig): GeneratedTest {
     ];
   }
 
-  const durationValue = config.duration ? Number(config.duration) : 90;
+  const durationValue = config.duration ? Number(config.duration) : 45;
 
   return {
     id: 'test_' + Date.now(),
@@ -70,6 +70,7 @@ export function generateTest(config: TestConfig): GeneratedTest {
     createdAt: new Date().toISOString()
   };
 }
+
 export function createDefaultTest(config?: Partial<TestConfig>): GeneratedTest {
   return generateTest({
     grade: 10,
