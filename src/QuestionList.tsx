@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { GeneratedTest, Question } from './types';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
 import { saveTestToBank } from './testBankStorage';
 import {
-  Edit3, Trash2, FileText, Save, FolderArchive, BookOpen,
-  FolderPlus, X, Check, Folder
+  Edit3, Trash2, Save, FolderArchive, X, Check
 } from 'lucide-react';
 
 interface QuestionListProps {
@@ -30,12 +29,10 @@ export const QuestionList: React.FC<QuestionListProps> = ({
   const part2 = questions.filter((q) => q.type === 'true_false');
   const part3 = questions.filter((q) => q.type === 'short_answer');
 
-  // MODAL LƯU VÀO KHO ĐỀ (CÓ NƠI LƯU & TỰ ĐIỀN TÊN FILE)
   const [isSaveModalOpen, setIsSaveModalOpen] = useState<boolean>(false);
   const [saveFileName, setSaveFileName] = useState<string>('');
   const [saveFolder, setSaveFolder] = useState<string>(`TOÁN ${grade}`);
 
-  // Tự động điền tên file chuẩn và nơi lưu khi mở modal
   const handleOpenSaveModal = () => {
     const rawTitle = test.title || `De_Kiem_Tra_Toan_${grade}`;
     const cleanTitle = rawTitle.replace(/[\\/:*?"<>|\s]+/g, '_');
@@ -44,7 +41,6 @@ export const QuestionList: React.FC<QuestionListProps> = ({
     setIsSaveModalOpen(true);
   };
 
-  // Xác nhận lưu vào kho
   const handleConfirmSaveToBank = () => {
     if (!saveFileName.trim()) {
       alert('Vui lòng nhập tên file!');
@@ -77,7 +73,6 @@ export const QuestionList: React.FC<QuestionListProps> = ({
       {/* 1. THANH TIÊU ĐỀ & NÚT LƯU VÀO KHO ĐỀ */}
       <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div>
           <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider block">
             ĐỀ THI CHUẨN ĐỊNH DẠNG GDPT 2018 (22 CÂU - 10 ĐIỂM)
           </span>
@@ -90,7 +85,6 @@ export const QuestionList: React.FC<QuestionListProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* NÚT LƯU VÀO KHO ĐỀ -> BẬT MODAL CHỌN NƠI LƯU & TỰ ĐIỀN TÊN */}
           <button
             type="button"
             onClick={handleOpenSaveModal}
@@ -143,7 +137,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
         </button>
       </div>
 
-      {/* PHẦN I: TRẮC NGHIỆM 4 LỰA CHỌN (12 CÂU) */}
+      {/* PHẦN I */}
       {(activeTab === 'all' || activeTab === 'part1') && (
         <div className="space-y-4">
           <div className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
@@ -210,7 +204,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
         </div>
       )}
 
-      {/* PHẦN II: TRẮC NGHIỆM ĐÚNG / SAI (CÂU 1 ĐẾN CÂU 4, Ý a, b, c, d) */}
+      {/* PHẦN II */}
       {(activeTab === 'all' || activeTab === 'part2') && (
         <div className="space-y-4 pt-2">
           <div className="bg-gradient-to-r from-indigo-700 to-purple-700 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
@@ -273,7 +267,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
         </div>
       )}
 
-      {/* PHẦN III: TRẢ LỜI NGẮN (CÂU 1 ĐẾN CÂU 6) */}
+      {/* PHẦN III */}
       {(activeTab === 'all' || activeTab === 'part3') && (
         <div className="space-y-4 pt-2">
           <div className="bg-gradient-to-r from-purple-700 to-pink-700 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
@@ -320,12 +314,10 @@ export const QuestionList: React.FC<QuestionListProps> = ({
         </div>
       )}
 
-      {/* ======================================================= */}
-      {/* MODAL LƯU ĐỀ THI: CÓ NƠI LƯU & TỰ ĐIỀN TÊN FILE */}
-      {/* ======================================================= */}
+      {/* MODAL LƯU ĐỀ THI */}
       {isSaveModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-200 animate-in fade-in font-sans">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-200 font-sans">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
                 <Save className="w-5 h-5 text-emerald-600" /> Lưu đề thi vào Kho lưu trữ
@@ -340,7 +332,6 @@ export const QuestionList: React.FC<QuestionListProps> = ({
             </div>
 
             <div className="space-y-4 text-xs">
-              {/* 1. TÊN FILE - ĐƯỢC TỰ ĐỘNG ĐIỀN CHUẨN */}
               <div>
                 <label className="block font-bold text-slate-700 mb-1.5">
                   Tên file đề thi (*):
@@ -349,16 +340,12 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                   type="text"
                   value={saveFileName}
                   onChange={(e) => setSaveFileName(e.target.value)}
-                  placeholder="Nhập tên file (VD: De_On_Tap_Toan_11.docx)..."
+                  placeholder="Nhập tên file..."
                   className="w-full p-2.5 border border-slate-300 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-mono"
                   autoFocus
                 />
-                <span className="text-[10px] text-emerald-600 font-medium block mt-1">
-                  ✓ Hệ thống đã tự động điền theo tiêu đề và khối lớp
-                </span>
               </div>
 
-              {/* 2. NƠI LƯU (THƯ MỤC TRONG KHO ĐỀ) */}
               <div>
                 <label className="block font-bold text-slate-700 mb-1.5">
                   Nơi lưu (Thư mục trong Kho đề):
