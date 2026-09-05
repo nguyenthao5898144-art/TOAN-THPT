@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { GeneratedTest, Question } from './types';
 import { MathText } from './MathText';
 import { DiagramRenderer } from './DiagramRenderer';
+import { saveMatrixToBank } from './matrixStorage';
 import {
   Edit3, Trash2, Save, FolderArchive, X, Check
 } from 'lucide-react';
@@ -30,21 +31,22 @@ export const QuestionList: React.FC<QuestionListProps> = ({
 
   const [isSaveModalOpen, setIsSaveModalOpen] = useState<boolean>(false);
   const [saveFileName, setSaveFileName] = useState<string>('');
-  const [saveFolder, setSaveFolder] = useState<string>('TOÁN 10A3');
+  const [saveFolder, setSaveFolder] = useState<string>('');
 
-  // Quét danh sách thư mục thực tế từ localStorage (được đồng bộ với QuestionBankManager)
+  // Lấy danh sách thư mục từ kho tùy chỉnh hoặc mặc định
   const getAvailableFolders = () => {
     try {
       const stored = localStorage.getItem('matrix_custom_folders');
       if (stored) {
         const parsed = JSON.parse(stored);
-        const clean = parsed.filter((f: string) => f !== 'TẤT CẢ');
-        if (clean.length > 0) return clean;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       }
     } catch (e) {
       console.error(e);
     }
-    return ['TOÁN 10A3', 'TOÁN 11A5', 'TOÁN 12A6'];
+    return ['TOÁN 10', 'TOÁN 11', 'TOÁN 12'];
   };
 
   const handleOpenSaveModal = () => {
@@ -53,7 +55,8 @@ export const QuestionList: React.FC<QuestionListProps> = ({
     setSaveFileName(`${cleanTitle}.json`);
     
     const folders = getAvailableFolders();
-    setSaveFolder(folders[0] || 'TOÁN 10A3');
+    const matched = folders.find((f: string) => f.includes(String(grade)));
+    setSaveFolder(matched || folders[0] || '');
     setIsSaveModalOpen(true);
   };
 
@@ -62,32 +65,24 @@ export const QuestionList: React.FC<QuestionListProps> = ({
       alert('Vui lòng nhập tên file!');
       return;
     }
+    if (!saveFolder) {
+      alert('Vui lòng chọn thư mục lưu!');
+      return;
+    }
     try {
-      const targetFolder = (saveFolder || 'TOÁN 10A3').trim().toUpperCase();
-      
-      // Ghi trực tiếp vào kho lưu trữ chung của Ngân hàng ma trận (khớp chính xác với QuestionBankManager)
-      const STORAGE_KEY = 'saved_matrix_bank_items';
-      const existingData = localStorage.getItem(STORAGE_KEY);
-      const matrices = existingData ? JSON.parse(existingData) : [];
-
-      const newMatrix = {
-        id: 'matrix_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+      // Gọi hàm chuẩn từ matrixStorage.ts đã được đồng bộ hóa
+      saveMatrixToBank({
         title: saveFileName.trim(),
         grade: String(grade),
         durationMinutes: Number(test.config?.durationMinutes || test.durationMinutes || 45),
         config: test.config || {},
         yccdCounts: (test as any).yccdCounts || {},
-        folderName: targetFolder,
-        createdAt: new Date().toISOString(),
-      };
-
-      matrices.unshift(newMatrix);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(matrices));
+        folderName: saveFolder.trim().toUpperCase(),
+      } as any);
 
       setIsSaveModalOpen(false);
-      alert(`Đã lưu thành công vào thư mục [${targetFolder}] trong Ngân hàng ma trận!`);
+      alert(`Đã lưu thành công vào thư mục [${saveFolder.trim().toUpperCase()}] trong Ngân hàng ma trận!`);
       
-      // TỰ ĐỘNG ĐIỀU HƯỚNG VỀ ĐÚNG GIAO DIỆN NGÂN HÀNG MA TRẬN
       if (onOpenBank) {
         onOpenBank();
       }
@@ -388,19 +383,25 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                 <label className="block font-bold text-slate-700 mb-1.5">
                   Chọn thư mục trong Ngân hàng ma trận (*):
                 </label>
-                <select
-                  value={saveFolder}
-                  onChange={(e) => setSaveFolder(e.target.value)}
-                  className="w-full p-2.5 border border-slate-300 rounded-xl font-bold text-xs bg-white outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  {availableFolders.map((folder) => (
-                    <option key={folder} value={folder}>
-                      {folder}
-                    </option>
-                  ))}
-                </select>
+                {availableFolders.length === 0 ? (
+                  <p className="text-rose-600 font-bold italic">
+                    Chưa có thư mục nào! Thầy vui lòng tạo thư mục trước khi lưu file.
+                  </p>
+                ) : (
+                  <select
+                    value={saveFolder}
+                    onChange={(e) => setSaveFolder(e.target.value)}
+                    className="w-full p-2.5 border border-slate-300 rounded-xl font-bold text-xs bg-white outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    {availableFolders.map((folder: string) => (
+                      <option key={folder} value={folder}>
+                        {folder}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <p className="text-[11px] text-slate-500 mt-1.5 italic">
-                  * Sau khi lưu sẽ ghi trực tiếp vào Ngân hàng ma trận và tự động chuyển hướng về đó.
+                  * Tệp tin sẽ được lưu thẳng vào thư mục đã chọn trong Ngân hàng ma trận.
                 </p>
               </div>
             </div>
@@ -416,9 +417,9 @@ export const QuestionList: React.FC<QuestionListProps> = ({
               <button
                 type="button"
                 onClick={handleConfirmSaveToBank}
-                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs shadow transition-all cursor-pointer flex items-center gap-1.5"
               >
-                <Check className="w-4 h-4" /> Xác nhận lưu & Về Ngân hàng ma trận
+                <Check className="w-4 h-4" /> Xác nhận lưu vào Ngân hàng ma trận
               </button>
             </div>
           </div>
