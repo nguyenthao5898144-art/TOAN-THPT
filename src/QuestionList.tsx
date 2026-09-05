@@ -33,15 +33,19 @@ export const QuestionList: React.FC<QuestionListProps> = ({
   const [saveFileName, setSaveFileName] = useState<string>('');
   const [saveFolder, setSaveFolder] = useState<string>('TOÁN 10A3');
 
-  // Quét danh sách các thư mục chuẩn đang hiển thị trên giao diện quản lý
+  // Đọc danh sách thư mục thực tế từ localStorage (nơi lưu các thư mục do thầy tạo bằng nút +)
   const getAvailableFolders = () => {
     try {
-      // Lấy danh sách các lớp/thư mục thực tế từ localStorage nếu có lưu, hoặc dùng mặc định các lớp thầy vừa tạo
-      const customFolders = ['TOÁN 10A3', 'TOÁN 11A5', 'TOÁN 12A6'];
-      return Array.from(new Set(customFolders));
+      const stored = localStorage.getItem('matrix_custom_folders');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const clean = parsed.filter((f: string) => f !== 'TẤT CẢ');
+        if (clean.length > 0) return clean;
+      }
     } catch (e) {
-      return ['TOÁN 10A3', 'TOÁN 11A5', 'TOÁN 12A6'];
+      console.error(e);
     }
+    return ['TOÁN 10A3', 'TOÁN 11A5', 'TOÁN 12A6'];
   };
 
   const handleOpenSaveModal = () => {
@@ -385,7 +389,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                   ))}
                 </select>
                 <p className="text-[11px] text-slate-500 mt-1.5 italic">
-                  * Hệ thống sẽ lưu vào thư mục bạn chọn và tự động đưa thầy về Ngân hàng ma trận.
+                  * Tự động đồng bộ các thư mục lớp thầy đã tạo. Lưu xong sẽ chuyển về Ngân hàng ma trận.
                 </p>
               </div>
             </div>
