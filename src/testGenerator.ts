@@ -78,3 +78,15 @@ export function createDefaultTest(config?: Partial<TestConfig>): GeneratedTest {
     ...config
   });
 }
+export function createDefaultTest(config?: Partial<TestConfig>): GeneratedTest {
+  return generateTest({
+    grade: 10,
+    title: 'ĐỀ KIỂM TRA MÔN TOÁN (THPT)',
+    duration: 45,
+    ...config
+  });
+}
+
+export const generateUniqueTextForStudent = (text: any, student?: any): any => {
+  return text || '';
+};
