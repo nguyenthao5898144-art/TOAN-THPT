@@ -10,7 +10,7 @@ import { getStoredBankTests, saveStoredBankTests } from './testBankStorage';
 import {
   FileText, Database, Users, GraduationCap, Grid,
   Upload, Sparkles, Eye, Settings, Trash2, X, Check,
-  Folder, FolderPlus, Layers, Edit3
+  Folder, FolderPlus, Layers, Edit3, ArrowLeft, Bookmark, BookOpen, Home
 } from 'lucide-react';
 
 interface MatrixFolder {
@@ -20,24 +20,46 @@ interface MatrixFolder {
 }
 
 export const App: React.FC = () => {
-  // 1. QUY TẮC ĐẶT TÊN BẮT BUỘC: MA_TRẬN_[...].json
+  // 1. HÀM ÉP BUỘC ĐỊNH DẠNG TÊN: MA_TRẬN_[...].json
   const formatMatrixFileName = (rawTitle: string): string => {
     let clean = (rawTitle || 'DE_THI').trim().replace(/\.json$/i, '');
     let core = clean.replace(/^MA_TRẬN_(\[)?/i, '').replace(/\]$/, '').trim();
     return `MA_TRẬN_[${core}].json`;
   };
 
+  const extractCleanTitle = (matrixFileName: string): string => {
+    return (matrixFileName || 'ĐỀ KIỂM TRA TOÁN')
+      .replace(/^MA_TRẬN_(\[)?/i, '')
+      .replace(/\]\.json$/i, '')
+      .replace(/\.json$/i, '')
+      .trim();
+  };
+
   const [currentTest, setCurrentTest] = useState<GeneratedTest>(() => {
-    const t = createDefaultTest({ grade: '10', title: 'ĐỀ_KHẢO_SÁT_&_ĐÁNH_GIÁ_TOÁN_10_-_GDPT_2018' } as any);
-    return { ...t, title: formatMatrixFileName(t.title) };
+    return createDefaultTest({ grade: '12', title: 'ĐỀ_KHẢO_SÁT_&_ĐÁNH_GIÁ_TOÁN_12_-_GDPT_2018' } as any);
   });
 
+  // TỰ ĐỘNG CHUẨN HÓA MỌI FILE ĐÃ LƯU VỀ DẠNG MA_TRẬN_[...].json
   const [savedTests, setSavedTests] = useState<GeneratedTest[]>(() => {
     try {
       const s = getStoredBankTests();
       if (s?.length) return s.map(t => ({ ...t, title: formatMatrixFileName(t.title) }));
-      const initial = createDefaultTest({ grade: '10', title: 'ĐỀ_KHẢO_SÁT_&_ĐÁNH_GIÁ_TOÁN_10_-_GDPT_2018' } as any);
-      return [{ ...initial, title: formatMatrixFileName(initial.title) }];
+      return [
+        {
+          id: 'test_12_default',
+          title: 'MA_TRẬN_[ĐỀ_KHẢO_SÁT_&_ĐÁNH_GIÁ_TOÁN_12_-_GDPT_2018].json',
+          config: { grade: '12', durationMinutes: 45 },
+          questions: MATH_10_QUESTIONS,
+          createdAt: '2026-09-12T00:00:00Z',
+        } as any,
+        {
+          id: 'test_10_default',
+          title: 'MA_TRẬN_[ĐỀ_KHẢO_SÁT_&_ĐÁNH_GIÁ_TOÁN_10_-_GDPT_2018].json',
+          config: { grade: '10', durationMinutes: 45 },
+          questions: MATH_10_QUESTIONS,
+          createdAt: '2026-09-12T00:00:00Z',
+        } as any,
+      ];
     } catch {
       return [];
     }
@@ -46,48 +68,39 @@ export const App: React.FC = () => {
   const [view, setView] = useState<'generator' | 'matrix' | 'bank' | 'classes' | 'student_portal'>('bank');
   const [isGeneratorModalOpen, setIsGeneratorModalOpen] = useState<boolean>(false);
 
-  // Danh sách thư mục ma trận
+  // DANH SÁCH THƯ MỤC MA TRẬN (CHUẨN ẢNH 184)
   const [matrixFolders, setMatrixFolders] = useState<MatrixFolder[]>([
     { id: 'f11', name: 'TOÁN 11', grade: '11' },
     { id: 'f12', name: 'TOÁN 12', grade: '12' },
     { id: 'f10', name: 'TOÁN 10', grade: '10' },
   ]);
-  const [selectedFolderId, setSelectedFolderId] = useState<string>('f10');
+  const [selectedFolderId, setSelectedFolderId] = useState<string>('f12');
 
-  // State Cài đặt đề thi
+  // State Cài đặt
   const [editingSettingsTest, setEditingSettingsTest] = useState<GeneratedTest | null>(null);
   const [editTitle, setEditTitle] = useState<string>('');
   const [editDuration, setEditDuration] = useState<number>(45);
-  const [editGrade, setEditGrade] = useState<string>('10');
+  const [editGrade, setEditGrade] = useState<string>('12');
 
   useEffect(() => {
     if (savedTests.length) saveStoredBankTests(savedTests);
   }, [savedTests]);
 
-  // 1. NÚT MỞ FILE
+  // 1. NÚT MỞ FILE: MỞ ĐỀ THI RA SOẠN THẢO
   const handleOpenSavedTest = (test: GeneratedTest) => {
+    const cleanTitle = extractCleanTitle(test.title);
     const safeTest: GeneratedTest = {
-      id: test.id || `test_${Date.now()}`,
-      title: formatMatrixFileName(test.title),
-      config: test.config || {
-        grade: '10',
-        durationMinutes: 45,
-        questionCountByType: { multipleChoice: 12, trueFalse: 4, shortAnswer: 6 },
-        selectedTopicIds: [],
-        selectedLessonIds: [],
-        selectedOutcomes: [],
-      },
+      ...test,
+      title: cleanTitle,
       questions: Array.isArray(test.questions) && test.questions.length > 0 ? test.questions : MATH_10_QUESTIONS,
-      createdAt: test.createdAt || new Date().toISOString(),
     };
-
     setCurrentTest(safeTest);
-    setView('generator'); // Chuyển sang màn hình xem đề thi
+    setView('generator');
   };
 
-  // 2. NÚT ĐỔI TÊN FILE
+  // 2. NÚT ĐỔI TÊN: ĐỔI TÊN VÀ TỰ ĐỘNG BỌC MA_TRẬN_[...]
   const handleRenameTest = (t: GeneratedTest) => {
-    const currentCore = t.title.replace(/^MA_TRẬN_(\[)?/i, '').replace(/\]\.json$/i, '');
+    const currentCore = extractCleanTitle(t.title);
     const newCore = prompt('Nhập tên mới cho file ma trận:', currentCore);
     if (newCore && newCore.trim()) {
       const formattedTitle = formatMatrixFileName(newCore.trim());
@@ -95,198 +108,99 @@ export const App: React.FC = () => {
       const updatedList = savedTests.map(item => item.id === t.id ? updatedTest : item);
       setSavedTests(updatedList);
       saveStoredBankTests(updatedList);
-      if (currentTest.id === t.id) setCurrentTest(updatedTest);
+      if (currentTest.id === t.id) setCurrentTest({ ...currentTest, title: newCore.trim() });
       alert(`Đã đổi tên thành công: ${formattedTitle}`);
     }
   };
 
-  // 3. NÚT CÀI ĐẶT THÔNG SỐ
-  const handleOpenSettings = (test: GeneratedTest) => {
-    setEditingSettingsTest(test);
-    setEditTitle(test.title.replace(/^MA_TRẬN_(\[)?/i, '').replace(/\]\.json$/i, ''));
-    setEditDuration(test.config?.durationMinutes || 45);
-    setEditGrade(test.config?.grade || '10');
+  // 3. NÚT CÀI ĐẶT
+  const handleOpenSettings = (t: GeneratedTest) => {
+    setEditingSettingsTest(t);
+    setEditTitle(extractCleanTitle(t.title));
+    setEditDuration(t.config?.durationMinutes || 45);
+    setEditGrade(t.config?.grade || '12');
   };
 
-  // 4. NÚT XOÁ FILE
+  // 4. NÚT XOÁ
   const handleDeleteSavedTest = (id: string, title: string) => {
-    if (confirm(`Thầy có chắc chắn muốn xóa file "${title}" khỏi ngân hàng ma trận?`)) {
+    if (confirm(`Thầy có chắc chắn muốn xóa file "${title}"?`)) {
       const updated = savedTests.filter((t) => t.id !== id);
       setSavedTests(updated);
       saveStoredBankTests(updated);
     }
   };
 
-  // LƯU ĐỀ VÀO KHO
+  // LƯU VÀO KHO MA TRẬN
   const handleSaveCurrentTestToBank = () => {
-    const formattedTitle = formatMatrixFileName(currentTest.title);
-    const updatedTest: GeneratedTest = {
+    const matrixFileName = formatMatrixFileName(currentTest.title);
+    const savedItem: GeneratedTest = {
       ...currentTest,
-      title: formattedTitle,
+      title: matrixFileName,
     };
-    setCurrentTest(updatedTest);
-
-    const updatedList = [updatedTest, ...savedTests.filter((t) => t.id !== updatedTest.id)];
+    const updatedList = [savedItem, ...savedTests.filter((t) => t.id !== savedItem.id)];
     setSavedTests(updatedList);
     saveStoredBankTests(updatedList);
-    alert(`Đã lưu thành công vào ngân hàng ma trận: ${formattedTitle}`);
+    alert(`Đã lưu vào Ngân hàng ma trận với tên:\n${matrixFileName}`);
   };
 
-  // NẠP VÀ MỞ FILE JSON TỪ MÁY TÍNH
-  const handleImportJsonFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const parsed = JSON.parse(ev.target?.result as string);
-        const questions: Question[] = Array.isArray(parsed.questions) ? parsed.questions : MATH_10_QUESTIONS;
-
-        const newTest: GeneratedTest = {
-          id: parsed.id || `test_json_${Date.now()}`,
-          title: formatMatrixFileName(parsed.title || file.name),
-          config: parsed.config || {
-            grade: file.name.includes('11') ? '11' : (file.name.includes('12') ? '12' : '10'),
-            durationMinutes: 45,
-            questionCountByType: { multipleChoice: 12, trueFalse: 4, shortAnswer: 6 },
-            selectedTopicIds: [],
-            selectedLessonIds: [],
-            selectedOutcomes: [],
-          },
-          questions,
-          createdAt: new Date().toISOString(),
-        };
-
-        const updated = [newTest, ...savedTests.filter((t) => t.id !== newTest.id)];
-        setSavedTests(updated);
-        saveStoredBankTests(updated);
-
-        handleOpenSavedTest(newTest);
-        alert(`Đã nạp và mở thành công: ${newTest.title}`);
-      } catch {
-        alert('Lỗi: File JSON không đúng định dạng!');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  };
-
-  const selectedFolder = matrixFolders.find(f => f.id === selectedFolderId) || matrixFolders[0];
-  const testsInFolder = savedTests.filter(t => (t.config?.grade || '10') === selectedFolder.grade);
+  const selectedFolder = matrixFolders.find(f => f.id === selectedFolderId) || matrixFolders;
+  const testsInFolder = savedTests.filter(t => (t.config?.grade || '12') === selectedFolder.grade);
 
   return (
     <div className="min-h-screen bg-slate-100 flex font-sans text-slate-800">
-      {/* THANH ĐIỀU HƯỚNG TRÁI */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 shadow-sm">
-        <div className="p-5 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-900 text-white rounded-2xl flex items-center justify-center font-black text-lg shadow">
-              ∑
-            </div>
-            <div>
-              <h1 className="font-black text-slate-900 text-sm tracking-tight">TOÁN THPT</h1>
-              <p className="text-[11px] text-slate-400 font-bold">GDPT 2018</p>
-            </div>
+      {/* THANH MENU DỌC ICON BÊN TRÁI (CHUẨN ẢNH 184) */}
+      <aside className="w-16 bg-blue-900 flex flex-col items-center py-4 justify-between shrink-0 shadow-lg text-white">
+        <div className="space-y-6 flex flex-col items-center">
+          <div className="w-10 h-10 bg-blue-700 rounded-2xl flex items-center justify-center font-black text-xs shadow-inner">
+            THPT
           </div>
 
-          <nav className="space-y-1 text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => setView('bank')}
-              className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all ${
-                view === 'bank' ? 'bg-blue-900 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <Database className="w-4 h-4" /> Ngân hàng ma trận ({savedTests.length})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setView('generator')}
-              className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all ${
-                view === 'generator' ? 'bg-blue-900 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <FileText className="w-4 h-4" /> Biên tập đề thi
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setView('matrix')}
-              className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all ${
-                view === 'matrix' ? 'bg-blue-900 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <Grid className="w-4 h-4" /> Ma trận & Bản đặc tả
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setView('classes')}
-              className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all ${
-                view === 'classes' ? 'bg-blue-900 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <Users className="w-4 h-4" /> Quản lý lớp học
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setView('student_portal')}
-              className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all ${
-                view === 'student_portal' ? 'bg-blue-900 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <GraduationCap className="w-4 h-4" /> Cổng làm bài học sinh
-            </button>
+          <nav className="space-y-3 flex flex-col items-center">
+            <button type="button" onClick={() => setView('generator')} className={`p-2.5 rounded-xl transition-all ${view === 'generator' ? 'bg-blue-800 text-white' : 'text-blue-200 hover:text-white'}`} title="Trang chủ"><Home className="w-5 h-5" /></button>
+            <button type="button" onClick={() => setView('generator')} className="p-2.5 text-blue-200 hover:text-white rounded-xl" title="Đề thi"><FileText className="w-5 h-5" /></button>
+            <button type="button" onClick={() => setIsGeneratorModalOpen(true)} className="p-2.5 text-blue-200 hover:text-white rounded-xl" title="Tạo đề AI"><Sparkles className="w-5 h-5" /></button>
+            <button type="button" onClick={() => setView('classes')} className={`p-2.5 rounded-xl transition-all ${view === 'classes' ? 'bg-blue-800 text-white' : 'text-blue-200 hover:text-white'}`} title="Quản lý lớp"><Layers className="w-5 h-5" /></button>
+            {/* ICON BOOKOPEN ĐANG CHỌN TRONG ẢNH 184 */}
+            <button type="button" onClick={() => setView('bank')} className={`p-2.5 rounded-xl transition-all ${view === 'bank' ? 'bg-blue-600 text-white shadow' : 'text-blue-200 hover:text-white'}`} title="Thư mục ma trận"><BookOpen className="w-5 h-5" /></button>
+            <button type="button" onClick={() => setView('matrix')} className={`p-2.5 rounded-xl transition-all ${view === 'matrix' ? 'bg-blue-800 text-white' : 'text-blue-200 hover:text-white'}`} title="Ma trận đặc tả"><Grid className="w-5 h-5" /></button>
+            <button type="button" onClick={() => setView('student_portal')} className="p-2.5 text-blue-200 hover:text-white rounded-xl" title="Lưu trữ"><Bookmark className="w-5 h-5" /></button>
           </nav>
         </div>
       </aside>
 
       {/* VÙNG NỘI DUNG CHÍNH */}
       <main className="flex-1 flex flex-col overflow-hidden">
+        {/* HEADER TRÊN CÙNG: QUAY LẠI - TOÁN THPT - THÔNG TIN THẦY NGUYỄN QUỐC TÂM (CHUẨN ẢNH 184) */}
         <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shadow-sm shrink-0">
-          <div className="flex items-center gap-3">
-            <h2 className="text-base font-black text-slate-900 max-w-md truncate">
-              {currentTest?.title}
-            </h2>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-              TOÁN {currentTest?.config?.grade || '10'}
-            </span>
-          </div>
+          <button
+            type="button"
+            onClick={() => setView('generator')}
+            className="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-blue-800 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4 text-blue-600" /> Quay lại
+          </button>
 
           <div className="flex items-center gap-2">
-            <label className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer">
-              <Upload className="w-3.5 h-3.5 text-blue-600" /> Nạp file JSON
-              <input type="file" accept=".json" onChange={handleImportJsonFile} className="hidden" />
-            </label>
+            <h1 className="font-black text-slate-900 text-lg tracking-tight">TOÁN THPT</h1>
+            <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">GDPT 2018</span>
+          </div>
 
-            <button
-              type="button"
-              onClick={handleSaveCurrentTestToBank}
-              className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
-            >
-              <Database className="w-3.5 h-3.5 text-blue-700" /> Lưu vào Kho ma trận
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsGeneratorModalOpen(true)}
-              className="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4" /> Tạo đề ma trận mới
-            </button>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <h4 className="font-bold text-xs text-slate-900">Thầy Nguyễn Quốc Tâm</h4>
+              <p className="text-[11px] text-slate-400">THPT Mai Thanh Thế</p>
+            </div>
+            <div className="w-9 h-9 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs shadow">
+              QT
+            </div>
           </div>
         </header>
 
+        {/* NỘI DUNG MÀN HÌNH THƯ MỤC MA TRẬN */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* ======================================================= */}
-          {/* GIAO DIỆN NGÂN HÀNG MA TRẬN VỚI ĐỦ 4 NÚT CHỨC NĂNG */}
-          {/* ======================================================= */}
           {view === 'bank' && (
             <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start gap-6">
-              {/* THƯ MỤC MA TRẬN (BÊN TRÁI) */}
+              {/* KHUNG TRÁI: THƯ MỤC MA TRẬN (CHUẨN ẢNH 184) */}
               <div className="w-full md:w-72 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4 shrink-0">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
@@ -298,7 +212,7 @@ export const App: React.FC = () => {
                     onClick={() => {
                       const name = prompt('Nhập tên thư mục mới:');
                       if (name && name.trim()) {
-                        const newF: MatrixFolder = { id: `f_${Date.now()}`, name: name.trim().toUpperCase(), grade: '10' };
+                        const newF: MatrixFolder = { id: `f_${Date.now()}`, name: name.trim().toUpperCase(), grade: '12' };
                         setMatrixFolders([...matrixFolders, newF]);
                         setSelectedFolderId(newF.id);
                       }
@@ -314,7 +228,7 @@ export const App: React.FC = () => {
                 <div className="space-y-2">
                   {matrixFolders.map((f) => {
                     const isSelected = selectedFolderId === f.id;
-                    const count = savedTests.filter(t => (t.config?.grade || '10') === f.grade).length;
+                    const count = savedTests.filter(t => (t.config?.grade || '12') === f.grade).length;
                     return (
                       <div
                         key={f.id}
@@ -338,9 +252,7 @@ export const App: React.FC = () => {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (confirm(`Xóa thư mục "${f.name}"?`)) {
-                                setMatrixFolders(matrixFolders.filter(x => x.id !== f.id));
-                              }
+                              if (confirm(`Xóa thư mục "${f.name}"?`)) setMatrixFolders(matrixFolders.filter(x => x.id !== f.id));
                             }}
                             className={`p-1 rounded-lg ${isSelected ? 'text-emerald-200 hover:text-white' : 'text-slate-400 hover:text-rose-600'}`}
                           >
@@ -353,7 +265,7 @@ export const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* DANH SÁCH FILE MA TRẬN (BÊN PHẢI) */}
+              {/* KHUNG PHẢI: THẺ FILE CÓ ĐỦ 4 NÚT VÀ TÊN MA_TRẬN_[...].json (CHUẨN ẢNH 184) */}
               <div className="flex-1 w-full bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
                 <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
                   <h3 className="font-black text-sm text-slate-900">
@@ -366,75 +278,55 @@ export const App: React.FC = () => {
                   {testsInFolder.map((t) => (
                     <div
                       key={t.id}
-                      onClick={() => handleOpenSavedTest(t)}
-                      className="border border-slate-200 rounded-3xl p-5 hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer space-y-3 bg-white"
+                      className="border border-slate-200 rounded-3xl p-5 hover:border-emerald-500 hover:shadow-md transition-all space-y-3 bg-white"
                     >
                       <div className="flex justify-between items-center">
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                          TOÁN {t.config?.grade || '10'}
+                          TOÁN {t.config?.grade || selectedFolder.grade}
                         </span>
                         <span className="text-xs text-slate-400 font-mono">12/9/2026</span>
                       </div>
 
-                      {/* TÊN FILE CHUẨN MA_TRẬN_[...].json */}
+                      {/* TỰ ĐỘNG ÉP HIỂN THỊ CHUẨN XÁC: MA_TRẬN_[...].json */}
                       <h3 className="font-black text-slate-900 text-sm break-words">
                         {formatMatrixFileName(t.title)}
                       </h3>
 
                       <p className="text-xs text-slate-500 font-medium">
-                        Thời gian làm bài: {t.config?.durationMinutes || 45} phút • {t.questions?.length || 22} câu
+                        Thời gian làm bài: {t.config?.durationMinutes || 45} phút
                       </p>
 
-                      {/* ĐẦY ĐỦ 4 NÚT: [MỞ FILE] - [ĐỔI TÊN] - [CÀI ĐẶT] - [XOÁ] */}
+                      {/* ĐẦY ĐỦ 4 NÚT BẤM: [MỞ FILE] - [ĐỔI TÊN] - [CÀI ĐẶT] - [XOÁ] */}
                       <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {/* 1. NÚT MỞ FILE */}
+                        <div className="flex flex-wrap items-center gap-2">
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenSavedTest(t);
-                            }}
-                            className="px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm cursor-pointer"
-                            title="Mở file ma trận và đề thi"
+                            onClick={() => handleOpenSavedTest(t)}
+                            className="px-3.5 py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5" /> Mở file
                           </button>
 
-                          {/* 2. NÚT ĐỔI TÊN */}
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRenameTest(t);
-                            }}
-                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
-                            title="Đổi tên file ma trận"
+                            onClick={() => handleRenameTest(t)}
+                            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                           >
                             <Edit3 className="w-3.5 h-3.5 text-slate-600" /> Đổi tên
                           </button>
 
-                          {/* 3. NÚT CÀI ĐẶT */}
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenSettings(t);
-                            }}
-                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
-                            title="Cài đặt thông số"
+                            onClick={() => handleOpenSettings(t)}
+                            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                           >
                             <Settings className="w-3.5 h-3.5 text-slate-600" /> Cài đặt
                           </button>
                         </div>
 
-                        {/* 4. NÚT XOÁ */}
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteSavedTest(t.id, t.title);
-                          }}
+                          onClick={() => handleDeleteSavedTest(t.id, t.title)}
                           className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl cursor-pointer"
                           title="Xóa file ma trận"
                         >
@@ -461,7 +353,7 @@ export const App: React.FC = () => {
         </div>
       </main>
 
-      {/* POPUP CÀI ĐẶT ĐỀ THI */}
+      {/* MODAL CÀI ĐẶT THÔNG SỐ */}
       {editingSettingsTest && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border font-sans animate-in fade-in">
@@ -474,14 +366,13 @@ export const App: React.FC = () => {
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-700 font-bold mb-1">Tên ma trận / đề thi:</label>
+                <label className="block text-slate-700 font-bold mb-1">Tên ma trận:</label>
                 <input
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   className="w-full p-2 border border-slate-300 rounded-xl font-bold text-xs outline-none"
                 />
-                <p className="text-[10px] text-slate-400 mt-1">Hệ thống sẽ tự động lưu dưới dạng: <strong>MA_TRẬN_[{editTitle}].json</strong></p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -504,13 +395,14 @@ export const App: React.FC = () => {
               <button onClick={() => setEditingSettingsTest(null)} className="px-4 py-2 bg-slate-100 rounded-xl text-xs font-bold">Hủy</button>
               <button
                 onClick={() => {
+                  const formatted = formatMatrixFileName(editTitle);
                   const updatedTest: GeneratedTest = {
                     ...editingSettingsTest,
-                    title: formatMatrixFileName(editTitle),
+                    title: formatted,
                     config: { ...editingSettingsTest.config, grade: editGrade, durationMinutes: Number(editDuration) || 45 },
                   };
                   setSavedTests(savedTests.map(t => t.id === updatedTest.id ? updatedTest : t));
-                  if (currentTest.id === updatedTest.id) setCurrentTest(updatedTest);
+                  if (currentTest.id === updatedTest.id) setCurrentTest({ ...currentTest, title: editTitle.trim() });
                   setEditingSettingsTest(null);
                   alert('Đã lưu cài đặt thành công!');
                 }}
@@ -523,16 +415,14 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* POPUP TẠO MA TRẬN MỚI */}
+      {/* MODAL TẠO ĐỀ MA TRẬN MỚI */}
       {isGeneratorModalOpen && (
         <QuestionGeneratorModal
           isOpen={isGeneratorModalOpen}
           onClose={() => setIsGeneratorModalOpen(false)}
           onGenerate={(newCfg) => {
             const created = createDefaultTest(newCfg);
-            const formatted = { ...created, title: formatMatrixFileName(created.title) };
-            setCurrentTest(formatted);
-            setSavedTests([formatted, ...savedTests]);
+            setCurrentTest(created);
             setIsGeneratorModalOpen(false);
             setView('generator');
           }}
