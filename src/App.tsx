@@ -523,7 +523,7 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* POPUP TẠO ĐỀ MA TRẬN MỚI */}
+      {/* POPUP TẠO MA TRẬN MỚI */}
       {isGeneratorModalOpen && (
         <QuestionGeneratorModal
           isOpen={isGeneratorModalOpen}
